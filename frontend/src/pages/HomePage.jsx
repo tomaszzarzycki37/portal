@@ -114,8 +114,9 @@ export default function HomePage() {
 
           <div className="home-hero-search-image">
             <img 
-              src="https://images.unsplash.com/photo-1552820728-8ac41f1ce891?w=800&q=80" 
+              src="https://images.unsplash.com/photo-1605559424843-9e4c3ca856d1?w=1000&q=80" 
               alt="Car"
+              onError={(e) => e.target.style.display = 'none'}
             />
           </div>
         </div>
