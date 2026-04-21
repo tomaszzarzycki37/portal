@@ -9,6 +9,7 @@ export default function HomePage() {
   const { t } = useTranslation()
   const [cars, setCars] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedBrand, setSelectedBrand] = useState('all')
   const [engineSearch, setEngineSearch] = useState('')
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -31,6 +32,11 @@ export default function HomePage() {
     return Array.from(values).sort((a, b) => a.localeCompare(b))
   }, [cars])
 
+  const brands = useMemo(() => {
+    const values = new Set(cars.map((car) => String(car.brand_name || '').trim()).filter(Boolean))
+    return Array.from(values).sort((a, b) => a.localeCompare(b))
+  }, [cars])
+
   const filteredCars = useMemo(() => {
     const normalizedSearch = String(searchTerm || '').trim().toLowerCase()
     const normalizedEngine = String(engineSearch || '').trim().toLowerCase()
@@ -38,12 +44,13 @@ export default function HomePage() {
     return cars.filter((car) => {
       const haystack = `${car.brand_name || ''} ${car.name || ''} ${car.description || ''} ${car.engine_type || ''}`.toLowerCase()
       if (normalizedSearch && !haystack.includes(normalizedSearch)) return false
+      if (selectedBrand !== 'all' && String(car.brand_name || '') !== selectedBrand) return false
       if (normalizedEngine && !String(car.engine_type || '').toLowerCase().includes(normalizedEngine)) return false
       if (vehicleTypeFilter !== 'all' && String(car.vehicle_type || '') !== vehicleTypeFilter) return false
       if (statusFilter !== 'all' && String(car.production_status || '') !== statusFilter) return false
       return true
     })
-  }, [cars, searchTerm, engineSearch, vehicleTypeFilter, statusFilter])
+  }, [cars, searchTerm, selectedBrand, engineSearch, vehicleTypeFilter, statusFilter])
 
   const heroBackgroundImage = FALLBACK_HERO_IMAGE
 
@@ -70,6 +77,20 @@ export default function HomePage() {
                     placeholder="Szukaj marki, modelu..."
                   />
                 </label>
+              </div>
+
+              <div className="home-filter-section">
+                <label className="home-filter-label">{t.pages.brandLabel}</label>
+                <select
+                  className="form-input"
+                  value={selectedBrand}
+                  onChange={(e) => setSelectedBrand(e.target.value)}
+                >
+                  <option value="all">{t.pages.allLabel}</option>
+                  {brands.map((brand) => (
+                    <option key={brand} value={brand}>{brand}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="home-filter-section">
