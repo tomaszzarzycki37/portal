@@ -52,58 +52,63 @@ export default function HomePage() {
               <h2>{t.pages.modelSearchTitle}</h2>
               
               <div className="home-filter-group">
-                <div className="home-filter-row">
-                  <label className="home-filter-checkbox">
-                    <input type="checkbox" defaultChecked />
-                    <span>Leasing</span>
-                  </label>
-                  <label className="home-filter-checkbox">
-                    <input type="checkbox" defaultChecked />
-                    <span>Wynajem</span>
-                  </label>
-                  <label className="home-filter-checkbox">
-                    <input type="checkbox" defaultChecked />
-                    <span>Kredyt</span>
-                  </label>
-                </div>
-                <div className="home-filter-row">
-                  <label className="home-filter-checkbox">
-                    <input type="checkbox" defaultChecked />
-                    <span>Nowe</span>
-                  </label>
-                  <label className="home-filter-checkbox">
-                    <input type="checkbox" defaultChecked />
-                    <span>Używane</span>
-                  </label>
-                  <label className="home-filter-checkbox">
-                    <input type="checkbox" defaultChecked />
-                    <span>Demo</span>
-                  </label>
-                </div>
+                <label className="home-filter-checkbox">
+                  <input 
+                    type="text" 
+                    className="form-input"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Szukaj marki, modelu..."
+                  />
+                </label>
               </div>
 
               <div className="home-filter-section">
-                <button className="home-filter-expandable">
-                  <span>Rocznik</span>
-                  <span>Wybierz</span>
-                </button>
+                <label className="home-filter-label">{t.pages.engineFilter}</label>
+                <input 
+                  type="text"
+                  className="form-input"
+                  value={engineSearch}
+                  onChange={(e) => setEngineSearch(e.target.value)}
+                  placeholder="np. 1.6L, 2.0T..."
+                />
               </div>
 
               <div className="home-filter-section">
-                <button className="home-filter-expandable">
-                  <span>Marka</span>
-                  <span>Wybierz</span>
-                </button>
+                <label className="home-filter-label">{t.pages.type}</label>
+                <select
+                  className="form-input"
+                  value={vehicleTypeFilter}
+                  onChange={(e) => setVehicleTypeFilter(e.target.value)}
+                >
+                  <option value="all">{t.pages.allLabel}</option>
+                  {vehicleTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="home-filter-section">
-                <button className="home-filter-expandable home-filter-disabled">
-                  <span>Model</span>
-                  <span>Wybierz markę</span>
-                </button>
+                <label className="home-filter-label">{t.pages.productionStatus}</label>
+                <select
+                  className="form-input"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="all">{t.pages.allLabel}</option>
+                  <option value="active">{t.pages.statusActive}</option>
+                  <option value="discontinued">{t.pages.statusDiscontinued}</option>
+                  <option value="upcoming">{t.pages.statusUpcoming}</option>
+                </select>
               </div>
 
-              <button className="home-filter-cta">Sprawdź 11 937 aut od ręki →</button>
+              <Link 
+                to="/cars" 
+                className="home-filter-cta"
+                style={{ textDecoration: 'none', display: 'block', textAlign: 'center' }}
+              >
+                Sprawdź {filteredCars.length} aut →
+              </Link>
             </div>
           </div>
 
