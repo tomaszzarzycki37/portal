@@ -5,7 +5,7 @@
 }
 
 .home-wrap {
-	padding: 0.5rem 0 1.5rem;
+	padding: 0 0 1.5rem;
 	background: radial-gradient(circle at 10% 0%, #fff7ed 0%, #ffffff 50%, #f8fafc 100%);
 }
 
@@ -199,7 +199,7 @@
 }
 
 .home-hero-search {
-	margin-top: 1rem;
+	margin-top: 0;
 	border-radius: 1.5rem;
 	overflow: hidden;
 	background: #ffffff;
