@@ -1,0 +1,264 @@
+:root {
+	--brand-red: #b91c1c;
+	--brand-amber: #f59e0b;
+	--brand-slate: #0f172a;
+}
+
+.home-wrap {
+	padding: 0.5rem 0 1.5rem;
+	background: radial-gradient(circle at 10% 0%, #fff7ed 0%, #ffffff 50%, #f8fafc 100%);
+}
+
+.hero-graphic {
+	position: relative;
+	padding: 1.5rem;
+	border-radius: 1.3rem;
+	border: 1px solid #e2e8f0;
+	background:
+		linear-gradient(120deg, rgba(255, 255, 255, 0.92), rgba(255, 251, 235, 0.8)),
+		linear-gradient(160deg, #fecaca 0%, #ffedd5 45%, #fde68a 100%);
+}
+
+.hero-grid {
+	position: relative;
+	z-index: 10;
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1.4rem;
+}
+
+.hero-title {
+	margin: 0.65rem 0;
+	line-height: 1.05;
+	letter-spacing: -0.02em;
+	font-size: clamp(2rem, 4vw, 3.8rem);
+	color: #111827;
+}
+
+.hero-title span {
+	display: block;
+	color: #f59e0b;
+}
+
+.hero-text {
+	margin: 0 0 1rem;
+	max-width: 34rem;
+	color: #334155;
+	line-height: 1.6;
+}
+
+.hero-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	margin-bottom: 1rem;
+}
+
+.stats-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0.6rem;
+}
+
+.hero-chip {
+	display: inline-block;
+	border-radius: 9999px;
+	border: 1px solid #fca5a5;
+	background: rgba(255, 255, 255, 0.75);
+	padding: 0.35rem 0.8rem;
+	font-size: 0.8rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: var(--brand-red);
+}
+
+.hero-glow {
+	position: absolute;
+	border-radius: 9999px;
+	filter: blur(28px);
+	opacity: 0.55;
+}
+
+.hero-glow-a {
+	right: -2rem;
+	top: -3rem;
+	height: 11rem;
+	width: 11rem;
+	background: #fca5a5;
+}
+
+.hero-glow-b {
+	bottom: -4rem;
+	left: 35%;
+	height: 12rem;
+	width: 12rem;
+	background: #fde68a;
+}
+
+.graphic-road {
+	position: relative;
+	height: 240px;
+	border-radius: 1rem;
+	background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+	box-shadow: 0 16px 40px rgba(15, 23, 42, 0.35);
+	overflow: hidden;
+}
+
+.hero-visual {
+	position: relative;
+}
+
+.road-lines {
+	position: absolute;
+	inset: 0;
+	background-image: repeating-linear-gradient(
+		to bottom,
+		transparent 0,
+		transparent 26px,
+		#f8fafc 26px,
+		#f8fafc 38px
+	);
+	width: 8px;
+	margin: 0 auto;
+	left: 0;
+	right: 0;
+	opacity: 0.9;
+}
+
+.car-card {
+	position: absolute;
+	border-radius: 0.9rem;
+	padding: 0.7rem 1rem;
+	color: #fff;
+	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
+}
+
+.car-card-red {
+	top: 1rem;
+	right: 1rem;
+	background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+
+.car-card-amber {
+	bottom: 1.1rem;
+	left: 1rem;
+	background: linear-gradient(135deg, #f59e0b, #b45309);
+}
+
+.car-card-slate {
+	top: 48%;
+	left: 52%;
+	transform: translate(-50%, -50%);
+	background: linear-gradient(135deg, #334155, #0f172a);
+}
+
+.car-title {
+	font-size: 0.95rem;
+	font-weight: 800;
+}
+
+.car-sub {
+	font-size: 0.72rem;
+	opacity: 0.9;
+}
+
+.stat-box {
+	border-radius: 0.75rem;
+	border: 1px solid #e2e8f0;
+	background: rgba(255, 255, 255, 0.85);
+	padding: 0.75rem;
+}
+
+.stat-number {
+	font-size: 1.15rem;
+	font-weight: 800;
+	color: var(--brand-slate);
+}
+
+.stat-label {
+	font-size: 0.8rem;
+	color: #64748b;
+}
+
+.feature-tile {
+	border-radius: 1rem;
+	padding: 1rem;
+	border: 1px solid transparent;
+	color: #0f172a;
+}
+
+.feature-tile h3 {
+	margin: 0 0 0.4rem;
+	font-size: 1.2rem;
+}
+
+.feature-tile p {
+	margin: 0;
+	color: #334155;
+}
+
+.features-grid {
+	margin-top: 1rem;
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.75rem;
+}
+
+.home-cta {
+	margin-top: 1.2rem;
+	text-align: center;
+}
+
+.home-cta h2 {
+	margin: 0 0 0.35rem;
+	font-size: clamp(1.4rem, 3vw, 2rem);
+	color: #0f172a;
+}
+
+.home-cta p {
+	margin: 0;
+	color: #475569;
+}
+
+.feature-tile-red {
+	background: linear-gradient(160deg, #fee2e2, #fecaca);
+	border-color: #fca5a5;
+}
+
+.feature-tile-amber {
+	background: linear-gradient(160deg, #fef3c7, #fde68a);
+	border-color: #facc15;
+}
+
+.feature-tile-slate {
+	background: linear-gradient(160deg, #e2e8f0, #cbd5e1);
+	border-color: #94a3b8;
+}
+
+@media (max-width: 767px) {
+	.graphic-road {
+		height: 205px;
+	}
+
+	.car-card {
+		padding: 0.55rem 0.75rem;
+	}
+}
+
+@media (min-width: 960px) {
+	.hero-graphic {
+		padding: 2.5rem;
+	}
+
+	.hero-grid {
+		grid-template-columns: 1.1fr 0.9fr;
+		align-items: center;
+		gap: 2rem;
+	}
+
+	.features-grid {
+		margin-top: 1.5rem;
+		grid-template-columns: repeat(3, 1fr);
+	}
+}

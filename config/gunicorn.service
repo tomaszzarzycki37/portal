@@ -1,0 +1,24 @@
+# Systemd service file for Gunicorn
+# Location: /etc/systemd/system/gunicorn-chinese-cars.service
+
+[Unit]
+Description=Gunicorn application server for Chinese Cars Portal
+After=network.target
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/chinese-cars-portal/backend
+
+Environment="PATH=/var/www/chinese-cars-portal/backend/venv/bin"
+ExecStart=/var/www/chinese-cars-portal/backend/venv/bin/gunicorn \
+    --config /var/www/chinese-cars-portal/config/gunicorn.conf.py \
+    --chdir /var/www/chinese-cars-portal/backend \
+    portal_project.wsgi
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

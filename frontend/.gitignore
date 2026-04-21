@@ -1,0 +1,17 @@
+.gitignore {
+  node_modules/
+  dist/
+  .env
+  .env.local
+  .DS_Store
+  *.log
+  .vscode
+}
+
+module {
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
+  },
+}

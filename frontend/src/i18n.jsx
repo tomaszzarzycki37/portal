@@ -1,0 +1,592 @@
+﻿import { createContext, useContext, useMemo, useState, useEffect } from 'react'
+import api from './services/api'
+
+const baseTranslations = {
+  en: {
+    nav: {
+      brandTitle: 'China Cars',
+      brandIcon: '🚗',
+      brandLogoUrl: '',
+      cars: 'Cars',
+      opinions: 'Opinions',
+      profile: 'Profile',
+      admin: 'Admin',
+      login: 'Login',
+      register: 'Register',
+      logout: 'Logout',
+      roleAdmin: 'Role: Admin',
+      roleUser: 'Role: User',
+      menu: 'Menu',
+      closeMenu: 'Close menu',
+    },
+    home: {
+      chip: 'China Cars',
+      titleA: 'Discover Chinese Cars',
+      titleB: 'with Real Opinions',
+      intro:
+        'Compare brands, browse model specs, and open each car page to read community opinions and comments.',
+      browseCars: 'Browse Cars',
+      readOpinions: 'Open Cars with Opinions',
+      models: 'Models',
+      brands: 'Brands',
+      updates: 'Updates',
+      feature1Title: 'Model Explorer',
+      feature1Text: 'Filter by body type, year, and performance specs.',
+      feature2Title: 'Opinion Engine',
+      feature2Text: 'Read ratings, comments, and verified owner reviews.',
+      feature3Title: 'Admin Control',
+      feature3Text: 'Manage cars, users, opinions, and future modules.',
+      ctaTitle: 'Start Exploring the Fastest Growing Car Market',
+      ctaText: 'Jump into detailed specs and real-world impressions from the community.',
+      car1Sub: 'EV Sedan',
+      car2Sub: 'Compact SUV',
+      car3Sub: 'Premium EV',
+    },
+    footer: {
+      about: 'About Us',
+      aboutText:
+        'Your comprehensive portal for Chinese car brands, reviews, and expert opinions.',
+      quickLinks: 'Quick Links',
+      home: 'Home',
+      cars: 'Cars',
+      contact: 'Contact',
+      email: 'Email: info@chinesecarsportal.com',
+      phone: 'Phone: +1 (555) 123-4567',
+      rights: 'All rights reserved.',
+    },
+    pages: {
+      carsCatalog: 'Cars Catalog',
+      brandCatalogIntro: 'Browse the catalog by brand first, then open the model lineup inside each brand section.',
+      breadcrumbsLabel: 'Breadcrumbs',
+      reviewsLabel: 'reviews',
+      modelsLabel: 'models',
+      loading: 'Loading...',
+      carDetail: 'Car detail page',
+      brandNotFound: 'Brand not found.',
+      carNotFound: 'Car not found.',
+      carOpinions: 'Opinions',
+      specs: 'Specifications',
+      year: 'Year',
+      type: 'Type',
+      engine: 'Engine',
+      horsepower: 'Horsepower',
+      acceleration: 'Acceleration (0-100 km/h)',
+      topSpeed: 'Top speed',
+      fuelConsumption: 'Consumption',
+      price: 'Price range',
+      productionStatus: 'Production status',
+      statusActive: 'Active',
+      statusDiscontinued: 'Discontinued',
+      statusUpcoming: 'Upcoming',
+      sectionPerformance: 'Performance Snapshot',
+      sectionMarket: 'Market & Lifecycle',
+      sectionCommunity: 'Community Snapshot',
+      modelAge: 'Model age',
+      years: 'years',
+      featuredModel: 'Featured model',
+      yes: 'Yes',
+      no: 'No',
+      brandLabel: 'Brand',
+      averageRating: 'Average rating',
+      totalOpinions: 'Total opinions',
+      brandFounded: 'Founded',
+      brandOverview: 'Brand overview',
+      brandLineup: 'Model lineup',
+      brandEditorTitle: 'Brand editor',
+      openBrand: 'Open brand',
+      backToBrands: 'Back to brands',
+      brandWebsite: 'Official website',
+      brandLogoUpload: 'Upload brand logo',
+      brandLogoActions: 'Logo actions',
+      brandLogoClear: 'Clear brand logo',
+      brandLogoUploadError: 'Could not read the selected brand logo file.',
+      brandSave: 'Save brand changes',
+      brandSaved: 'Brand updated successfully.',
+      brandSaveError: 'Could not save brand changes.',
+      noModelsInBrand: 'No models available in this brand yet.',
+      unknownBrand: 'Unknown brand',
+      noOpinions: 'No opinions yet for this car.',
+      opinions: 'Opinions page',
+      login: 'Login page',
+      register: 'Register page',
+      profile: 'Profile page',
+      admin: 'Admin dashboard',
+    },
+    auth: {
+      loginTitle: 'Login',
+      username: 'Username',
+      password: 'Password',
+      loginButton: 'Sign in',
+      invalidCreds: 'Invalid username or password.',
+    },
+    profile: {
+      myProfile: 'My Profile',
+      avatar: 'Profile Photo',
+      photoHint: 'JPG, PNG up to 5MB',
+      personalInfo: 'Personal Information',
+      username: 'Username',
+      usernameHint: 'Username cannot be changed',
+      email: 'Email',
+      firstName: 'First Name',
+      lastName: 'Last Name',
+      contactInfo: 'Contact Information',
+      phone: 'Phone',
+      location: 'Location',
+      bio: 'About You',
+      bioLabel: 'Bio',
+      bioPlaceholder: 'Tell us about yourself, your interests in cars, or your opinion...',
+      saveChanges: 'Save Changes',
+      savedSuccess: 'Profile updated successfully!',
+      saveError: 'Failed to save profile',
+      loadError: 'Failed to load profile',
+      notLoggedIn: 'Please log in to view your profile',
+    },
+
+    adminPanel: {
+      title: 'Admin Dashboard',
+      subtitle: 'Edit selected car data and upload its main image.',
+      ownerLabel: 'Dashboard owner',
+      densityLabel: 'Density',
+      densityCompact: 'Compact',
+      densityComfortable: 'Comfortable',
+      inventory: 'Inventory control',
+      editor: 'Vehicle editor',
+      statsTotalCars: 'Total cars',
+      statsFeaturedCars: 'Featured cars',
+      statsAvgRating: 'Average catalog rating',
+      searchCars: 'Search cars',
+      searchPlaceholder: 'Type brand or model...',
+      featuredOnly: 'Show featured only',
+      quickSelect: 'Quick select',
+      selectCar: 'Select car',
+      description: 'Description',
+      descriptionEn: 'Description (EN)',
+      descriptionPl: 'Description (PL)',
+      priceRange: 'Price range',
+      priceMinK: 'Minimum price (k)',
+      priceMaxK: 'Maximum price (k)',
+      baseCurrency: 'Base currency',
+      targetCurrencies: 'Display currencies',
+      pricePreview: 'Generated price range',
+      currencyTooltipAria: 'Currency conversion info',
+      currencyTooltip:
+        'Conversion logic: min/max are entered in base currency, then converted through USD using fixed admin rates (USD=1.00, EUR=1.09, PLN=0.25, GBP=1.27).',
+      currencyRequired: 'Select at least one currency.',
+      priceInvalid: 'Enter valid min/max prices (k) and currency setup.',
+      featured: 'Featured',
+      image: 'Main image',
+      brandLogo: 'Brand logo',
+      imageEditorTitle: 'Image editor',
+      editImage: 'Edit image',
+      hideImageEditor: 'Close image editor',
+      save: 'Save changes',
+      reset: 'Reset changes',
+      saved: 'Changes saved successfully.',
+      loadError: 'Could not load admin data.',
+      noAccess: 'Admin access required.',
+      textManagerTitle: 'Text Content Manager',
+      textManagerSubtitle: 'Edit any UI text key, including homepage content.',
+      headerSettingsTitle: 'Header Settings',
+      headerSettingsSubtitle: 'Edit the portal name, icon, and logo used in the top navigation.',
+      headerTitle: 'Portal name',
+      headerIcon: 'Portal icon',
+      headerLogoUrl: 'Portal logo URL',
+      headerLogoHint: 'Leave empty to use the icon. Relative paths like /media/... are supported.',
+      headerLogoFile: 'Upload portal logo',
+      headerLogoActions: 'Logo actions',
+      headerLogoClear: 'Clear logo',
+      headerLogoUploadError: 'Could not read the selected logo file.',
+      headerPreview: 'Header preview',
+      headerSave: 'Save header settings',
+      headerSaved: 'Header settings saved.',
+      headerSaveError: 'Could not save header settings.',
+      footerSettingsTitle: 'Footer Settings',
+      footerSaved: 'Footer settings saved.',
+      footerSaveError: 'Could not save footer settings.',
+      footerSave: 'Save footer settings',
+      createBrandTitle: 'Add brand',
+      createBrandSubtitle: 'Create a new car brand that can contain multiple models and versions.',
+      brandName: 'Brand name',
+      brandSlug: 'Brand slug',
+      createBrand: 'Create brand',
+      createBrandValidation: 'Brand name and slug are required, and founded year must be a valid number.',
+      brandCreated: 'Brand created successfully.',
+      brandCreateError: 'Could not create brand.',
+      createModelTitle: 'Add model or version',
+      createModelSubtitle: 'Create a new model/version and assign it to a brand.',
+      chooseBrand: 'Brand',
+      modelSlug: 'Model slug',
+      createModel: 'Create model/version',
+      createModelValidation: 'Brand, model name, slug, year, and description are required.',
+      modelCreated: 'Model/version created successfully.',
+      modelCreateError: 'Could not create model/version.',
+      textLanguage: 'Text language',
+      textKey: 'Text key',
+      textBaseValue: 'Current base value',
+      textValue: 'Override value',
+      textSave: 'Save text override',
+      textSaved: 'Text override saved.',
+      textSaveError: 'Could not save text override.',
+    },
+    adminInline: {
+      quickEdit: 'Admin quick edit',
+      detailEditor: 'Inline Admin Editor',
+      showSettings: 'Settings',
+      hideSettings: 'Close settings',
+      modelName: 'Model name',
+      sectionBasics: 'Basic details',
+      priceRange: 'Price range',
+      featured: 'Featured',
+      save: 'Save',
+      loadDetailError: 'Could not load full car details.',
+      yearRequired: 'Year is required and must be valid.',
+      saved: 'Saved successfully.',
+      saveError: 'Could not save changes.',
+    },
+  },
+  pl: {
+    nav: {
+      brandTitle: 'China Cars',
+      brandIcon: '🚗',
+      brandLogoUrl: '',
+      cars: 'Samochody',
+      opinions: 'Opinie',
+      profile: 'Profil',
+      admin: 'Administrator',
+      login: 'Logowanie',
+      register: 'Rejestracja',
+      logout: 'Wyloguj',
+      roleAdmin: 'Rola: Admin',
+      roleUser: 'Rola: Użytkownik',
+      menu: 'Menu',
+      closeMenu: 'Zamknij menu',
+    },
+    home: {
+      chip: 'China Cars',
+      titleA: 'Odkrywaj chińskie samochody',
+      titleB: 'z prawdziwymi opiniami',
+      intro:
+        'Porównuj marki, sprawdzaj specyfikacje modeli i otwieraj strony samochodów, aby czytać opinie oraz komentarze społeczności.',
+      browseCars: 'Przeglądaj samochody',
+      readOpinions: 'Przejdź do aut z opiniami',
+      models: 'Modele',
+      brands: 'Marki',
+      updates: 'Aktualności',
+      feature1Title: 'Wyszukiwarka modeli',
+      feature1Text: 'Filtruj po nadwoziu, roczniku i parametrach.',
+      feature2Title: 'Silnik opinii',
+      feature2Text: 'Czytaj oceny, komentarze i opinie zweryfikowanych właścicieli.',
+      feature3Title: 'Panel administracyjny',
+      feature3Text: 'Zarządzaj samochodami, użytkownikami, opiniami i nowymi modułami.',
+      ctaTitle: 'Poznaj najszybciej rosnący rynek motoryzacyjny',
+      ctaText: 'Wejdź w szczegółowe dane i prawdziwe wrażenia społeczności.',
+      car1Sub: 'Sedan EV',
+      car2Sub: 'Kompaktowy SUV',
+      car3Sub: 'EV Premium',
+    },
+    footer: {
+      about: 'O nas',
+      aboutText:
+        'Kompleksowy portal o chińskich markach samochodowych, recenzjach i opiniach ekspertów.',
+      quickLinks: 'Szybkie linki',
+      home: 'Start',
+      cars: 'Samochody',
+      contact: 'Kontakt',
+      email: 'E-mail: info@chinesecarsportal.com',
+      phone: 'Telefon: +1 (555) 123-4567',
+      rights: 'Wszelkie prawa zastrzeżone.',
+    },
+    pages: {
+      carsCatalog: 'Katalog samochodów',
+      brandCatalogIntro: 'Przeglądaj katalog najpierw według marki, a dopiero potem otwieraj modele w obrębie danej sekcji.',
+      breadcrumbsLabel: 'Okruszki',
+      reviewsLabel: 'opinii',
+      modelsLabel: 'modeli',
+      loading: 'Ładowanie...',
+      carDetail: 'Strona szczegółów samochodu',
+      brandNotFound: 'Nie znaleziono marki.',
+      carNotFound: 'Nie znaleziono samochodu.',
+      carOpinions: 'Opinie',
+      specs: 'Specyfikacja',
+      year: 'Rok',
+      type: 'Typ',
+      engine: 'Silnik',
+      horsepower: 'Moc',
+      acceleration: 'Przyspieszenie (0-100 km/h)',
+      topSpeed: 'Prędkość maksymalna',
+      fuelConsumption: 'Zużycie',
+      price: 'Zakres cenowy',
+      productionStatus: 'Status produkcji',
+      statusActive: 'Aktywny',
+      statusDiscontinued: 'Zakończony',
+      statusUpcoming: 'Nadchodzący',
+      sectionPerformance: 'Parametry osiągów',
+      sectionMarket: 'Rynek i cykl życia',
+      sectionCommunity: 'Podsumowanie społeczności',
+      modelAge: 'Wiek modelu',
+      years: 'lat',
+      featuredModel: 'Model wyróżniony',
+      yes: 'Tak',
+      no: 'Nie',
+      brandLabel: 'Marka',
+      averageRating: 'Średnia ocena',
+      totalOpinions: 'Liczba opinii',
+      brandFounded: 'Założono',
+      brandOverview: 'Przegląd marki',
+      brandLineup: 'Gama modeli',
+      brandEditorTitle: 'Edytor marki',
+      openBrand: 'Otwórz markę',
+      backToBrands: 'Wróć do marek',
+      brandWebsite: 'Oficjalna strona',
+      brandLogoUpload: 'Wgraj logo marki',
+      brandLogoActions: 'Akcje logo',
+      brandLogoClear: 'Wyczyść logo marki',
+      brandLogoUploadError: 'Nie udało się odczytać wybranego pliku logo marki.',
+      brandSave: 'Zapisz zmiany marki',
+      brandSaved: 'Marka została zaktualizowana.',
+      brandSaveError: 'Nie udało się zapisać zmian marki.',
+      noModelsInBrand: 'Ta marka nie ma jeszcze modeli w katalogu.',
+      unknownBrand: 'Nieznana marka',
+      noOpinions: 'Brak opinii dla tego samochodu.',
+      opinions: 'Strona opinii',
+      login: 'Strona logowania',
+      register: 'Strona rejestracji',
+      profile: 'Strona profilu',
+      admin: 'Panel administratora',
+    },
+    auth: {
+      loginTitle: 'Logowanie',
+      username: 'Nazwa użytkownika',
+      password: 'Hasło',
+      loginButton: 'Zaloguj',
+      invalidCreds: 'Nieprawidłowa nazwa użytkownika lub hasło.',
+    },
+    profile: {
+      myProfile: 'Mój profil',
+      avatar: 'Zdjęcie profilowe',
+      photoHint: 'JPG, PNG do 5MB',
+      personalInfo: 'Informacje osobiste',
+      username: 'Nazwa użytkownika',
+      usernameHint: 'Nie można zmienić nazwy użytkownika',
+      email: 'E-mail',
+      firstName: 'Imię',
+      lastName: 'Nazwisko',
+      contactInfo: 'Informacje kontaktowe',
+      phone: 'Telefon',
+      location: 'Lokalizacja',
+      bio: 'O tobie',
+      bioLabel: 'Biografia',
+      bioPlaceholder: 'Opowiedz nam o sobie, twoich zainteresowaniach samochodami lub opinii...',
+      saveChanges: 'Zapisz zmiany',
+      savedSuccess: 'Profil został zaktualizowany!',
+      saveError: 'Nie udało się zapisać profilu',
+      loadError: 'Nie udało się załadować profilu',
+      notLoggedIn: 'Zaloguj się, aby wyświetlić swój profil',
+    },
+
+    adminPanel: {
+      title: 'Panel administratora',
+      subtitle: 'Edytuj dane wybranego samochodu i wgraj jego główne zdjęcie.',
+      ownerLabel: 'Właściciel panelu',
+      densityLabel: 'Gęstość',
+      densityCompact: 'Zwarte',
+      densityComfortable: 'Wygodne',
+      inventory: 'Kontrola katalogu',
+      editor: 'Edytor pojazdu',
+      statsTotalCars: 'Liczba samochodów',
+      statsFeaturedCars: 'Samochody wyróżnione',
+      statsAvgRating: 'Średnia ocena katalogu',
+      searchCars: 'Szukaj samochodów',
+      searchPlaceholder: 'Wpisz markę lub model...',
+      featuredOnly: 'Pokaż tylko wyróżnione',
+      quickSelect: 'Szybki wybór',
+      selectCar: 'Wybierz samochód',
+      description: 'Opis',
+      descriptionEn: 'Opis (EN)',
+      descriptionPl: 'Opis (PL)',
+      priceRange: 'Zakres cenowy',
+      priceMinK: 'Cena minimalna (k)',
+      priceMaxK: 'Cena maksymalna (k)',
+      baseCurrency: 'Waluta bazowa',
+      targetCurrencies: 'Waluty wyświetlania',
+      pricePreview: 'Wygenerowany zakres cenowy',
+      currencyTooltipAria: 'Informacja o przeliczaniu walut',
+      currencyTooltip:
+        'Logika przeliczeń: min/max podajesz w walucie bazowej, a następnie zakres jest przeliczany przez USD według stałych kursów panelu (USD=1.00, EUR=1.09, PLN=0.25, GBP=1.27).',
+      currencyRequired: 'Wybierz co najmniej jedną walutę.',
+      priceInvalid: 'Podaj poprawny zakres cen (k) i ustawienia walut.',
+      featured: 'Wyróżniony',
+      image: 'Główne zdjęcie',
+      brandLogo: 'Logo marki',
+      imageEditorTitle: 'Edytor zdjęcia',
+      editImage: 'Edytuj zdjęcie',
+      hideImageEditor: 'Zamknij edytor zdjęcia',
+      save: 'Zapisz zmiany',
+      reset: 'Przywróć zmiany',
+      saved: 'Zmiany zostały zapisane.',
+      loadError: 'Nie udało się wczytać danych administratora.',
+      noAccess: 'Wymagany dostęp administratora.',
+      textManagerTitle: 'Menedżer treści tekstowych',
+      textManagerSubtitle: 'Edytuj dowolny klucz tekstu UI, także na stronie głównej.',
+      headerSettingsTitle: 'Ustawienia nagłówka',
+      headerSettingsSubtitle: 'Edytuj nazwę portalu, ikonę i logo używane w górnej nawigacji.',
+      headerTitle: 'Nazwa portalu',
+      headerIcon: 'Ikona portalu',
+      headerLogoUrl: 'URL logo portalu',
+      headerLogoHint: 'Zostaw puste, aby użyć ikony. Obsługiwane są ścieżki względne typu /media/...',
+      headerLogoFile: 'Wgraj logo portalu',
+      headerLogoActions: 'Akcje logo',
+      headerLogoClear: 'Wyczyść logo',
+      headerLogoUploadError: 'Nie udało się odczytać wybranego pliku logo.',
+      headerPreview: 'Podgląd nagłówka',
+      headerSave: 'Zapisz ustawienia nagłówka',
+      headerSaved: 'Ustawienia nagłówka zapisane.',
+      headerSaveError: 'Nie udało się zapisać ustawień nagłówka.',
+      footerSettingsTitle: 'Ustawienia stopki',
+      footerSaved: 'Ustawienia stopki zapisane.',
+      footerSaveError: 'Nie udało się zapisać ustawień stopki.',
+      footerSave: 'Zapisz ustawienia stopki',
+      createBrandTitle: 'Dodaj markę',
+      createBrandSubtitle: 'Utwórz nową markę samochodów, do której można przypisywać modele i wersje.',
+      brandName: 'Nazwa marki',
+      brandSlug: 'Slug marki',
+      createBrand: 'Utwórz markę',
+      createBrandValidation: 'Nazwa i slug marki są wymagane, a rok założenia musi być poprawną liczbą.',
+      brandCreated: 'Marka została utworzona.',
+      brandCreateError: 'Nie udało się utworzyć marki.',
+      createModelTitle: 'Dodaj model lub wersję',
+      createModelSubtitle: 'Utwórz nowy model/wersję i przypisz go do wybranej marki.',
+      chooseBrand: 'Marka',
+      modelSlug: 'Slug modelu',
+      createModel: 'Utwórz model/wersję',
+      createModelValidation: 'Wymagane są: marka, nazwa modelu, slug, rok i opis.',
+      modelCreated: 'Model/wersja zostały utworzone.',
+      modelCreateError: 'Nie udało się utworzyć modelu/wersji.',
+      textLanguage: 'Język tekstu',
+      textKey: 'Klucz tekstu',
+      textBaseValue: 'Aktualna wartość bazowa',
+      textValue: 'Wartość nadpisania',
+      textSave: 'Zapisz nadpisanie tekstu',
+      textSaved: 'Nadpisanie tekstu zapisane.',
+      textSaveError: 'Nie udało się zapisać nadpisania tekstu.',
+    },
+    adminInline: {
+      quickEdit: 'Szybka edycja admina',
+      detailEditor: 'Wbudowany edytor administratora',
+      showSettings: 'Ustawienia',
+      hideSettings: 'Zamknij ustawienia',
+      modelName: 'Nazwa modelu',
+      sectionBasics: 'Podstawowe dane',
+      priceRange: 'Zakres cenowy',
+      featured: 'Wyróżniony',
+      save: 'Zapisz',
+      loadDetailError: 'Nie udało się wczytać pełnych danych samochodu.',
+      yearRequired: 'Rok jest wymagany i musi być poprawny.',
+      saved: 'Zapisano pomyślnie.',
+      saveError: 'Nie udało się zapisać zmian.',
+    },
+  },
+}
+
+function flattenTranslationKeys(obj, prefix = '') {
+  return Object.entries(obj).flatMap(([key, value]) => {
+    const nextPrefix = prefix ? `${prefix}.${key}` : key
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return flattenTranslationKeys(value, nextPrefix)
+    }
+    return [nextPrefix]
+  })
+}
+
+function setByPath(target, path, value) {
+  const parts = path.split('.')
+  let current = target
+
+  for (let i = 0; i < parts.length - 1; i += 1) {
+    const part = parts[i]
+    if (!(part in current) || typeof current[part] !== 'object' || current[part] === null) {
+      current[part] = {}
+    }
+    current = current[part]
+  }
+
+  current[parts[parts.length - 1]] = value
+}
+
+function deepClone(value) {
+  if (value === null || typeof value !== 'object') {
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => deepClone(item))
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, deepClone(item)]),
+  )
+}
+
+export function getTranslationKeys(lang = 'en') {
+  return flattenTranslationKeys(baseTranslations[lang] || {})
+}
+
+export function getBaseTranslationValue(lang, keyPath) {
+  return keyPath.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), baseTranslations[lang])
+}
+
+const LanguageContext = createContext(null)
+
+export function LanguageProvider({ children }) {
+  const [lang, setLang] = useState(() => localStorage.getItem('portal_lang') || 'en')
+  const [overrides, setOverrides] = useState([])
+
+  useEffect(() => {
+    localStorage.setItem('portal_lang', lang)
+    document.documentElement.lang = lang
+  }, [lang])
+
+  useEffect(() => {
+    const loadOverrides = async () => {
+      try {
+        const response = await api.get(`/common/content/?lang=${lang}`)
+        setOverrides(response.data.results || response.data || [])
+      } catch {
+        setOverrides([])
+      }
+    }
+
+    loadOverrides()
+  }, [lang])
+
+  const value = useMemo(
+    () => {
+      const mergedTranslations = deepClone(baseTranslations[lang])
+      overrides.forEach((item) => {
+        if (item?.key && typeof item?.value === 'string') {
+          setByPath(mergedTranslations, item.key, item.value)
+        }
+      })
+
+      return {
+        lang,
+        setLang,
+        t: mergedTranslations,
+      }
+    },
+    [lang, overrides],
+  )
+
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
+}
+
+export function useTranslation() {
+  const ctx = useContext(LanguageContext)
+  if (!ctx) {
+    throw new Error('useTranslation must be used within LanguageProvider')
+  }
+  return ctx
+}
+
+
+
