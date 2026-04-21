@@ -99,8 +99,8 @@ export default function AdminDashboard() {
   const [footerEmail, setFooterEmail] = useState('')
   const [footerPhone, setFooterPhone] = useState('')
   const [footerRecordIds, setFooterRecordIds] = useState({
-    email: null,
-    phone: null,
+    en: { email: null, phone: null },
+    pl: { email: null, phone: null },
   })
   const [footerSaving, setFooterSaving] = useState(false)
   const [footerMessage, setFooterMessage] = useState('')
@@ -655,20 +655,44 @@ export default function AdminDashboard() {
       try {
         setFooterMessage('')
         setFooterError('')
-        const response = await api.get(`/common/content/?lang=en`)
-        const list = response.data.results || response.data || []
-        const emailRecord = list.find((item) => item.key === 'footer.email') || null
-        const phoneRecord = list.find((item) => item.key === 'footer.phone') || null
+        const [enResponse, plResponse] = await Promise.all([
+          api.get('/common/content/?lang=en'),
+          api.get('/common/content/?lang=pl'),
+        ])
+
+        const enList = enResponse.data.results || enResponse.data || []
+        const plList = plResponse.data.results || plResponse.data || []
+        const enEmailRecord = enList.find((item) => item.key === 'footer.email') || null
+        const enPhoneRecord = enList.find((item) => item.key === 'footer.phone') || null
+        const plEmailRecord = plList.find((item) => item.key === 'footer.email') || null
+        const plPhoneRecord = plList.find((item) => item.key === 'footer.phone') || null
+
         const nextValues = {
-          email: String(emailRecord?.value ?? getBaseTranslationValue('en', 'footer.email') ?? ''),
-          phone: String(phoneRecord?.value ?? getBaseTranslationValue('en', 'footer.phone') ?? ''),
+          email: String(
+            enEmailRecord?.value
+            ?? plEmailRecord?.value
+            ?? getBaseTranslationValue('en', 'footer.email')
+            ?? '',
+          ),
+          phone: String(
+            enPhoneRecord?.value
+            ?? plPhoneRecord?.value
+            ?? getBaseTranslationValue('en', 'footer.phone')
+            ?? '',
+          ),
         }
 
         setFooterEmail(nextValues.email)
         setFooterPhone(nextValues.phone)
         setFooterRecordIds({
-          email: emailRecord?.id ?? null,
-          phone: phoneRecord?.id ?? null,
+          en: {
+            email: enEmailRecord?.id ?? null,
+            phone: enPhoneRecord?.id ?? null,
+          },
+          pl: {
+            email: plEmailRecord?.id ?? null,
+            phone: plPhoneRecord?.id ?? null,
+          },
         })
       } catch {
         const fallbackValues = {
@@ -677,7 +701,10 @@ export default function AdminDashboard() {
         }
         setFooterEmail(fallbackValues.email)
         setFooterPhone(fallbackValues.phone)
-        setFooterRecordIds({ email: null, phone: null })
+        setFooterRecordIds({
+          en: { email: null, phone: null },
+          pl: { email: null, phone: null },
+        })
       }
     }
 
@@ -786,22 +813,37 @@ export default function AdminDashboard() {
       setFooterMessage('')
       setFooterError('')
 
-      const [emailId, phoneId] = await Promise.all([
+      const [enEmailId, enPhoneId, plEmailId, plPhoneId] = await Promise.all([
         saveContentOverride({
-          recordId: footerRecordIds.email,
+          recordId: footerRecordIds.en.email,
           key: 'footer.email',
           value: footerEmail,
           language: 'en',
         }),
         saveContentOverride({
-          recordId: footerRecordIds.phone,
+          recordId: footerRecordIds.en.phone,
           key: 'footer.phone',
           value: footerPhone,
           language: 'en',
         }),
+        saveContentOverride({
+          recordId: footerRecordIds.pl.email,
+          key: 'footer.email',
+          value: footerEmail,
+          language: 'pl',
+        }),
+        saveContentOverride({
+          recordId: footerRecordIds.pl.phone,
+          key: 'footer.phone',
+          value: footerPhone,
+          language: 'pl',
+        }),
       ])
 
-      setFooterRecordIds({ email: emailId, phone: phoneId })
+      setFooterRecordIds({
+        en: { email: enEmailId, phone: enPhoneId },
+        pl: { email: plEmailId, phone: plPhoneId },
+      })
       setFooterMessage(t.adminPanel.footerSaved)
     } catch (err) {
       console.error('Footer save failed:', err)
