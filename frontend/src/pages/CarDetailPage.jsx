@@ -23,6 +23,12 @@ export default function CarDetailPage() {
   const [adminProductionStatus, setAdminProductionStatus] = useState('active')
   const [adminFeatured, setAdminFeatured] = useState(false)
   const [adminImage, setAdminImage] = useState(null)
+  const [adminOpinionTitle, setAdminOpinionTitle] = useState('')
+  const [adminOpinionContent, setAdminOpinionContent] = useState('')
+  const [adminOpinionRating, setAdminOpinionRating] = useState(5)
+  const [adminOpinionSaving, setAdminOpinionSaving] = useState(false)
+  const [adminOpinionMessage, setAdminOpinionMessage] = useState('')
+  const [adminOpinionError, setAdminOpinionError] = useState('')
   const [adminSaving, setAdminSaving] = useState(false)
   const [adminMessage, setAdminMessage] = useState('')
   const [adminError, setAdminError] = useState('')
@@ -116,6 +122,50 @@ export default function CarDetailPage() {
       setAdminError(t.adminInline.saveError)
     } finally {
       setAdminSaving(false)
+    }
+  }
+
+  const handleAdminOpinionCreate = async (e) => {
+    e.preventDefault()
+    if (!isAdmin || !car) return
+
+    const trimmedTitle = String(adminOpinionTitle || '').trim()
+    const trimmedContent = String(adminOpinionContent || '').trim()
+    const ratingValue = Number.parseInt(String(adminOpinionRating || '').trim(), 10)
+
+    if (!trimmedTitle || !trimmedContent || Number.isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+      setAdminOpinionMessage('')
+      setAdminOpinionError(t.pages.opinionCreateValidation)
+      return
+    }
+
+    try {
+      setAdminOpinionSaving(true)
+      setAdminOpinionMessage('')
+      setAdminOpinionError('')
+
+      await api.post('/opinions/', {
+        car_model: car.id,
+        title: trimmedTitle,
+        content: trimmedContent,
+        rating: ratingValue,
+      })
+
+      const [carResponse, opinionsResponse] = await Promise.all([
+        api.get(`/cars/${id}/`),
+        api.get(`/opinions/?car_model=${id}&ordering=-created_at`),
+      ])
+      setCar(carResponse.data)
+      setOpinions(opinionsResponse.data.results || opinionsResponse.data)
+
+      setAdminOpinionTitle('')
+      setAdminOpinionContent('')
+      setAdminOpinionRating(5)
+      setAdminOpinionMessage(t.pages.opinionCreated)
+    } catch {
+      setAdminOpinionError(t.pages.opinionCreateError)
+    } finally {
+      setAdminOpinionSaving(false)
     }
   }
 
@@ -246,6 +296,51 @@ export default function CarDetailPage() {
 
       <section className="detail-opinions">
         <h2 className="detail-section-title">{t.pages.carOpinions}</h2>
+
+        {isAdmin && (
+          <form className="admin-form-card" onSubmit={handleAdminOpinionCreate}>
+            <h3 className="detail-section-title">{t.pages.addOpinionTitle}</h3>
+
+            <label className="form-label" htmlFor="admin-opinion-title">{t.pages.opinionTitle}</label>
+            <input
+              id="admin-opinion-title"
+              className="form-input"
+              value={adminOpinionTitle}
+              onChange={(e) => setAdminOpinionTitle(e.target.value)}
+            />
+
+            <label className="form-label" htmlFor="admin-opinion-content">{t.adminPanel.description}</label>
+            <textarea
+              id="admin-opinion-content"
+              className="form-input form-textarea"
+              rows={4}
+              value={adminOpinionContent}
+              onChange={(e) => setAdminOpinionContent(e.target.value)}
+            />
+
+            <label className="form-label" htmlFor="admin-opinion-rating">{t.pages.averageRating}</label>
+            <select
+              id="admin-opinion-rating"
+              className="form-input"
+              value={adminOpinionRating}
+              onChange={(e) => setAdminOpinionRating(e.target.value)}
+            >
+              <option value={5}>5</option>
+              <option value={4}>4</option>
+              <option value={3}>3</option>
+              <option value={2}>2</option>
+              <option value={1}>1</option>
+            </select>
+
+            {adminOpinionMessage && <p className="form-success">{adminOpinionMessage}</p>}
+            {adminOpinionError && <p className="form-error">{adminOpinionError}</p>}
+
+            <button type="submit" className="btn btn-primary" disabled={adminOpinionSaving}>
+              {adminOpinionSaving ? t.pages.loading : t.pages.addOpinionSubmit}
+            </button>
+          </form>
+        )}
+
         {opinions.length === 0 ? (
           <div className="page-card">{t.pages.noOpinions}</div>
         ) : (
