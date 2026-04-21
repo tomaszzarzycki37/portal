@@ -3,6 +3,20 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const API_ORIGIN = import.meta.env.VITE_API_URL
+  ? API_BASE_URL.replace(/\/api\/?$/, '')
+  : import.meta.env.DEV
+    ? 'http://localhost:8000'
+    : ''
+
+function resolveMediaUrl(url) {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/')) return `${API_ORIGIN}${url}`
+  return `${API_ORIGIN}/${url}`
+}
+
 export default function HomePage() {
   const { t } = useTranslation()
   const [cars, setCars] = useState([])
@@ -42,6 +56,11 @@ export default function HomePage() {
       return true
     })
   }, [cars, searchTerm, engineSearch, vehicleTypeFilter, statusFilter])
+
+  const heroImageUrl = useMemo(() => {
+    const sourceCar = filteredCars.find((car) => car.image) || cars.find((car) => car.image)
+    return resolveMediaUrl(sourceCar?.image || '')
+  }, [cars, filteredCars])
 
   return (
     <div className="home-wrap">
@@ -113,11 +132,15 @@ export default function HomePage() {
           </div>
 
           <div className="home-hero-search-image">
-            <img 
-              src="https://images.unsplash.com/photo-1605559424843-9e4c3ca856d1?w=1000&q=80" 
-              alt="Car"
-              onError={(e) => e.target.style.display = 'none'}
-            />
+            {heroImageUrl ? (
+              <img
+                src={heroImageUrl}
+                alt="Car"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                }}
+              />
+            ) : null}
           </div>
         </div>
       </section>
