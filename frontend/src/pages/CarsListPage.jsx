@@ -8,7 +8,7 @@ export default function CarsListPage() {
   const [brands, setBrands] = useState([])
   const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(true)
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
 
   useEffect(() => {
     fetchCatalog()
@@ -44,6 +44,9 @@ export default function CarsListPage() {
           {brands.map((brand) => {
             const brandLogo = getBrandLogoOrPlaceholder(brand.logo || '', brand.name)
             const modelCount = Number.isFinite(Number(brand.model_count)) ? Number(brand.model_count) : 0
+            const brandDescription = lang === 'pl'
+              ? (brand.description_pl || brand.description_en || brand.description)
+              : (brand.description_en || brand.description)
 
             return (
               <section key={brand.slug || brand.name} className="brand-catalog-card">
@@ -56,8 +59,8 @@ export default function CarsListPage() {
                         <h2 className="brand-catalog-title">{brand.name}</h2>
                         <span className="brand-catalog-badge">{modelCount} {t.pages.modelsLabel}</span>
                       </div>
-                      {brand.description && (
-                        <p className="brand-catalog-description">{brand.description}</p>
+                      {brandDescription && (
+                        <p className="brand-catalog-description">{brandDescription}</p>
                       )}
                       <div className="brand-catalog-meta-row">
                         {brand.founded_year && (
