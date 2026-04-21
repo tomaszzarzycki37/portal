@@ -3,8 +3,12 @@ import { useState } from 'react'
 import { useTranslation } from '../i18n'
 import { isAdminUser } from '../utils/auth'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
-const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '')
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const API_ORIGIN = import.meta.env.VITE_API_URL
+  ? API_BASE_URL.replace(/\/api\/?$/, '')
+  : import.meta.env.DEV
+    ? 'http://localhost:8000'
+    : ''
 
 function resolveBrandLogoSrc(url) {
   if (!url) return ''
