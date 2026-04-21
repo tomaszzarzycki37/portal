@@ -211,14 +211,17 @@
 	grid-template-columns: 1fr;
 	gap: 0;
 	min-height: 450px;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
 }
 
 .home-hero-search-filters {
 	position: relative;
 	z-index: 10;
 	padding: 2rem 1.5rem;
-	background: #ffffff;
+	display: flex;
+	align-items: center;
 }
 
 .home-hero-search-card {
@@ -325,24 +328,20 @@
 
 @media (min-width: 768px) {
 	.home-hero-search-container {
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: 1fr;
 		align-items: stretch;
 	}
 
 	.home-hero-search-filters {
 		padding: 2.5rem 2rem;
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 		display: flex;
 		align-items: center;
-		justify-content: center;
+		justify-content: flex-start;
 	}
 
 	.home-hero-search-card {
-		max-width: 100%;
-	}
-
-	.home-hero-search-image {
-		min-height: 450px;
+		max-width: 360px;
+		margin-left: 1.5rem;
 	}
 }
 

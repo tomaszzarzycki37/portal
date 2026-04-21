@@ -17,6 +17,8 @@ function resolveMediaUrl(url) {
   return `${API_ORIGIN}/${url}`
 }
 
+const FALLBACK_HERO_IMAGE = 'https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&w=1800&q=80'
+
 export default function HomePage() {
   const { t } = useTranslation()
   const [cars, setCars] = useState([])
@@ -62,10 +64,17 @@ export default function HomePage() {
     return resolveMediaUrl(sourceCar?.image || '')
   }, [cars, filteredCars])
 
+  const heroBackgroundImage = heroImageUrl || FALLBACK_HERO_IMAGE
+
   return (
     <div className="home-wrap">
       <section className="home-hero-search">
-        <div className="home-hero-search-container">
+        <div
+          className="home-hero-search-container"
+          style={{
+            backgroundImage: `linear-gradient(110deg, rgba(35, 54, 116, 0.78) 0%, rgba(73, 39, 132, 0.55) 45%, rgba(17, 24, 39, 0.35) 100%), url('${heroBackgroundImage}')`,
+          }}
+        >
           <div className="home-hero-search-filters">
             <div className="home-hero-search-card">
               <h2>{t.pages.modelSearchTitle}</h2>
@@ -129,18 +138,6 @@ export default function HomePage() {
                 Sprawdź {filteredCars.length} aut →
               </Link>
             </div>
-          </div>
-
-          <div className="home-hero-search-image">
-            {heroImageUrl ? (
-              <img
-                src={heroImageUrl}
-                alt="Car"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none'
-                }}
-              />
-            ) : null}
           </div>
         </div>
       </section>
