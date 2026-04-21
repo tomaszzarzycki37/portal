@@ -3,20 +3,6 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
-const API_ORIGIN = import.meta.env.VITE_API_URL
-  ? API_BASE_URL.replace(/\/api\/?$/, '')
-  : import.meta.env.DEV
-    ? 'http://localhost:8000'
-    : ''
-
-function resolveMediaUrl(url) {
-  if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://')) return url
-  if (url.startsWith('/')) return `${API_ORIGIN}${url}`
-  return `${API_ORIGIN}/${url}`
-}
-
 const FALLBACK_HERO_IMAGE = 'https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&w=1800&q=80'
 
 export default function HomePage() {
@@ -59,12 +45,7 @@ export default function HomePage() {
     })
   }, [cars, searchTerm, engineSearch, vehicleTypeFilter, statusFilter])
 
-  const heroImageUrl = useMemo(() => {
-    const sourceCar = filteredCars.find((car) => car.image) || cars.find((car) => car.image)
-    return resolveMediaUrl(sourceCar?.image || '')
-  }, [cars, filteredCars])
-
-  const heroBackgroundImage = heroImageUrl || FALLBACK_HERO_IMAGE
+  const heroBackgroundImage = FALLBACK_HERO_IMAGE
 
   return (
     <div className="home-wrap">
