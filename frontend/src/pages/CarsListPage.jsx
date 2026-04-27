@@ -1,13 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
 import { useTranslation } from '../i18n'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 
+function detectDriveType(engineType) {
+  const text = String(engineType || '').toLowerCase()
+  if (text.includes('awd') || text.includes('4x4') || text.includes('4wd')) return 'awd'
+  if (text.includes('fwd')) return 'fwd'
+  if (text.includes('rwd')) return 'rwd'
+  return 'other'
+}
+
 export default function CarsListPage() {
   const [brands, setBrands] = useState([])
   const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [engineSearch, setEngineSearch] = useState('')
+  const [vehicleTypeFilter, setVehicleTypeFilter] = useState('all')
+  const [productionStatusFilter, setProductionStatusFilter] = useState('all')
+  const [driveTypeFilter, setDriveTypeFilter] = useState('all')
   const { t, lang } = useTranslation()
 
   useEffect(() => {
@@ -32,6 +45,54 @@ export default function CarsListPage() {
     }
   }
 
+  const sortedCars = useMemo(
+    () => [...cars].sort((a, b) => `${a.brand_name} ${a.name}`.localeCompare(`${b.brand_name} ${b.name}`)),
+    [cars],
+  )
+
+  const vehicleTypes = useMemo(() => {
+    const values = new Set(cars.map((car) => String(car.vehicle_type || '').trim()).filter(Boolean))
+    return Array.from(values).sort((a, b) => a.localeCompare(b))
+  }, [cars])
+
+  const filteredCars = useMemo(() => {
+    const normalizedSearch = String(searchTerm || '').trim().toLowerCase()
+    const normalizedEngine = String(engineSearch || '').trim().toLowerCase()
+
+    return sortedCars.filter((car) => {
+      const haystack = `${car.brand_name || ''} ${car.name || ''} ${car.description || ''} ${car.engine_type || ''}`.toLowerCase()
+
+      if (normalizedSearch && !haystack.includes(normalizedSearch)) return false
+      if (normalizedEngine && !String(car.engine_type || '').toLowerCase().includes(normalizedEngine)) return false
+      if (vehicleTypeFilter !== 'all' && String(car.vehicle_type || '') !== vehicleTypeFilter) return false
+      if (productionStatusFilter !== 'all' && String(car.production_status || '') !== productionStatusFilter) return false
+      if (driveTypeFilter !== 'all' && detectDriveType(car.engine_type) !== driveTypeFilter) return false
+      return true
+    })
+  }, [sortedCars, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter])
+
+  const matchedCountByBrand = useMemo(() => {
+    const byBrandId = new Map()
+    filteredCars.forEach((car) => {
+      const key = car.brand
+      byBrandId.set(key, (byBrandId.get(key) || 0) + 1)
+    })
+    return byBrandId
+  }, [filteredCars])
+
+  const visibleBrands = useMemo(() => {
+    if (
+      !searchTerm.trim() &&
+      !engineSearch.trim() &&
+      vehicleTypeFilter === 'all' &&
+      productionStatusFilter === 'all' &&
+      driveTypeFilter === 'all'
+    ) {
+      return brands
+    }
+    return brands.filter((brand) => (matchedCountByBrand.get(brand.id) || 0) > 0)
+  }, [brands, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter, matchedCountByBrand])
+
   return (
     <div>
       <h1 className="page-title">{t.pages.carsCatalog}</h1>
@@ -40,10 +101,112 @@ export default function CarsListPage() {
       {loading ? (
         <div className="page-loading">{t.pages.loading}</div>
       ) : (
-        <div className="brand-catalog-list">
-          {brands.map((brand) => {
+        <>
+          <section className="admin-form-card">
+            <h2 className="detail-section-title">{t.pages.modelSearchTitle}</h2>
+            <div className="admin-fields-grid">
+              <div>
+                <label className="form-label" htmlFor="catalog-search">{t.pages.searchModels}</label>
+                <input
+                  id="catalog-search"
+                  className="form-input"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder={t.pages.searchModelsPlaceholder}
+                />
+              </div>
+              <div>
+                <label className="form-label" htmlFor="catalog-engine">{t.pages.engineFilter}</label>
+                <input
+                  id="catalog-engine"
+                  className="form-input"
+                  value={engineSearch}
+                  onChange={(e) => setEngineSearch(e.target.value)}
+                  placeholder={t.pages.engineFilterPlaceholder}
+                />
+              </div>
+              <div>
+                <label className="form-label" htmlFor="catalog-type">{t.pages.type}</label>
+                <select
+                  id="catalog-type"
+                  className="form-input"
+                  value={vehicleTypeFilter}
+                  onChange={(e) => setVehicleTypeFilter(e.target.value)}
+                >
+                  <option value="all">{t.pages.allLabel}</option>
+                  {vehicleTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="form-label" htmlFor="catalog-drive">{t.pages.driveType}</label>
+                <select
+                  id="catalog-drive"
+                  className="form-input"
+                  value={driveTypeFilter}
+                  onChange={(e) => setDriveTypeFilter(e.target.value)}
+                >
+                  <option value="all">{t.pages.allLabel}</option>
+                  <option value="awd">AWD/4WD</option>
+                  <option value="fwd">FWD</option>
+                  <option value="rwd">RWD</option>
+                  <option value="other">{t.pages.otherDrive}</option>
+                </select>
+              </div>
+              <div>
+                <label className="form-label" htmlFor="catalog-status">{t.pages.productionStatus}</label>
+                <select
+                  id="catalog-status"
+                  className="form-input"
+                  value={productionStatusFilter}
+                  onChange={(e) => setProductionStatusFilter(e.target.value)}
+                >
+                  <option value="all">{t.pages.allLabel}</option>
+                  <option value="active">{t.pages.statusActive}</option>
+                  <option value="discontinued">{t.pages.statusDiscontinued}</option>
+                  <option value="upcoming">{t.pages.statusUpcoming}</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section className="brand-catalog-list" style={{ marginTop: '1rem' }}>
+            {filteredCars.length === 0 ? (
+              <div className="page-card">{t.pages.noModelsFound}</div>
+            ) : (
+              filteredCars.map((car) => (
+                <article key={car.id} className="brand-catalog-card">
+                  <div className="brand-catalog-header brand-catalog-header-static">
+                    <div className="brand-catalog-identity">
+                      <div>
+                        <div className="brand-catalog-title-row">
+                          <h3 className="brand-catalog-title">{car.brand_name} {car.name}</h3>
+                          <span className="brand-catalog-badge">{car.vehicle_type || '-'}</span>
+                        </div>
+                        <div className="brand-catalog-meta-row">
+                          <span className="brand-catalog-meta-pill">{t.pages.engine}: {car.engine_type || '-'}</span>
+                          <span className="brand-catalog-meta-pill">{t.pages.year}: {car.year_introduced || '-'}</span>
+                          <span className="brand-catalog-meta-pill">{t.pages.productionStatus}: {car.production_status || '-'}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="brand-catalog-actions">
+                      <Link to={`/cars/${car.id}`} className="catalog-action-btn">
+                        {t.pages.readMore}
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              ))
+            )}
+          </section>
+
+          <div className="brand-catalog-list">
+            {visibleBrands.map((brand) => {
             const brandLogo = getBrandLogoOrPlaceholder(brand.logo || '', brand.name)
             const modelCount = Number.isFinite(Number(brand.model_count)) ? Number(brand.model_count) : 0
+            const matchedCount = matchedCountByBrand.get(brand.id) || modelCount
             const brandDescription = lang === 'pl'
               ? (brand.description_pl || brand.description_en || brand.description)
               : (brand.description_en || brand.description)
@@ -57,7 +220,7 @@ export default function CarsListPage() {
                     <div>
                       <div className="brand-catalog-title-row">
                         <h2 className="brand-catalog-title">{brand.name}</h2>
-                        <span className="brand-catalog-badge">{modelCount} {t.pages.modelsLabel}</span>
+                        <span className="brand-catalog-badge">{matchedCount} {t.pages.modelsLabel}</span>
                       </div>
                       {brandDescription && (
                         <p className="brand-catalog-description">{brandDescription}</p>
@@ -66,7 +229,7 @@ export default function CarsListPage() {
                         {brand.founded_year && (
                           <span className="brand-catalog-meta-pill">{t.pages.brandFounded}: {brand.founded_year}</span>
                         )}
-                        <span className="brand-catalog-meta-pill">{modelCount} {t.pages.modelsLabel}</span>
+                        <span className="brand-catalog-meta-pill">{matchedCount} {t.pages.modelsLabel}</span>
                       </div>
                     </div>
                   </div>
@@ -79,7 +242,8 @@ export default function CarsListPage() {
               </section>
             )
           })}
-        </div>
+          </div>
+        </>
       )}
     </div>
   )

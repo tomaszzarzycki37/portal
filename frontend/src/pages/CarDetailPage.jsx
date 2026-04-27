@@ -29,6 +29,10 @@ export default function CarDetailPage() {
   const [adminOpinionSaving, setAdminOpinionSaving] = useState(false)
   const [adminOpinionMessage, setAdminOpinionMessage] = useState('')
   const [adminOpinionError, setAdminOpinionError] = useState('')
+  const [expandedOpinions, setExpandedOpinions] = useState(new Set())
+  const [opinionComments, setOpinionComments] = useState({})
+  const [commentTexts, setCommentTexts] = useState({})
+  const [commentSaving, setCommentSaving] = useState({})
   const [adminSaving, setAdminSaving] = useState(false)
   const [adminMessage, setAdminMessage] = useState('')
   const [adminError, setAdminError] = useState('')
@@ -78,6 +82,42 @@ export default function CarDetailPage() {
 
     fetchData()
   }, [id, isAdmin])
+
+  const handleToggleComments = async (opinionId) => {
+    setExpandedOpinions((prev) => {
+      const next = new Set(prev)
+      if (next.has(opinionId)) {
+        next.delete(opinionId)
+      } else {
+        next.add(opinionId)
+      }
+      return next
+    })
+    if (!opinionComments[opinionId]) {
+      try {
+        const res = await api.get(`/opinions/${opinionId}/`)
+        setOpinionComments((prev) => ({ ...prev, [opinionId]: res.data.comments || [] }))
+      } catch {
+        setOpinionComments((prev) => ({ ...prev, [opinionId]: [] }))
+      }
+    }
+  }
+
+  const handleAddComment = async (opinionId) => {
+    const text = (commentTexts[opinionId] || '').trim()
+    if (!text) return
+    setCommentSaving((prev) => ({ ...prev, [opinionId]: true }))
+    try {
+      await api.post(`/opinions/${opinionId}/add_comment/`, { content: text })
+      const res = await api.get(`/opinions/${opinionId}/`)
+      setOpinionComments((prev) => ({ ...prev, [opinionId]: res.data.comments || [] }))
+      setCommentTexts((prev) => ({ ...prev, [opinionId]: '' }))
+    } catch {
+      // comment error silently ignored — form stays open
+    } finally {
+      setCommentSaving((prev) => ({ ...prev, [opinionId]: false }))
+    }
+  }
 
   const handleAdminSave = async (e) => {
     e.preventDefault()
@@ -353,7 +393,49 @@ export default function CarDetailPage() {
                 <div className="opinion-rating-row">
                   <span className="rating">★ {opinion.rating}</span>
                   <span className="opinion-counts">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
+                  <button
+                    type="button"
+                    className="btn-comment-toggle"
+                    onClick={() => handleToggleComments(opinion.id)}
+                  >
+                    {expandedOpinions.has(opinion.id) ? '−' : '+'} {opinion.comments_count || 0} {t.pages.showComments}
+                  </button>
                 </div>
+                {expandedOpinions.has(opinion.id) && (
+                  <div className="opinion-comments">
+                    {(opinionComments[opinion.id] || []).length === 0 ? (
+                      <p className="opinion-no-comments">{t.pages.noComments}</p>
+                    ) : (
+                      (opinionComments[opinion.id] || []).map((c) => (
+                        <div key={c.id} className="comment-item">
+                          <span className="comment-author">{c.author?.username}</span>
+                          <span className="comment-text">{c.content}</span>
+                        </div>
+                      ))
+                    )}
+                    <div className="comment-add-row">
+                      <input
+                        className="form-input comment-input"
+                        placeholder={t.pages.commentPlaceholder}
+                        value={commentTexts[opinion.id] || ''}
+                        onChange={(e) =>
+                          setCommentTexts((prev) => ({ ...prev, [opinion.id]: e.target.value }))
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleAddComment(opinion.id)
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        disabled={commentSaving[opinion.id]}
+                        onClick={() => handleAddComment(opinion.id)}
+                      >
+                        {t.pages.commentSubmit}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </article>
             ))}
           </div>

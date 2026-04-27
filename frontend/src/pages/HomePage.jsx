@@ -32,6 +32,11 @@ export default function HomePage() {
     return Array.from(values).sort((a, b) => a.localeCompare(b))
   }, [cars])
 
+  const engineTypes = useMemo(() => {
+    const values = new Set(cars.map((car) => String(car.engine_type || '').trim()).filter(Boolean))
+    return Array.from(values).sort((a, b) => a.localeCompare(b))
+  }, [cars])
+
   const brands = useMemo(() => {
     const values = new Set(cars.map((car) => String(car.brand_name || '').trim()).filter(Boolean))
     return Array.from(values).sort((a, b) => a.localeCompare(b))
@@ -74,8 +79,14 @@ export default function HomePage() {
                     className="form-input"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Szukaj marki, modelu..."
+                    placeholder={t.pages.searchInputPlaceholder}
+                    list="searchModels"
                   />
+                  <datalist id="searchModels">
+                    {brands.map((brand) => (
+                      <option key={brand} value={brand} />
+                    ))}
+                  </datalist>
                 </label>
               </div>
 
@@ -100,12 +111,18 @@ export default function HomePage() {
                   className="form-input"
                   value={engineSearch}
                   onChange={(e) => setEngineSearch(e.target.value)}
-                  placeholder="np. 1.6L, 2.0T..."
+                  placeholder={t.pages.engineFilterPlaceholder}
+                  list="engineTypes"
                 />
+                <datalist id="engineTypes">
+                  {engineTypes.map((type) => (
+                    <option key={type} value={type} />
+                  ))}
+                </datalist>
               </div>
 
               <div className="home-filter-section">
-                <label className="home-filter-label">{t.pages.type}</label>
+                <label className="home-filter-label">{t.pages.typeFilter}</label>
                 <select
                   className="form-input"
                   value={vehicleTypeFilter}
@@ -137,7 +154,7 @@ export default function HomePage() {
                 className="home-filter-cta"
                 style={{ textDecoration: 'none', display: 'block', textAlign: 'center' }}
               >
-                Sprawdź {filteredCars.length} aut →
+                {t.pages.searchCta} {filteredCars.length} {t.pages.modelsAvailable} →
               </Link>
             </div>
           </div>
