@@ -215,6 +215,22 @@ export default function AdminDashboard() {
     })
   }, [cars, searchTerm, featuredOnly])
 
+  const groupedFilteredCars = useMemo(() => {
+    const groups = new Map()
+
+    ;[...filteredCars]
+      .sort((a, b) => `${a.brand_name || ''} ${a.name || ''}`.localeCompare(`${b.brand_name || ''} ${b.name || ''}`))
+      .forEach((car) => {
+        const brandName = String(car.brand_name || '').trim() || 'Unknown brand'
+        if (!groups.has(brandName)) {
+          groups.set(brandName, [])
+        }
+        groups.get(brandName).push(car)
+      })
+
+    return Array.from(groups.entries()).map(([brandName, items]) => ({ brandName, items }))
+  }, [filteredCars])
+
   const stats = useMemo(() => {
     const totalCars = cars.length
     const featuredCars = cars.filter((car) => car.is_featured).length
@@ -965,24 +981,33 @@ export default function AdminDashboard() {
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
             >
-              {filteredCars.map((car) => (
-                <option key={car.id} value={car.id}>
-                  {car.brand_name} - {car.name}
-                </option>
+              {groupedFilteredCars.map((group) => (
+                <optgroup key={group.brandName} label={group.brandName}>
+                  {group.items.map((car) => (
+                    <option key={car.id} value={car.id}>
+                      {car.name}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
 
             <div className="admin-car-list">
-              {filteredCars.map((car) => (
-                <button
-                  key={car.id}
-                  type="button"
-                  className={`admin-car-list-item ${String(car.id) === String(selectedId) ? 'active' : ''}`}
-                  onClick={() => setSelectedId(String(car.id))}
-                >
-                  <span>{car.brand_name} {car.name}</span>
-                  <span>{car.year_introduced}</span>
-                </button>
+              {groupedFilteredCars.map((group) => (
+                <div key={group.brandName}>
+                  <p className="form-label" style={{ marginBottom: '0.5rem' }}>{group.brandName}</p>
+                  {group.items.map((car) => (
+                    <button
+                      key={car.id}
+                      type="button"
+                      className={`admin-car-list-item ${String(car.id) === String(selectedId) ? 'active' : ''}`}
+                      onClick={() => setSelectedId(String(car.id))}
+                    >
+                      <span>{car.name}</span>
+                      <span>{car.year_introduced}</span>
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
           </aside>

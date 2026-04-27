@@ -71,6 +71,20 @@ export default function CarsListPage() {
     })
   }, [sortedCars, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter])
 
+  const groupedCarsByBrand = useMemo(() => {
+    const groups = new Map()
+
+    filteredCars.forEach((car) => {
+      const brandKey = car.brand
+      if (!groups.has(brandKey)) {
+        groups.set(brandKey, [])
+      }
+      groups.get(brandKey).push(car)
+    })
+
+    return groups
+  }, [filteredCars])
+
   const matchedCountByBrand = useMemo(() => {
     const byBrandId = new Map()
     filteredCars.forEach((car) => {
@@ -171,42 +185,12 @@ export default function CarsListPage() {
             </div>
           </section>
 
-          <section className="brand-catalog-list" style={{ marginTop: '1rem' }}>
-            {filteredCars.length === 0 ? (
-              <div className="page-card">{t.pages.noModelsFound}</div>
-            ) : (
-              filteredCars.map((car) => (
-                <article key={car.id} className="brand-catalog-card">
-                  <div className="brand-catalog-header brand-catalog-header-static">
-                    <div className="brand-catalog-identity">
-                      <div>
-                        <div className="brand-catalog-title-row">
-                          <h3 className="brand-catalog-title">{car.brand_name} {car.name}</h3>
-                          <span className="brand-catalog-badge">{car.vehicle_type || '-'}</span>
-                        </div>
-                        <div className="brand-catalog-meta-row">
-                          <span className="brand-catalog-meta-pill">{t.pages.engine}: {car.engine_type || '-'}</span>
-                          <span className="brand-catalog-meta-pill">{t.pages.year}: {car.year_introduced || '-'}</span>
-                          <span className="brand-catalog-meta-pill">{t.pages.productionStatus}: {car.production_status || '-'}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="brand-catalog-actions">
-                      <Link to={`/cars/${car.id}`} className="catalog-action-btn">
-                        {t.pages.readMore}
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-              ))
-            )}
-          </section>
-
           <div className="brand-catalog-list">
             {visibleBrands.map((brand) => {
             const brandLogo = getBrandLogoOrPlaceholder(brand.logo || '', brand.name)
             const modelCount = Number.isFinite(Number(brand.model_count)) ? Number(brand.model_count) : 0
             const matchedCount = matchedCountByBrand.get(brand.id) || modelCount
+            const brandCars = groupedCarsByBrand.get(brand.id) || []
             const brandDescription = lang === 'pl'
               ? (brand.description_pl || brand.description_en || brand.description)
               : (brand.description_en || brand.description)
@@ -238,6 +222,37 @@ export default function CarsListPage() {
                       {t.pages.openBrand}
                     </Link>
                   </div>
+                </div>
+
+                <div style={{ marginTop: '1rem', display: 'grid', gap: '0.75rem' }}>
+                  {brandCars.length === 0 ? (
+                    <div className="page-card">{t.pages.noModelsInBrand}</div>
+                  ) : (
+                    brandCars.map((car) => (
+                      <article key={car.id} className="brand-catalog-card" style={{ margin: 0 }}>
+                        <div className="brand-catalog-header brand-catalog-header-static">
+                          <div className="brand-catalog-identity">
+                            <div>
+                              <div className="brand-catalog-title-row">
+                                <h3 className="brand-catalog-title">{car.name}</h3>
+                                <span className="brand-catalog-badge">{car.vehicle_type || '-'}</span>
+                              </div>
+                              <div className="brand-catalog-meta-row">
+                                <span className="brand-catalog-meta-pill">{t.pages.engine}: {car.engine_type || '-'}</span>
+                                <span className="brand-catalog-meta-pill">{t.pages.year}: {car.year_introduced || '-'}</span>
+                                <span className="brand-catalog-meta-pill">{t.pages.productionStatus}: {car.production_status || '-'}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="brand-catalog-actions">
+                            <Link to={`/cars/${car.id}`} className="catalog-action-btn">
+                              {t.pages.readMore}
+                            </Link>
+                          </div>
+                        </div>
+                      </article>
+                    ))
+                  )}
                 </div>
               </section>
             )
