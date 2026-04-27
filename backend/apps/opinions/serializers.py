@@ -1,6 +1,6 @@
 """Serializers for opinions app"""
 from rest_framework import serializers
-from .models import Opinion, Comment, Vote
+from .models import Opinion, Comment, Vote, PressReview
 from django.contrib.auth.models import User
 
 
@@ -95,3 +95,31 @@ class VoteCreateSerializer(serializers.ModelSerializer):
             defaults={'vote_type': validated_data['vote_type']}
         )
         return vote
+
+
+class PressReviewListSerializer(serializers.ModelSerializer):
+    car_id = serializers.IntegerField(source='car_model.id', read_only=True)
+    car_name = serializers.CharField(source='car_model.name', read_only=True)
+    car_brand_name = serializers.CharField(source='car_model.brand.name', read_only=True)
+
+    class Meta:
+        model = PressReview
+        fields = [
+            'id', 'car_id', 'car_name', 'car_brand_name', 'title', 'summary', 'content',
+            'publication_name', 'publication_url', 'author_name', 'published_at',
+            'is_featured', 'created_at'
+        ]
+
+
+class PressReviewDetailSerializer(serializers.ModelSerializer):
+    car_id = serializers.IntegerField(source='car_model.id', read_only=True)
+    car_name = serializers.CharField(source='car_model.name', read_only=True)
+    car_brand_name = serializers.CharField(source='car_model.brand.name', read_only=True)
+
+    class Meta:
+        model = PressReview
+        fields = [
+            'id', 'car_id', 'car_name', 'car_brand_name', 'title', 'summary', 'content',
+            'publication_name', 'publication_url', 'author_name', 'published_at',
+            'is_featured', 'is_published', 'created_at', 'updated_at'
+        ]

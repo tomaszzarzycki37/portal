@@ -10,6 +10,7 @@ export default function CarDetailPage() {
   const { id } = useParams()
   const [car, setCar] = useState(null)
   const [opinions, setOpinions] = useState([])
+  const [reviewArticles, setReviewArticles] = useState([])
   const [loading, setLoading] = useState(true)
   const [adminDescription, setAdminDescription] = useState('')
   const [adminYearIntroduced, setAdminYearIntroduced] = useState('')
@@ -43,13 +44,15 @@ export default function CarDetailPage() {
       try {
         setLoading(true)
 
-        const [carResponse, opinionsResponse] = await Promise.all([
+        const [carResponse, opinionsResponse, reviewsResponse] = await Promise.all([
           api.get(`/cars/${id}/`),
           api.get(`/opinions/?car_model=${id}&ordering=-created_at`),
+          api.get(`/reviews/?car_model=${id}&ordering=-published_at&page_size=3`),
         ])
 
         setCar(carResponse.data)
         setOpinions(opinionsResponse.data.results || opinionsResponse.data)
+        setReviewArticles(reviewsResponse.data.results || reviewsResponse.data || [])
 
         if (isAdmin) {
           setAdminDescription(carResponse.data.description || '')
@@ -219,7 +222,6 @@ export default function CarDetailPage() {
 
   const currentYear = new Date().getFullYear()
   const modelAge = car.year_introduced ? Math.max(currentYear - car.year_introduced, 0) : null
-  const latestReviews = opinions.slice(0, 3)
 
   return (
     <div className="detail-wrap">
@@ -352,19 +354,25 @@ export default function CarDetailPage() {
           </Link>
         </div>
 
-        {latestReviews.length === 0 ? (
+        {reviewArticles.length === 0 ? (
           <div className="page-card">{t.pages.noReviewsYet}</div>
         ) : (
           <div className="detail-reviews-preview-grid">
-            {latestReviews.map((review) => (
+            {reviewArticles.map((review) => (
               <article key={review.id} className="opinion-card-item">
                 <h3 className="opinion-title">{review.title}</h3>
-                <p className="opinion-meta">{review.author?.username || t.pages.unknownAuthor}</p>
-                <p className="opinion-text">{review.content}</p>
-                <div className="opinion-rating-row">
-                  <span className="rating">★ {review.rating}</span>
-                  <span className="opinion-counts">👍 {review.helpful_count} | 👎 {review.unhelpful_count}</span>
-                </div>
+                <p className="opinion-meta">
+                  {review.publication_name}
+                  {review.author_name ? ` - ${review.author_name}` : ''}
+                </p>
+                <p className="opinion-text">{review.summary || review.content}</p>
+                {review.publication_url && (
+                  <div className="opinion-rating-row">
+                    <a href={review.publication_url} target="_blank" rel="noreferrer" className="opinion-view-car">
+                      {t.pages.openSourceArticle}
+                    </a>
+                  </div>
+                )}
               </article>
             ))}
           </div>

@@ -67,3 +67,25 @@ class Vote(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.vote_type} - {self.opinion.title}"
+
+
+class PressReview(models.Model):
+    """Editorial/press review article about a car model."""
+    car_model = models.ForeignKey(CarModel, on_delete=models.CASCADE, related_name='press_reviews')
+    title = models.CharField(max_length=220)
+    summary = models.TextField(blank=True)
+    content = models.TextField()
+    publication_name = models.CharField(max_length=180)
+    publication_url = models.URLField(blank=True)
+    author_name = models.CharField(max_length=120, blank=True)
+    published_at = models.DateField()
+    is_featured = models.BooleanField(default=False)
+    is_published = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-published_at', '-created_at']
+
+    def __str__(self):
+        return f"{self.title} ({self.publication_name})"

@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/', include([
         path('cars/', include('apps.cars.urls')),
         path('opinions/', include('apps.opinions.urls')),
+        path('reviews/', include('apps.opinions.reviews_urls')),
         path('users/', include('apps.users.urls')),
         path('common/', include('apps.common.urls')),
     ])),

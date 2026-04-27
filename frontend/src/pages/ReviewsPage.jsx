@@ -6,9 +6,7 @@ import api from '../services/api'
 export default function ReviewsPage() {
   const { t, lang } = useTranslation()
   const [reviews, setReviews] = useState([])
-  const [carBrandById, setCarBrandById] = useState({})
   const [loading, setLoading] = useState(true)
-  const [ratingFilter, setRatingFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedBrand, setSelectedBrand] = useState('all')
@@ -18,22 +16,11 @@ export default function ReviewsPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [reviewsResponse, carsResponse] = await Promise.all([
-          api.get('/opinions/?page_size=200&ordering=-created_at'),
-          api.get('/cars/?page_size=300'),
-        ])
+        const reviewsResponse = await api.get('/reviews/?page_size=200&ordering=-published_at')
 
         const reviewsList = reviewsResponse.data.results || reviewsResponse.data || []
-        const carsList = carsResponse.data.results || carsResponse.data || []
-
-        const nextCarBrandById = {}
-        carsList.forEach((car) => {
-          if (!car?.id) return
-          nextCarBrandById[car.id] = car.brand_name || ''
-        })
 
         setReviews(reviewsList)
-        setCarBrandById(nextCarBrandById)
       } catch (error) {
         console.error('Error fetching reviews:', error)
       } finally {
@@ -44,16 +31,10 @@ export default function ReviewsPage() {
     fetchData()
   }, [])
 
-  const normalizedReviews = useMemo(() => {
-    return reviews.map((review) => {
-      const fallbackBrandName = carBrandById[review.car_id] || ''
-      const brandName = String(review.car_brand_name || fallbackBrandName || '').trim()
-      return {
-        ...review,
-        _brandName: brandName,
-      }
-    })
-  }, [reviews, carBrandById])
+  const normalizedReviews = useMemo(
+    () => reviews.map((review) => ({ ...review, _brandName: String(review.car_brand_name || '').trim() })),
+    [reviews],
+  )
 
   const availableBrands = useMemo(() => {
     const values = new Set(normalizedReviews.map((review) => String(review._brandName || '').trim()).filter(Boolean))
@@ -84,8 +65,6 @@ export default function ReviewsPage() {
 
     if (selectedBrand !== 'all') filtered = filtered.filter((review) => review._brandName === selectedBrand)
     if (selectedModel !== 'all') filtered = filtered.filter((review) => String(review.car_id) === String(selectedModel))
-    if (ratingFilter !== 'all') filtered = filtered.filter((review) => review.rating === Number(ratingFilter))
-
     if (searchTerm.trim()) {
       const normalizedSearch = searchTerm.toLowerCase()
       filtered = filtered.filter((review) => {
@@ -97,10 +76,10 @@ export default function ReviewsPage() {
     const sorted = [...filtered]
     if (sortBy === 'newest') sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     if (sortBy === 'oldest') sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-    if (sortBy === 'highest-rated') sorted.sort((a, b) => b.rating - a.rating)
-    if (sortBy === 'most-helpful') sorted.sort((a, b) => b.helpful_count - a.helpful_count)
+    if (sortBy === 'highest-rated') sorted.sort((a, b) => new Date(b.published_at) - new Date(a.published_at))
+    if (sortBy === 'most-helpful') sorted.sort((a, b) => new Date(b.published_at) - new Date(a.published_at))
     return sorted
-  }, [normalizedReviews, selectedBrand, selectedModel, ratingFilter, sortBy, searchTerm])
+  }, [normalizedReviews, selectedBrand, selectedModel, sortBy, searchTerm])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -156,18 +135,6 @@ export default function ReviewsPage() {
         </div>
 
         <div className="filter-group">
-          <label className="form-label">{t.pages.averageRating}</label>
-          <select className="form-input" value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)}>
-            <option value="all">{t.pages.allLabel}</option>
-            <option value="5">⭐ 5</option>
-            <option value="4">⭐ 4</option>
-            <option value="3">⭐ 3</option>
-            <option value="2">⭐ 2</option>
-            <option value="1">⭐ 1</option>
-          </select>
-        </div>
-
-        <div className="filter-group">
           <label className="form-label">{t.pages.sortBy}</label>
           <select className="form-input" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
             <option value="newest">{t.pages.sortNewest}</option>
@@ -197,14 +164,19 @@ export default function ReviewsPage() {
                 </div>
 
                 <div className="opinion-list-meta">
-                  <span className="opinion-author">{review.author?.username || t.pages.unknownAuthor}</span>
-                  <span className="opinion-date">{formatDate(review.created_at)}</span>
+                  <span className="opinion-author">{review.publication_name}{review.author_name ? ` - ${review.author_name}` : ''}</span>
+                  <span className="opinion-date">{formatDate(review.published_at)}</span>
                 </div>
 
                 <p className="opinion-content">{review.content}</p>
 
                 <div className="opinion-list-footer">
-                  <span className="opinion-votes">👍 {review.helpful_count} | 👎 {review.unhelpful_count}</span>
+                  <span className="opinion-votes">{review.published_at}</span>
+                  {review.publication_url && (
+                    <a href={review.publication_url} target="_blank" rel="noreferrer" className="opinion-view-car">
+                      {t.pages.openSourceArticle}
+                    </a>
+                  )}
                   {review.car_id && (
                     <Link to={`/cars/${review.car_id}`} className="opinion-view-car">
                       {t.pages.viewCar}

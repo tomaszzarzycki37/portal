@@ -1,6 +1,6 @@
 """Admin configuration for opinions app"""
 from django.contrib import admin
-from .models import Opinion, Comment, Vote
+from .models import Opinion, Comment, Vote, PressReview
 
 
 @admin.register(Opinion)
@@ -40,3 +40,17 @@ class VoteAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(PressReview)
+class PressReviewAdmin(admin.ModelAdmin):
+    list_display = ['title', 'car_model', 'publication_name', 'published_at', 'is_featured', 'is_published']
+    list_filter = ['is_published', 'is_featured', 'published_at', 'publication_name']
+    search_fields = ['title', 'summary', 'content', 'publication_name', 'author_name', 'car_model__name']
+    readonly_fields = ['created_at', 'updated_at']
+    fieldsets = (
+        ('Article', {'fields': ('car_model', 'title', 'summary', 'content')}),
+        ('Publication', {'fields': ('publication_name', 'publication_url', 'author_name', 'published_at')}),
+        ('Status', {'fields': ('is_published', 'is_featured')}),
+        ('Timestamps', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
+    )

@@ -15,12 +15,12 @@ export default function CarReviewsPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [carResponse, opinionsResponse] = await Promise.all([
+        const [carResponse, reviewsResponse] = await Promise.all([
           api.get(`/cars/${id}/`),
-          api.get(`/opinions/?car_model=${id}&ordering=-created_at&page_size=200`),
+          api.get(`/reviews/?car_model=${id}&ordering=-published_at&page_size=200`),
         ])
         setCar(carResponse.data)
-        setReviews(opinionsResponse.data.results || opinionsResponse.data || [])
+        setReviews(reviewsResponse.data.results || reviewsResponse.data || [])
       } catch (error) {
         console.error('Error fetching reviews:', error)
         setCar(null)
@@ -66,7 +66,7 @@ export default function CarReviewsPage() {
           <p className="detail-description">{t.pages.reviewsSectionIntro}</p>
 
           <div className="detail-badges">
-            <span className="detail-badge">{reviews.length} {reviews.length === 1 ? t.pages.opinionSingle : t.pages.opinionPlural}</span>
+            <span className="detail-badge">{reviews.length} {reviews.length === 1 ? t.pages.reviewSingle : t.pages.reviewPlural}</span>
           </div>
 
           <div style={{ marginTop: '0.75rem' }}>
@@ -85,11 +85,18 @@ export default function CarReviewsPage() {
             {reviews.map((review) => (
               <article key={review.id} className="opinion-card-item">
                 <h3 className="opinion-title">{review.title}</h3>
-                <p className="opinion-meta">{review.author?.username || t.pages.unknownAuthor}</p>
+                <p className="opinion-meta">
+                  {review.publication_name}
+                  {review.author_name ? ` - ${review.author_name}` : ''}
+                </p>
                 <p className="opinion-text">{review.content}</p>
                 <div className="opinion-rating-row">
-                  <span className="rating">★ {review.rating}</span>
-                  <span className="opinion-counts">👍 {review.helpful_count} | 👎 {review.unhelpful_count}</span>
+                  <span className="opinion-counts">{review.published_at}</span>
+                  {review.publication_url && (
+                    <a href={review.publication_url} target="_blank" rel="noreferrer" className="opinion-view-car">
+                      {t.pages.openSourceArticle}
+                    </a>
+                  )}
                 </div>
               </article>
             ))}

@@ -5,10 +5,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 from apps.common.helpers import IsOwnerOrAdminOrReadOnly
-from .models import Opinion, Comment, Vote
+from .models import Opinion, Comment, Vote, PressReview
 from .serializers import (
     OpinionListSerializer, OpinionDetailSerializer, OpinionCreateUpdateSerializer,
-    CommentSerializer, CommentCreateSerializer, VoteCreateSerializer
+    CommentSerializer, CommentCreateSerializer, VoteCreateSerializer,
+    PressReviewListSerializer, PressReviewDetailSerializer
 )
 
 
@@ -108,3 +109,19 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+
+class PressReviewViewSet(viewsets.ReadOnlyModelViewSet):
+    """Press/editorial review articles API endpoint."""
+    queryset = PressReview.objects.filter(is_published=True).select_related('car_model', 'car_model__brand')
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['car_model', 'is_featured']
+    search_fields = ['title', 'summary', 'content', 'publication_name', 'author_name', 'car_model__name']
+    ordering_fields = ['published_at', 'created_at']
+    ordering = ['-published_at', '-created_at']
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return PressReviewDetailSerializer
+        return PressReviewListSerializer
