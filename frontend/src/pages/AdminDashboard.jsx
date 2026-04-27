@@ -132,6 +132,20 @@ export default function AdminDashboard() {
   const [creatingModel, setCreatingModel] = useState(false)
   const [createModelMessage, setCreateModelMessage] = useState('')
   const [createModelError, setCreateModelError] = useState('')
+  const [isCreateReviewSectionOpen, setIsCreateReviewSectionOpen] = useState(false)
+  const [newReviewCarId, setNewReviewCarId] = useState('')
+  const [newReviewTitle, setNewReviewTitle] = useState('')
+  const [newReviewSummary, setNewReviewSummary] = useState('')
+  const [newReviewContent, setNewReviewContent] = useState('')
+  const [newReviewPublication, setNewReviewPublication] = useState('')
+  const [newReviewPublicationUrl, setNewReviewPublicationUrl] = useState('')
+  const [newReviewAuthor, setNewReviewAuthor] = useState('')
+  const [newReviewPublishedAt, setNewReviewPublishedAt] = useState('')
+  const [newReviewFeatured, setNewReviewFeatured] = useState(false)
+  const [newReviewPublished, setNewReviewPublished] = useState(true)
+  const [creatingReview, setCreatingReview] = useState(false)
+  const [createReviewMessage, setCreateReviewMessage] = useState('')
+  const [createReviewError, setCreateReviewError] = useState('')
 
   const toSlug = (value) => String(value || '')
     .toLowerCase()
@@ -153,6 +167,9 @@ export default function AdminDashboard() {
 
     if (brandList.length > 0 && !newModelBrandId) {
       setNewModelBrandId(String(brandList[0].id))
+    }
+    if (carList.length > 0 && !newReviewCarId) {
+      setNewReviewCarId(String(carList[0].id))
     }
 
     const preferred = String(preferredSelectedId || selectedId || '')
@@ -477,6 +494,55 @@ export default function AdminDashboard() {
       setCreateModelError(t.adminPanel.modelCreateError)
     } finally {
       setCreatingModel(false)
+    }
+  }
+
+  const handleCreateReview = async (e) => {
+    e.preventDefault()
+    setCreateReviewMessage('')
+    setCreateReviewError('')
+
+    const parsedCarId = Number.parseInt(newReviewCarId, 10)
+    if (
+      Number.isNaN(parsedCarId) ||
+      !newReviewTitle.trim() ||
+      !newReviewContent.trim() ||
+      !newReviewPublication.trim() ||
+      !newReviewPublishedAt
+    ) {
+      setCreateReviewError(t.adminPanel.createReviewValidation)
+      return
+    }
+
+    try {
+      setCreatingReview(true)
+      await api.post('/reviews/', {
+        car_model: parsedCarId,
+        title: newReviewTitle.trim(),
+        summary: newReviewSummary.trim(),
+        content: newReviewContent.trim(),
+        publication_name: newReviewPublication.trim(),
+        publication_url: newReviewPublicationUrl.trim(),
+        author_name: newReviewAuthor.trim(),
+        published_at: newReviewPublishedAt,
+        is_featured: newReviewFeatured,
+        is_published: newReviewPublished,
+      })
+
+      setNewReviewTitle('')
+      setNewReviewSummary('')
+      setNewReviewContent('')
+      setNewReviewPublication('')
+      setNewReviewPublicationUrl('')
+      setNewReviewAuthor('')
+      setNewReviewPublishedAt('')
+      setNewReviewFeatured(false)
+      setNewReviewPublished(true)
+      setCreateReviewMessage(t.adminPanel.reviewCreated)
+    } catch {
+      setCreateReviewError(t.adminPanel.reviewCreateError)
+    } finally {
+      setCreatingReview(false)
     }
   }
 
@@ -1384,6 +1450,148 @@ export default function AdminDashboard() {
                 {creatingBrand ? t.pages.loading : t.adminPanel.createBrand}
               </button>
             </div>
+            </form>
+          </div>
+        )}
+      </section>
+
+      <section className="admin-form-card admin-collapsible-card">
+        <button
+          type="button"
+          className="admin-collapsible-toggle"
+          onClick={() => setIsCreateReviewSectionOpen((prev) => !prev)}
+          aria-expanded={isCreateReviewSectionOpen}
+          aria-controls="admin-create-review-content"
+        >
+          <h2 className="admin-section-heading">{t.adminPanel.createReviewTitle}</h2>
+          <span className={`admin-inline-toggle admin-inline-gear ${isCreateReviewSectionOpen ? 'is-open' : ''}`} aria-hidden="true">
+            <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
+            </svg>
+          </span>
+        </button>
+
+        {isCreateReviewSectionOpen && (
+          <div id="admin-create-review-content">
+            <p className="admin-subtitle">{t.adminPanel.createReviewSubtitle}</p>
+
+            <form onSubmit={handleCreateReview}>
+              <div className="admin-form-grid">
+                <div>
+                  <label className="form-label" htmlFor="new-review-car">{t.adminPanel.chooseModel}</label>
+                  <select
+                    id="new-review-car"
+                    className="form-input"
+                    value={newReviewCarId}
+                    onChange={(e) => setNewReviewCarId(e.target.value)}
+                  >
+                    {cars.map((car) => (
+                      <option key={car.id} value={car.id}>{car.brand_name} {car.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="form-label" htmlFor="new-review-title">{t.pages.opinionTitle}</label>
+                  <input
+                    id="new-review-title"
+                    className="form-input"
+                    value={newReviewTitle}
+                    onChange={(e) => setNewReviewTitle(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label" htmlFor="new-review-publication">{t.adminPanel.reviewPublication}</label>
+                  <input
+                    id="new-review-publication"
+                    className="form-input"
+                    value={newReviewPublication}
+                    onChange={(e) => setNewReviewPublication(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label" htmlFor="new-review-author">{t.adminPanel.reviewAuthor}</label>
+                  <input
+                    id="new-review-author"
+                    className="form-input"
+                    value={newReviewAuthor}
+                    onChange={(e) => setNewReviewAuthor(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label" htmlFor="new-review-date">{t.adminPanel.reviewDate}</label>
+                  <input
+                    id="new-review-date"
+                    type="date"
+                    className="form-input"
+                    value={newReviewPublishedAt}
+                    onChange={(e) => setNewReviewPublishedAt(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label" htmlFor="new-review-url">{t.adminPanel.reviewSourceUrl}</label>
+                  <input
+                    id="new-review-url"
+                    className="form-input"
+                    value={newReviewPublicationUrl}
+                    onChange={(e) => setNewReviewPublicationUrl(e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div className="admin-form-grid-full">
+                  <label className="form-label" htmlFor="new-review-summary">{t.adminPanel.reviewSummary}</label>
+                  <textarea
+                    id="new-review-summary"
+                    className="form-input form-textarea"
+                    rows={3}
+                    value={newReviewSummary}
+                    onChange={(e) => setNewReviewSummary(e.target.value)}
+                  />
+                </div>
+
+                <div className="admin-form-grid-full">
+                  <label className="form-label" htmlFor="new-review-content">{t.adminPanel.reviewContent}</label>
+                  <textarea
+                    id="new-review-content"
+                    className="form-input form-textarea"
+                    rows={6}
+                    value={newReviewContent}
+                    onChange={(e) => setNewReviewContent(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <label className="form-checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={newReviewFeatured}
+                  onChange={(e) => setNewReviewFeatured(e.target.checked)}
+                />
+                {t.adminPanel.reviewFeatured}
+              </label>
+
+              <label className="form-checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={newReviewPublished}
+                  onChange={(e) => setNewReviewPublished(e.target.checked)}
+                />
+                {t.adminPanel.reviewPublished}
+              </label>
+
+              {createReviewMessage && <p className="form-success">{createReviewMessage}</p>}
+              {createReviewError && <p className="form-error">{createReviewError}</p>}
+
+              <div className="admin-actions-row">
+                <button type="submit" className="btn btn-primary" disabled={creatingReview}>
+                  {creatingReview ? t.pages.loading : t.adminPanel.createReview}
+                </button>
+              </div>
             </form>
           </div>
         )}

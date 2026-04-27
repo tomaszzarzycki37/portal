@@ -8,6 +8,7 @@ const FALLBACK_HERO_IMAGE = 'https://images.unsplash.com/photo-1494905998402-395
 export default function HomePage() {
   const { t } = useTranslation()
   const [cars, setCars] = useState([])
+  const [featuredReviews, setFeaturedReviews] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [engineSearch, setEngineSearch] = useState('')
@@ -25,6 +26,19 @@ export default function HomePage() {
     }
 
     loadCars()
+  }, [])
+
+  useEffect(() => {
+    const loadFeaturedReviews = async () => {
+      try {
+        const response = await api.get('/reviews/featured/?limit=8')
+        setFeaturedReviews(response.data || [])
+      } catch {
+        setFeaturedReviews([])
+      }
+    }
+
+    loadFeaturedReviews()
   }, [])
 
   const vehicleTypes = useMemo(() => {
@@ -174,6 +188,34 @@ export default function HomePage() {
           <h3>{t.home.feature3Title}</h3>
           <p>{t.home.feature3Text}</p>
         </article>
+      </section>
+
+      <section className="home-featured-reviews">
+        <div className="home-featured-reviews-head">
+          <div>
+            <h2>{t.home.featuredReviewsTitle}</h2>
+            <p>{t.home.featuredReviewsIntro}</p>
+          </div>
+          <Link to="/reviews" className="home-featured-reviews-link">{t.home.readAllReviews}</Link>
+        </div>
+
+        {featuredReviews.length > 0 ? (
+          <div className="home-featured-reviews-rail">
+            {featuredReviews.map((review) => (
+              <article key={review.id} className="home-featured-review-card">
+                <p className="home-featured-review-meta">{review.car_brand_name} {review.car_name}</p>
+                <h3>{review.title}</h3>
+                <p>{review.summary || String(review.content || '').slice(0, 160)}</p>
+                <div className="home-featured-review-footer">
+                  <span>{review.publication_name}</span>
+                  <Link to={`/cars/${review.car_id}/reviews`}>{t.home.openFeaturedReview}</Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="home-featured-reviews-empty">{t.home.noFeaturedReviews}</p>
+        )}
       </section>
 
       <section className="home-cta">

@@ -123,3 +123,12 @@ class PressReviewDetailSerializer(serializers.ModelSerializer):
             'publication_name', 'publication_url', 'author_name', 'published_at',
             'is_featured', 'is_published', 'created_at', 'updated_at'
         ]
+
+
+class PressReviewWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PressReview
+        fields = [
+            'car_model', 'title', 'summary', 'content', 'publication_name',
+            'publication_url', 'author_name', 'published_at', 'is_featured', 'is_published'
+        ]

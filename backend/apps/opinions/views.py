@@ -4,12 +4,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
-from apps.common.helpers import IsOwnerOrAdminOrReadOnly
+from apps.common.helpers import IsOwnerOrAdminOrReadOnly, IsAdminOrReadOnly
 from .models import Opinion, Comment, Vote, PressReview
 from .serializers import (
     OpinionListSerializer, OpinionDetailSerializer, OpinionCreateUpdateSerializer,
     CommentSerializer, CommentCreateSerializer, VoteCreateSerializer,
-    PressReviewListSerializer, PressReviewDetailSerializer
+    PressReviewListSerializer, PressReviewDetailSerializer, PressReviewWriteSerializer
 )
 
 
@@ -111,17 +111,38 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
 
-class PressReviewViewSet(viewsets.ReadOnlyModelViewSet):
+class PressReviewViewSet(viewsets.ModelViewSet):
     """Press/editorial review articles API endpoint."""
-    queryset = PressReview.objects.filter(is_published=True).select_related('car_model', 'car_model__brand')
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    queryset = PressReview.objects.select_related('car_model', 'car_model__brand')
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['car_model', 'is_featured']
     search_fields = ['title', 'summary', 'content', 'publication_name', 'author_name', 'car_model__name']
     ordering_fields = ['published_at', 'created_at']
     ordering = ['-published_at', '-created_at']
 
+    def get_queryset(self):
+        queryset = PressReview.objects.select_related('car_model', 'car_model__brand')
+        if self.request.user and self.request.user.is_authenticated and self.request.user.is_staff:
+            return queryset
+        return queryset.filter(is_published=True)
+
     def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return PressReviewWriteSerializer
         if self.action == 'retrieve':
             return PressReviewDetailSerializer
         return PressReviewListSerializer
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticatedOrReadOnly])
+    def featured(self, request):
+        """Get featured press reviews for homepage widgets."""
+        limit = request.query_params.get('limit', '6')
+        try:
+            parsed_limit = max(1, min(int(limit), 20))
+        except (TypeError, ValueError):
+            parsed_limit = 6
+
+        featured_qs = self.get_queryset().filter(is_featured=True).order_by('-published_at', '-created_at')
+        serializer = PressReviewListSerializer(featured_qs[:parsed_limit], many=True, context={'request': request})
+        return Response(serializer.data)
