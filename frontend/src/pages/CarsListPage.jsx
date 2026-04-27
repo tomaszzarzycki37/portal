@@ -249,7 +249,7 @@ export default function CarsListPage() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: '1rem', display: 'grid', gap: '0.75rem' }}>
+                <div style={{ marginTop: '0.5rem', display: 'grid', gap: '0.5rem', padding: '0 0.75rem 0.75rem' }}>
                   {brandCars.length === 0 ? (
                     <div className="page-card">{hasActiveFilters ? t.pages.noModelsFound : t.pages.noModelsInBrand}</div>
                   ) : (
