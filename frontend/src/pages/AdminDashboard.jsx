@@ -146,6 +146,13 @@ export default function AdminDashboard() {
   const [creatingReview, setCreatingReview] = useState(false)
   const [createReviewMessage, setCreateReviewMessage] = useState('')
   const [createReviewError, setCreateReviewError] = useState('')
+  const [isManageReviewsSectionOpen, setIsManageReviewsSectionOpen] = useState(false)
+  const [pressReviews, setPressReviews] = useState([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [reviewsError, setReviewsError] = useState('')
+  const [reviewsMessage, setReviewsMessage] = useState('')
+  const [editingReviewId, setEditingReviewId] = useState(null)
+  const [reviewEditDraft, setReviewEditDraft] = useState(null)
 
   const toSlug = (value) => String(value || '')
     .toLowerCase()
@@ -179,6 +186,23 @@ export default function AdminDashboard() {
       setSelectedId(String(carList[0].id))
     } else {
       setSelectedId('')
+    }
+  }
+
+  const loadPressReviews = async () => {
+    setReviewsError('')
+    setReviewsMessage('')
+    setReviewsLoading(true)
+
+    try {
+      const response = await api.get('/reviews/?page_size=200&ordering=-published_at')
+      const reviewList = response.data.results || response.data || []
+      setPressReviews(reviewList)
+    } catch {
+      setReviewsError(t.adminPanel.reviewLoadError)
+      setPressReviews([])
+    } finally {
+      setReviewsLoading(false)
     }
   }
 
@@ -371,7 +395,10 @@ export default function AdminDashboard() {
 
       try {
         setLoading(true)
-        await loadInventoryData('')
+        await Promise.all([
+          loadInventoryData(''),
+          loadPressReviews(),
+        ])
       } catch {
         setError(t.adminPanel.loadError)
       } finally {
@@ -539,10 +566,95 @@ export default function AdminDashboard() {
       setNewReviewFeatured(false)
       setNewReviewPublished(true)
       setCreateReviewMessage(t.adminPanel.reviewCreated)
+      await loadPressReviews()
     } catch {
       setCreateReviewError(t.adminPanel.reviewCreateError)
     } finally {
       setCreatingReview(false)
+    }
+  }
+
+  const handleEditReview = async (reviewId) => {
+    setReviewsMessage('')
+    setReviewsError('')
+    try {
+      const response = await api.get(`/reviews/${reviewId}/`)
+      const detail = response.data
+      const publishedDate = String(detail.published_at || '').slice(0, 10)
+      setEditingReviewId(reviewId)
+      setReviewEditDraft({
+        car_model: String(detail.car_id || ''),
+        title: detail.title || '',
+        summary: detail.summary || '',
+        content: detail.content || '',
+        publication_name: detail.publication_name || '',
+        publication_url: detail.publication_url || '',
+        author_name: detail.author_name || '',
+        published_at: publishedDate,
+        is_featured: !!detail.is_featured,
+        is_published: !!detail.is_published,
+      })
+    } catch {
+      setReviewsError(t.adminPanel.reviewLoadError)
+    }
+  }
+
+  const handleCancelReviewEdit = () => {
+    setEditingReviewId(null)
+    setReviewEditDraft(null)
+  }
+
+  const handleSaveReviewEdit = async (reviewId) => {
+    if (!reviewEditDraft) return
+    if (
+      !reviewEditDraft.car_model ||
+      !reviewEditDraft.title.trim() ||
+      !reviewEditDraft.content.trim() ||
+      !reviewEditDraft.publication_name.trim() ||
+      !reviewEditDraft.published_at
+    ) {
+      setReviewsError(t.adminPanel.createReviewValidation)
+      return
+    }
+
+    setReviewsMessage('')
+    setReviewsError('')
+    try {
+      await api.patch(`/reviews/${reviewId}/`, {
+        car_model: Number.parseInt(reviewEditDraft.car_model, 10),
+        title: reviewEditDraft.title.trim(),
+        summary: reviewEditDraft.summary.trim(),
+        content: reviewEditDraft.content.trim(),
+        publication_name: reviewEditDraft.publication_name.trim(),
+        publication_url: reviewEditDraft.publication_url.trim(),
+        author_name: reviewEditDraft.author_name.trim(),
+        published_at: reviewEditDraft.published_at,
+        is_featured: !!reviewEditDraft.is_featured,
+        is_published: !!reviewEditDraft.is_published,
+      })
+      setReviewsMessage(t.adminPanel.reviewUpdated)
+      setEditingReviewId(null)
+      setReviewEditDraft(null)
+      await loadPressReviews()
+    } catch {
+      setReviewsError(t.adminPanel.reviewUpdateError)
+    }
+  }
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm(t.adminPanel.reviewDeleteConfirm)) return
+    setReviewsMessage('')
+    setReviewsError('')
+    try {
+      await api.delete(`/reviews/${reviewId}/`)
+      setReviewsMessage(t.adminPanel.reviewDeleted)
+      if (editingReviewId === reviewId) {
+        setEditingReviewId(null)
+        setReviewEditDraft(null)
+      }
+      await loadPressReviews()
+    } catch {
+      setReviewsError(t.adminPanel.reviewDeleteError)
     }
   }
 
@@ -1451,6 +1563,191 @@ export default function AdminDashboard() {
               </button>
             </div>
             </form>
+          </div>
+        )}
+      </section>
+
+      <section className="admin-form-card admin-collapsible-card">
+        <button
+          type="button"
+          className="admin-collapsible-toggle"
+          onClick={() => setIsManageReviewsSectionOpen((prev) => !prev)}
+          aria-expanded={isManageReviewsSectionOpen}
+          aria-controls="admin-manage-reviews-content"
+        >
+          <h2 className="admin-section-heading">{t.adminPanel.manageReviewsTitle}</h2>
+          <span className={`admin-inline-toggle admin-inline-gear ${isManageReviewsSectionOpen ? 'is-open' : ''}`} aria-hidden="true">
+            <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
+            </svg>
+          </span>
+        </button>
+
+        {isManageReviewsSectionOpen && (
+          <div id="admin-manage-reviews-content">
+            <p className="admin-subtitle">{t.adminPanel.manageReviewsSubtitle}</p>
+
+            <div className="admin-actions-row" style={{ justifyContent: 'flex-start', marginTop: '0.85rem' }}>
+              <button type="button" className="btn btn-secondary" onClick={loadPressReviews} disabled={reviewsLoading}>
+                {reviewsLoading ? t.pages.loading : t.adminPanel.refreshReviews}
+              </button>
+            </div>
+
+            {reviewsMessage && <p className="form-success">{reviewsMessage}</p>}
+            {reviewsError && <p className="form-error">{reviewsError}</p>}
+
+            <div className="admin-review-list">
+              {!reviewsLoading && pressReviews.length === 0 && (
+                <p className="admin-meta">{t.adminPanel.noReviewsToManage}</p>
+              )}
+
+              {pressReviews.map((review) => (
+                <article key={review.id} className="admin-review-card">
+                  <div className="admin-review-card-head">
+                    <div>
+                      <h3 className="admin-review-title">{review.title}</h3>
+                      <p className="admin-meta">{review.car_brand_name} {review.car_name} • {review.publication_name}</p>
+                    </div>
+                    <div className="admin-actions-row">
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => handleEditReview(review.id)}
+                      >
+                        {t.adminPanel.editReview}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        onClick={() => handleDeleteReview(review.id)}
+                      >
+                        {t.adminPanel.deleteReview}
+                      </button>
+                    </div>
+                  </div>
+
+                  {editingReviewId === review.id && reviewEditDraft && (
+                    <div className="admin-review-edit-grid">
+                      <div className="admin-form-grid">
+                        <div>
+                          <label className="form-label" htmlFor={`edit-review-car-${review.id}`}>{t.adminPanel.chooseModel}</label>
+                          <select
+                            id={`edit-review-car-${review.id}`}
+                            className="form-input"
+                            value={reviewEditDraft.car_model}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, car_model: e.target.value }))}
+                          >
+                            {cars.map((car) => (
+                              <option key={car.id} value={car.id}>{car.brand_name} {car.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="form-label" htmlFor={`edit-review-title-${review.id}`}>{t.pages.opinionTitle}</label>
+                          <input
+                            id={`edit-review-title-${review.id}`}
+                            className="form-input"
+                            value={reviewEditDraft.title}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, title: e.target.value }))}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="form-label" htmlFor={`edit-review-publication-${review.id}`}>{t.adminPanel.reviewPublication}</label>
+                          <input
+                            id={`edit-review-publication-${review.id}`}
+                            className="form-input"
+                            value={reviewEditDraft.publication_name}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, publication_name: e.target.value }))}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="form-label" htmlFor={`edit-review-author-${review.id}`}>{t.adminPanel.reviewAuthor}</label>
+                          <input
+                            id={`edit-review-author-${review.id}`}
+                            className="form-input"
+                            value={reviewEditDraft.author_name}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, author_name: e.target.value }))}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="form-label" htmlFor={`edit-review-date-${review.id}`}>{t.adminPanel.reviewDate}</label>
+                          <input
+                            id={`edit-review-date-${review.id}`}
+                            type="date"
+                            className="form-input"
+                            value={reviewEditDraft.published_at}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, published_at: e.target.value }))}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="form-label" htmlFor={`edit-review-url-${review.id}`}>{t.adminPanel.reviewSourceUrl}</label>
+                          <input
+                            id={`edit-review-url-${review.id}`}
+                            className="form-input"
+                            value={reviewEditDraft.publication_url}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, publication_url: e.target.value }))}
+                          />
+                        </div>
+
+                        <div className="admin-form-grid-full">
+                          <label className="form-label" htmlFor={`edit-review-summary-${review.id}`}>{t.adminPanel.reviewSummary}</label>
+                          <textarea
+                            id={`edit-review-summary-${review.id}`}
+                            className="form-input form-textarea"
+                            rows={3}
+                            value={reviewEditDraft.summary}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, summary: e.target.value }))}
+                          />
+                        </div>
+
+                        <div className="admin-form-grid-full">
+                          <label className="form-label" htmlFor={`edit-review-content-${review.id}`}>{t.adminPanel.reviewContent}</label>
+                          <textarea
+                            id={`edit-review-content-${review.id}`}
+                            className="form-input form-textarea"
+                            rows={6}
+                            value={reviewEditDraft.content}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, content: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+
+                      <label className="form-checkbox-row">
+                        <input
+                          type="checkbox"
+                          checked={reviewEditDraft.is_featured}
+                          onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, is_featured: e.target.checked }))}
+                        />
+                        {t.adminPanel.reviewFeatured}
+                      </label>
+
+                      <label className="form-checkbox-row">
+                        <input
+                          type="checkbox"
+                          checked={reviewEditDraft.is_published}
+                          onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, is_published: e.target.checked }))}
+                        />
+                        {t.adminPanel.reviewPublished}
+                      </label>
+
+                      <div className="admin-actions-row">
+                        <button type="button" className="btn btn-secondary" onClick={handleCancelReviewEdit}>
+                          {t.adminPanel.cancelEdit}
+                        </button>
+                        <button type="button" className="btn btn-primary" onClick={() => handleSaveReviewEdit(review.id)}>
+                          {t.adminPanel.saveReviewChanges}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
           </div>
         )}
       </section>

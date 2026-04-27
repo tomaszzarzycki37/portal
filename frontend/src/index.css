@@ -753,6 +753,15 @@ a {
   min-width: 150px;
 }
 
+.btn-danger {
+  background: #b91c1c;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #991b1b;
+}
+
 .admin-subtitle {
   margin: 0.35rem 0 0;
   color: #334155;
@@ -762,6 +771,39 @@ a {
   margin: 0.35rem 0 0;
   color: #64748b;
   font-size: 0.85rem;
+}
+
+.admin-review-list {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.admin-review-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.9rem;
+  padding: 0.85rem;
+  background: #fff;
+}
+
+.admin-review-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.admin-review-title {
+  margin: 0;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.admin-review-edit-grid {
+  margin-top: 0.85rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.85rem;
 }
 
 .cars-grid {
