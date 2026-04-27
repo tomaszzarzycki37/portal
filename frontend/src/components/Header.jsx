@@ -39,6 +39,7 @@ export default function Header() {
         
         <div className="main-nav desktop-only">
           <Link to="/cars" className="nav-link">{t.nav.cars}</Link>
+          <Link to="/opinions" className="nav-link">{t.nav.opinions}</Link>
           {token && <Link to="/profile" className="nav-link">{t.nav.profile}</Link>}
           {token && isAdmin && <Link to="/admin" className="nav-link">{t.nav.admin}</Link>}
         </div>
@@ -126,6 +127,7 @@ export default function Header() {
               </span>
             )}
             <Link to="/cars" className="nav-link">{t.nav.cars}</Link>
+            <Link to="/opinions" className="nav-link">{t.nav.opinions}</Link>
             {token && <Link to="/profile" className="nav-link">{t.nav.profile}</Link>}
             {token && isAdmin && <Link to="/admin" className="nav-link">{t.nav.admin}</Link>}
           </div>

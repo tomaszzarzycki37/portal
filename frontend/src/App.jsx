@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage'
 import CarsListPage from './pages/CarsListPage'
 import BrandDetailPage from './pages/BrandDetailPage'
 import CarDetailPage from './pages/CarDetailPage'
+import OpinionsPage from './pages/OpinionsPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ProfilePage from './pages/ProfilePage'
@@ -22,6 +23,7 @@ function App() {
             <Route path="/cars" element={<CarsListPage />} />
             <Route path="/cars/brands/:slug" element={<BrandDetailPage />} />
             <Route path="/cars/:id" element={<CarDetailPage />} />
+            <Route path="/opinions" element={<OpinionsPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/profile" element={<ProfilePage />} />
