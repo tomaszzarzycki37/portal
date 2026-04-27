@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useState } from 'react'
 import { useTranslation } from '../i18n'
 import { isAdminUser } from '../utils/auth'
@@ -19,11 +19,16 @@ function resolveBrandLogoSrc(url) {
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const location = useLocation()
   const token = localStorage.getItem('access_token')
   const isAdmin = isAdminUser()
   const { t, lang, setLang } = useTranslation()
   const brandLogoSrc = resolveBrandLogoSrc(t.nav.brandLogoUrl)
   const hasBrandLogo = Boolean(brandLogoSrc)
+  const detailMatch = location.pathname.match(/^\/cars\/([^/]+)$/)
+  const reviewsMatch = location.pathname.match(/^\/cars\/([^/]+)\/reviews$/)
+  const carIdForReviews = detailMatch?.[1] || reviewsMatch?.[1] || null
+  const reviewsPath = carIdForReviews ? `/cars/${carIdForReviews}/reviews` : ''
 
   return (
     <header className="site-header">
@@ -40,6 +45,7 @@ export default function Header() {
         <div className="main-nav desktop-only">
           <Link to="/cars" className="nav-link">{t.nav.cars}</Link>
           <Link to="/opinions" className="nav-link">{t.nav.opinions}</Link>
+          {reviewsPath && <Link to={reviewsPath} className="nav-link">{t.nav.reviews}</Link>}
           {token && <Link to="/profile" className="nav-link">{t.nav.profile}</Link>}
           {token && isAdmin && <Link to="/admin" className="nav-link">{t.nav.admin}</Link>}
         </div>
@@ -128,6 +134,7 @@ export default function Header() {
             )}
             <Link to="/cars" className="nav-link">{t.nav.cars}</Link>
             <Link to="/opinions" className="nav-link">{t.nav.opinions}</Link>
+            {reviewsPath && <Link to={reviewsPath} className="nav-link">{t.nav.reviews}</Link>}
             {token && <Link to="/profile" className="nav-link">{t.nav.profile}</Link>}
             {token && isAdmin && <Link to="/admin" className="nav-link">{t.nav.admin}</Link>}
           </div>
