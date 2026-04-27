@@ -1292,6 +1292,13 @@ a {
   gap: 0.45rem;
 }
 
+.detail-shortcuts-row {
+  margin-top: 0.7rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .detail-badge {
   border: 1px solid #cbd5e1;
   background: #f8fafc;
