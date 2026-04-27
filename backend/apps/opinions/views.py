@@ -14,7 +14,7 @@ from .serializers import (
 
 class OpinionViewSet(viewsets.ModelViewSet):
     """Opinion/Review API endpoint"""
-    queryset = Opinion.objects.filter(is_approved=True).select_related('author', 'car_model')
+    queryset = Opinion.objects.filter(is_approved=True).select_related('author', 'car_model', 'car_model__brand')
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['car_model', 'author', 'rating']

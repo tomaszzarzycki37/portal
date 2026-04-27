@@ -4,12 +4,14 @@ import { useTranslation } from '../i18n'
 import api from '../services/api'
 
 export default function OpinionsPage() {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const [opinions, setOpinions] = useState([])
   const [loading, setLoading] = useState(true)
   const [ratingFilter, setRatingFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedBrand, setSelectedBrand] = useState('all')
+  const [selectedModel, setSelectedModel] = useState('all')
 
   useEffect(() => {
     const fetchOpinions = async () => {
@@ -27,24 +29,56 @@ export default function OpinionsPage() {
     fetchOpinions()
   }, [])
 
+  const brands = useMemo(() => {
+    const values = new Set(opinions.map((opinion) => String(opinion.car_brand_name || '').trim()).filter(Boolean))
+    return Array.from(values).sort((a, b) => a.localeCompare(b))
+  }, [opinions])
+
+  const models = useMemo(() => {
+    const byModelId = new Map()
+
+    opinions.forEach((opinion) => {
+      if (selectedBrand !== 'all' && opinion.car_brand_name !== selectedBrand) return
+      if (!opinion.car_id || !opinion.car_name) return
+      byModelId.set(opinion.car_id, opinion.car_name)
+    })
+
+    return Array.from(byModelId.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [opinions, selectedBrand])
+
+  useEffect(() => {
+    if (selectedModel === 'all') return
+    const stillAvailable = models.some((model) => String(model.id) === String(selectedModel))
+    if (!stillAvailable) {
+      setSelectedModel('all')
+    }
+  }, [models, selectedModel])
+
   const filteredAndSortedOpinions = useMemo(() => {
     let filtered = opinions
 
-    // Filter by rating
+    if (selectedBrand !== 'all') {
+      filtered = filtered.filter((op) => op.car_brand_name === selectedBrand)
+    }
+
+    if (selectedModel !== 'all') {
+      filtered = filtered.filter((op) => String(op.car_id) === String(selectedModel))
+    }
+
     if (ratingFilter !== 'all') {
       filtered = filtered.filter((op) => op.rating === Number(ratingFilter))
     }
 
-    // Filter by search term
     if (searchTerm.trim()) {
       const normalizedSearch = searchTerm.toLowerCase()
       filtered = filtered.filter((op) => {
-        const searchableText = `${op.title} ${op.content} ${op.car_name} ${op.author?.username || ''}`.toLowerCase()
+        const searchableText = `${op.title || ''} ${op.content || ''} ${op.car_name || ''} ${op.car_brand_name || ''} ${op.author?.username || ''}`.toLowerCase()
         return searchableText.includes(normalizedSearch)
       })
     }
 
-    // Sort
     const sorted = [...filtered]
     if (sortBy === 'newest') {
       sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -57,11 +91,43 @@ export default function OpinionsPage() {
     }
 
     return sorted
-  }, [opinions, ratingFilter, sortBy, searchTerm])
+  }, [opinions, selectedBrand, selectedModel, ratingFilter, sortBy, searchTerm])
+
+  const groupedByBrandAndModel = useMemo(() => {
+    const brandMap = new Map()
+
+    filteredAndSortedOpinions.forEach((opinion) => {
+      const brandName = opinion.car_brand_name || t.pages.unknownBrand
+      const modelName = opinion.car_name || '-'
+      const modelId = opinion.car_id || `no-id-${modelName}`
+
+      if (!brandMap.has(brandName)) {
+        brandMap.set(brandName, new Map())
+      }
+
+      const modelMap = brandMap.get(brandName)
+      if (!modelMap.has(modelId)) {
+        modelMap.set(modelId, { modelName, modelId, opinions: [] })
+      }
+
+      modelMap.get(modelId).opinions.push(opinion)
+    })
+
+    return Array.from(brandMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([brandName, modelMap]) => ({
+        brandName,
+        models: Array.from(modelMap.values()).sort((a, b) => a.modelName.localeCompare(b.modelName)),
+      }))
+  }, [filteredAndSortedOpinions, t.pages.unknownBrand])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    return date.toLocaleDateString(lang === 'pl' ? 'pl-PL' : 'en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
   }
 
   return (
@@ -69,7 +135,6 @@ export default function OpinionsPage() {
       <h1 className="page-title">{t.nav.opinions}</h1>
       <p className="admin-subtitle">{t.pages.opinionsCatalogIntro}</p>
 
-      {/* Filters */}
       <div className="opinions-filters">
         <div className="filter-group">
           <label className="form-label">{t.pages.searchModels}</label>
@@ -83,12 +148,28 @@ export default function OpinionsPage() {
         </div>
 
         <div className="filter-group">
+          <label className="form-label">{t.pages.brandLabel}</label>
+          <select className="form-input" value={selectedBrand} onChange={(e) => setSelectedBrand(e.target.value)}>
+            <option value="all">{t.pages.allLabel}</option>
+            {brands.map((brand) => (
+              <option key={brand} value={brand}>{brand}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label className="form-label">{t.pages.modelFilterLabel}</label>
+          <select className="form-input" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
+            <option value="all">{t.pages.allLabel}</option>
+            {models.map((model) => (
+              <option key={model.id} value={model.id}>{model.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-group">
           <label className="form-label">{t.pages.averageRating}</label>
-          <select
-            className="form-input"
-            value={ratingFilter}
-            onChange={(e) => setRatingFilter(e.target.value)}
-          >
+          <select className="form-input" value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)}>
             <option value="all">{t.pages.allLabel}</option>
             <option value="5">⭐ 5</option>
             <option value="4">⭐ 4</option>
@@ -118,39 +199,44 @@ export default function OpinionsPage() {
           <p className="admin-subtitle">
             {filteredAndSortedOpinions.length} {filteredAndSortedOpinions.length === 1 ? t.pages.opinionSingle : t.pages.opinionPlural}
           </p>
-          <div className="opinions-list">
-            {filteredAndSortedOpinions.map((opinion) => (
-              <article key={opinion.id} className="opinion-list-item">
-                <div className="opinion-list-header">
-                  <h3 className="opinion-title">{opinion.title}</h3>
-                  <span className="opinion-rating">★ {opinion.rating}/5</span>
-                </div>
 
-                <div className="opinion-list-meta">
-                  <span className="opinion-author">{opinion.author?.username || t.pages.unknownAuthor}</span>
-                  <span className="opinion-date">{formatDate(opinion.created_at)}</span>
-                  {opinion.car_name && (
-                    <Link to={`/cars/${opinion.car_model}`} className="opinion-car-link">
-                      {opinion.car_name} →
-                    </Link>
-                  )}
-                </div>
+          {groupedByBrandAndModel.map((brandGroup) => (
+            <section key={brandGroup.brandName} style={{ marginBottom: '1.5rem' }}>
+              <h2 className="detail-section-title">{brandGroup.brandName}</h2>
 
-                <p className="opinion-content">{opinion.content}</p>
+              {brandGroup.models.map((modelGroup) => (
+                <div key={`${brandGroup.brandName}-${modelGroup.modelId}`} style={{ marginBottom: '1rem' }}>
+                  <h3 className="opinion-title" style={{ marginBottom: '0.75rem' }}>{modelGroup.modelName}</h3>
+                  <div className="opinions-list">
+                    {modelGroup.opinions.map((opinion) => (
+                      <article key={opinion.id} className="opinion-list-item">
+                        <div className="opinion-list-header">
+                          <h4 className="opinion-title">{opinion.title}</h4>
+                          <span className="opinion-rating">★ {opinion.rating}/5</span>
+                        </div>
 
-                <div className="opinion-list-footer">
-                  <span className="opinion-votes">
-                    👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}
-                  </span>
-                  {opinion.car_model && (
-                    <Link to={`/cars/${opinion.car_model}`} className="opinion-view-car">
-                      {t.pages.viewCar}
-                    </Link>
-                  )}
+                        <div className="opinion-list-meta">
+                          <span className="opinion-author">{opinion.author?.username || t.pages.unknownAuthor}</span>
+                          <span className="opinion-date">{formatDate(opinion.created_at)}</span>
+                        </div>
+
+                        <p className="opinion-content">{opinion.content}</p>
+
+                        <div className="opinion-list-footer">
+                          <span className="opinion-votes">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
+                          {opinion.car_id && (
+                            <Link to={`/cars/${opinion.car_id}`} className="opinion-view-car">
+                              {t.pages.viewCar}
+                            </Link>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
                 </div>
-              </article>
-            ))}
-          </div>
+              ))}
+            </section>
+          ))}
         </div>
       )}
     </div>

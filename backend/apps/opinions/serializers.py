@@ -26,13 +26,16 @@ class VoteSerializer(serializers.ModelSerializer):
 
 class OpinionListSerializer(serializers.ModelSerializer):
     author = UserBriefSerializer(read_only=True)
+    car_id = serializers.IntegerField(source='car_model.id', read_only=True)
     car_name = serializers.CharField(source='car_model.name', read_only=True)
+    car_brand_name = serializers.CharField(source='car_model.brand.name', read_only=True)
+    content = serializers.CharField(read_only=True)
     comments_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Opinion
-        fields = ['id', 'car_name', 'title', 'rating', 'author', 'helpful_count', 
-                  'unhelpful_count', 'comments_count', 'is_verified_owner', 'created_at']
+        fields = ['id', 'car_id', 'car_name', 'car_brand_name', 'title', 'content', 'rating', 'author', 
+                  'helpful_count', 'unhelpful_count', 'comments_count', 'is_verified_owner', 'created_at']
 
     def get_comments_count(self, obj):
         return obj.comments.count()
