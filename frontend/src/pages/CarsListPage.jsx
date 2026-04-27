@@ -109,6 +109,13 @@ export default function CarsListPage() {
     return brands.filter((brand) => (matchedCountByBrand.get(brand.id) || 0) > 0)
   }, [brands, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter, matchedCountByBrand])
 
+  const hasActiveFilters =
+    Boolean(searchTerm.trim()) ||
+    Boolean(engineSearch.trim()) ||
+    vehicleTypeFilter !== 'all' ||
+    productionStatusFilter !== 'all' ||
+    driveTypeFilter !== 'all'
+
   return (
     <div>
       <h1 className="page-title">{t.pages.carsCatalog}</h1>
@@ -188,7 +195,9 @@ export default function CarsListPage() {
           </section>
 
           <div className="brand-catalog-list">
-            {visibleBrands.map((brand) => {
+            {visibleBrands.length === 0 ? (
+              <div className="page-card">{t.pages.noModelsFound}</div>
+            ) : visibleBrands.map((brand) => {
             const brandLogo = getBrandLogoOrPlaceholder(brand.logo || '', brand.name)
             const modelCount = Number.isFinite(Number(brand.model_count)) ? Number(brand.model_count) : 0
             const matchedCount = matchedCountByBrand.get(brand.id) || modelCount
@@ -228,7 +237,7 @@ export default function CarsListPage() {
 
                 <div style={{ marginTop: '1rem', display: 'grid', gap: '0.75rem' }}>
                   {brandCars.length === 0 ? (
-                    <div className="page-card">{t.pages.noModelsInBrand}</div>
+                    <div className="page-card">{hasActiveFilters ? t.pages.noModelsFound : t.pages.noModelsInBrand}</div>
                   ) : (
                     brandCars.map((car) => (
                       <article key={car.id} className="brand-catalog-card" style={{ margin: 0 }}>
