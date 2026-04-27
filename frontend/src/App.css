@@ -411,6 +411,151 @@
 .home-search-empty {
 	margin-top: 0.8rem;
 	border: 1px dashed #cbd5e1;
+
+	/* Opinions Page */
+	.opinions-page-wrap {
+		padding: 1.5rem;
+		max-width: 1100px;
+		margin: 0 auto;
+	}
+
+	.opinions-filters {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 1rem;
+		margin: 2rem 0;
+		padding: 1.5rem;
+		background: #f8fafc;
+		border-radius: 1rem;
+		border: 1px solid #e2e8f0;
+	}
+
+	.filter-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.filter-group .form-label {
+		font-weight: 600;
+		font-size: 0.9rem;
+	}
+
+	.opinions-list-wrap {
+		margin: 2rem 0;
+	}
+
+	.opinions-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	.opinion-list-item {
+		padding: 1.5rem;
+		background: white;
+		border: 1px solid #e2e8f0;
+		border-radius: 1rem;
+		transition: all 0.2s ease;
+	}
+
+	.opinion-list-item:hover {
+		border-color: #f59e0b;
+		box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+	}
+
+	.opinion-list-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 1rem;
+		margin-bottom: 0.8rem;
+	}
+
+	.opinion-title {
+		margin: 0;
+		font-size: 1.1rem;
+		color: #111827;
+		flex: 1;
+	}
+
+	.opinion-rating {
+		display: inline-block;
+		padding: 0.4rem 0.8rem;
+		background: #fef3c7;
+		color: #92400e;
+		border-radius: 0.5rem;
+		font-weight: 600;
+		font-size: 0.9rem;
+		white-space: nowrap;
+	}
+
+	.opinion-list-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+		margin-bottom: 1rem;
+		font-size: 0.9rem;
+		color: #64748b;
+	}
+
+	.opinion-author {
+		font-weight: 600;
+		color: #334155;
+	}
+
+	.opinion-date {
+		color: #94a3b8;
+	}
+
+	.opinion-car-link {
+		color: #f59e0b;
+		text-decoration: none;
+		font-weight: 600;
+		transition: color 0.2s;
+	}
+
+	.opinion-car-link:hover {
+		color: #d97706;
+		text-decoration: underline;
+	}
+
+	.opinion-content {
+		margin: 1rem 0;
+		line-height: 1.6;
+		color: #334155;
+	}
+
+	.opinion-list-footer {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+		margin-top: 1rem;
+		padding-top: 1rem;
+		border-top: 1px solid #f1f5f9;
+		font-size: 0.9rem;
+		color: #64748b;
+	}
+
+	.opinion-votes {
+		font-weight: 500;
+	}
+
+	.opinion-view-car {
+		padding: 0.5rem 1rem;
+		background: #f59e0b;
+		color: white;
+		text-decoration: none;
+		border-radius: 0.5rem;
+		font-weight: 600;
+		transition: background 0.2s;
+	}
+
+	.opinion-view-car:hover {
+		background: #d97706;
+		text-decoration: underline;
+	}
 	border-radius: 0.7rem;
 	padding: 0.75rem;
 	color: #475569;
