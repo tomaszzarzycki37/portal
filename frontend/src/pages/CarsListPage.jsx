@@ -256,15 +256,20 @@ export default function CarsListPage() {
                       <article key={car.id} className="brand-catalog-card" style={{ margin: 0 }}>
                         <div className="brand-catalog-header brand-catalog-header-static">
                           <div className="brand-catalog-identity">
+                            {car.image ? (
+                              <img src={car.image} alt={car.name} className="brand-catalog-logo" style={{ borderRadius: '0.5rem', objectFit: 'cover' }} />
+                            ) : (
+                              <div className="brand-catalog-logo" style={{ background: '#e2e8f0', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#94a3b8' }}>🚗</div>
+                            )}
                             <div>
                               <div className="brand-catalog-title-row">
-                                <h3 className="brand-catalog-title">{car.name}</h3>
-                                <span className="brand-catalog-badge">{car.vehicle_type || '-'}</span>
+                                <h3 className="brand-catalog-title" style={{ fontSize: '1rem' }}>{car.name}</h3>
+                                <span className="brand-catalog-badge" style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem' }}>{car.vehicle_type || '-'}</span>
                               </div>
-                              <div className="brand-catalog-meta-row">
-                                <span className="brand-catalog-meta-pill">{t.pages.engine}: {car.engine_type || '-'}</span>
-                                <span className="brand-catalog-meta-pill">{t.pages.year}: {car.year_introduced || '-'}</span>
-                                <span className="brand-catalog-meta-pill">{t.pages.productionStatus}: {car.production_status || '-'}</span>
+                              <div className="brand-catalog-meta-row" style={{ marginTop: '0.3rem', gap: '0.3rem' }}>
+                                <span className="brand-catalog-meta-pill" style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.12rem 0.4rem' }}>{t.pages.engine}: {car.engine_type || '-'}</span>
+                                <span className="brand-catalog-meta-pill" style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.12rem 0.4rem' }}>{t.pages.year}: {car.year_introduced || '-'}</span>
+                                <span className="brand-catalog-meta-pill" style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.12rem 0.4rem' }}>{t.pages.productionStatus}: {car.production_status || '-'}</span>
                               </div>
                             </div>
                           </div>
