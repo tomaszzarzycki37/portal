@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import api from '../services/api'
 import { useTranslation } from '../i18n'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
+import { getCarImage } from '../utils/carImages'
 
 function detectDriveType(engineType) {
   const text = String(engineType || '').toLowerCase()
@@ -254,22 +255,22 @@ export default function CarsListPage() {
                   ) : (
                     brandCars.map((car) => (
                       <article key={car.id} className="brand-catalog-card" style={{ margin: 0, boxShadow: 'none', borderRadius: '0.6rem', background: '#f8fafc' }}>
-                        <div className="brand-catalog-header brand-catalog-header-static" style={{ padding: '0.5rem 0.75rem' }}>
-                          <div className="brand-catalog-identity" style={{ gridTemplateColumns: '88px 1fr' }}>
-                            {car.image ? (
-                              <img src={car.image} alt={car.name} style={{ width: '88px', height: '58px', objectFit: 'cover', borderRadius: '0.4rem', border: '1px solid #dbe4f0', flexShrink: 0 }} />
-                            ) : (
-                              <div style={{ width: '88px', height: '58px', background: '#e2e8f0', borderRadius: '0.4rem', border: '1px solid #dbe4f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', color: '#94a3b8', flexShrink: 0 }}>🚗</div>
-                            )}
+                        <div className="brand-catalog-header brand-catalog-header-static" style={{ padding: '0.4rem 0.65rem' }}>
+                          <div className="brand-catalog-identity" style={{ gridTemplateColumns: '76px 1fr' }}>
+                            <img
+                              src={getCarImage(car)}
+                              alt={car.name}
+                              style={{ width: '76px', height: '48px', objectFit: 'cover', borderRadius: '0.4rem', border: '1px solid #dbe4f0', flexShrink: 0 }}
+                            />
                             <div>
                               <div className="brand-catalog-title-row">
-                                <h3 className="brand-catalog-title" style={{ fontSize: '0.95rem' }}>{car.name}</h3>
-                                <span className="brand-catalog-badge" style={{ fontSize: '0.68rem', padding: '0.12rem 0.4rem' }}>{car.vehicle_type || '-'}</span>
+                                <h3 className="brand-catalog-title" style={{ fontSize: '0.88rem' }}>{car.name}</h3>
+                                <span className="brand-catalog-badge" style={{ fontSize: '0.63rem', padding: '0.1rem 0.35rem' }}>{car.vehicle_type || '-'}</span>
                               </div>
-                              <div className="brand-catalog-meta-row" style={{ marginTop: '0.25rem', gap: '0.25rem' }}>
-                                <span className="brand-catalog-meta-pill" style={{ fontSize: '0.68rem', fontWeight: 600, padding: '0.1rem 0.35rem' }}>{t.pages.engine}: {car.engine_type || '-'}</span>
-                                <span className="brand-catalog-meta-pill" style={{ fontSize: '0.68rem', fontWeight: 600, padding: '0.1rem 0.35rem' }}>{t.pages.year}: {car.year_introduced || '-'}</span>
-                                <span className="brand-catalog-meta-pill" style={{ fontSize: '0.68rem', fontWeight: 600, padding: '0.1rem 0.35rem' }}>{t.pages.productionStatus}: {car.production_status || '-'}</span>
+                              <div className="brand-catalog-meta-row" style={{ marginTop: '0.2rem', gap: '0.2rem' }}>
+                                <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 600, padding: '0.08rem 0.3rem' }}>{t.pages.engine}: {car.engine_type || '-'}</span>
+                                <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 600, padding: '0.08rem 0.3rem' }}>{t.pages.year}: {car.year_introduced || '-'}</span>
+                                <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 600, padding: '0.08rem 0.3rem' }}>{t.pages.productionStatus}: {car.production_status || '-'}</span>
                               </div>
                             </div>
                           </div>
