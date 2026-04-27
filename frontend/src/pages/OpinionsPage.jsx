@@ -2,10 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
+import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 
 export default function OpinionsPage() {
   const { t, lang } = useTranslation()
   const [opinions, setOpinions] = useState([])
+  const [brandCatalog, setBrandCatalog] = useState([])
+  const [carBrandById, setCarBrandById] = useState({})
   const [loading, setLoading] = useState(true)
   const [ratingFilter, setRatingFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
@@ -14,11 +17,28 @@ export default function OpinionsPage() {
   const [selectedModel, setSelectedModel] = useState('all')
 
   useEffect(() => {
-    const fetchOpinions = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
-        const response = await api.get('/opinions/?page_size=200&ordering=-created_at')
-        setOpinions(response.data.results || response.data)
+        const [opinionsResponse, brandsResponse, carsResponse] = await Promise.all([
+          api.get('/opinions/?page_size=200&ordering=-created_at'),
+          api.get('/cars/brands/?page_size=200'),
+          api.get('/cars/?page_size=300'),
+        ])
+
+        const opinionsList = opinionsResponse.data.results || opinionsResponse.data || []
+        const brandsList = brandsResponse.data.results || brandsResponse.data || []
+        const carsList = carsResponse.data.results || carsResponse.data || []
+
+        const nextCarBrandById = {}
+        carsList.forEach((car) => {
+          if (!car?.id) return
+          nextCarBrandById[car.id] = car.brand_name || ''
+        })
+
+        setOpinions(opinionsList)
+        setBrandCatalog(brandsList)
+        setCarBrandById(nextCarBrandById)
       } catch (error) {
         console.error('Error fetching opinions:', error)
       } finally {
@@ -26,19 +46,54 @@ export default function OpinionsPage() {
       }
     }
 
-    fetchOpinions()
+    fetchData()
   }, [])
 
-  const brands = useMemo(() => {
-    const values = new Set(opinions.map((opinion) => String(opinion.car_brand_name || '').trim()).filter(Boolean))
+  const normalizedOpinions = useMemo(() => {
+    return opinions.map((opinion) => {
+      const fallbackBrandName = carBrandById[opinion.car_id] || ''
+      const brandName = String(opinion.car_brand_name || fallbackBrandName || '').trim()
+      return {
+        ...opinion,
+        _brandName: brandName,
+      }
+    })
+  }, [opinions, carBrandById])
+
+  const brandOpinionsCount = useMemo(() => {
+    const counts = new Map()
+    normalizedOpinions.forEach((opinion) => {
+      const brandName = opinion._brandName || t.pages.unknownBrand
+      counts.set(brandName, (counts.get(brandName) || 0) + 1)
+    })
+    return counts
+  }, [normalizedOpinions, t.pages.unknownBrand])
+
+  const brandSections = useMemo(() => {
+    const logoByBrandName = new Map()
+    brandCatalog.forEach((brand) => {
+      logoByBrandName.set(String(brand.name || '').trim(), brand.logo || '')
+    })
+
+    return Array.from(brandOpinionsCount.entries())
+      .map(([brandName, count]) => ({
+        brandName,
+        count,
+        logo: logoByBrandName.get(brandName) || '',
+      }))
+      .sort((a, b) => a.brandName.localeCompare(b.brandName))
+  }, [brandCatalog, brandOpinionsCount])
+
+  const availableBrands = useMemo(() => {
+    const values = new Set(normalizedOpinions.map((opinion) => String(opinion._brandName || '').trim()).filter(Boolean))
     return Array.from(values).sort((a, b) => a.localeCompare(b))
-  }, [opinions])
+  }, [normalizedOpinions])
 
   const models = useMemo(() => {
     const byModelId = new Map()
 
-    opinions.forEach((opinion) => {
-      if (selectedBrand !== 'all' && opinion.car_brand_name !== selectedBrand) return
+    normalizedOpinions.forEach((opinion) => {
+      if (selectedBrand !== 'all' && opinion._brandName !== selectedBrand) return
       if (!opinion.car_id || !opinion.car_name) return
       byModelId.set(opinion.car_id, opinion.car_name)
     })
@@ -46,7 +101,7 @@ export default function OpinionsPage() {
     return Array.from(byModelId.entries())
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name))
-  }, [opinions, selectedBrand])
+  }, [normalizedOpinions, selectedBrand])
 
   useEffect(() => {
     if (selectedModel === 'all') return
@@ -57,10 +112,10 @@ export default function OpinionsPage() {
   }, [models, selectedModel])
 
   const filteredAndSortedOpinions = useMemo(() => {
-    let filtered = opinions
+    let filtered = normalizedOpinions
 
     if (selectedBrand !== 'all') {
-      filtered = filtered.filter((op) => op.car_brand_name === selectedBrand)
+      filtered = filtered.filter((op) => op._brandName === selectedBrand)
     }
 
     if (selectedModel !== 'all') {
@@ -74,7 +129,7 @@ export default function OpinionsPage() {
     if (searchTerm.trim()) {
       const normalizedSearch = searchTerm.toLowerCase()
       filtered = filtered.filter((op) => {
-        const searchableText = `${op.title || ''} ${op.content || ''} ${op.car_name || ''} ${op.car_brand_name || ''} ${op.author?.username || ''}`.toLowerCase()
+        const searchableText = `${op.title || ''} ${op.content || ''} ${op.car_name || ''} ${op._brandName || ''} ${op.author?.username || ''}`.toLowerCase()
         return searchableText.includes(normalizedSearch)
       })
     }
@@ -91,13 +146,13 @@ export default function OpinionsPage() {
     }
 
     return sorted
-  }, [opinions, selectedBrand, selectedModel, ratingFilter, sortBy, searchTerm])
+  }, [normalizedOpinions, selectedBrand, selectedModel, ratingFilter, sortBy, searchTerm])
 
   const groupedByBrandAndModel = useMemo(() => {
     const brandMap = new Map()
 
     filteredAndSortedOpinions.forEach((opinion) => {
-      const brandName = opinion.car_brand_name || t.pages.unknownBrand
+      const brandName = opinion._brandName || t.pages.unknownBrand
       const modelName = opinion.car_name || '-'
       const modelId = opinion.car_id || `no-id-${modelName}`
 
@@ -135,6 +190,66 @@ export default function OpinionsPage() {
       <h1 className="page-title">{t.nav.opinions}</h1>
       <p className="admin-subtitle">{t.pages.opinionsCatalogIntro}</p>
 
+      {!loading && brandSections.length > 0 && (
+        <section className="brand-catalog-list" style={{ marginBottom: '1rem' }}>
+          <article className="brand-catalog-card">
+            <div className="brand-catalog-header brand-catalog-header-static">
+              <div className="brand-catalog-identity">
+                <div>
+                  <div className="brand-catalog-title-row">
+                    <h2 className="brand-catalog-title">{t.pages.allLabel}</h2>
+                    <span className="brand-catalog-badge">{normalizedOpinions.length} {t.pages.opinionPlural}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="brand-catalog-actions">
+                <button
+                  type="button"
+                  className="catalog-action-btn"
+                  onClick={() => {
+                    setSelectedBrand('all')
+                    setSelectedModel('all')
+                  }}
+                >
+                  {t.pages.allLabel}
+                </button>
+              </div>
+            </div>
+          </article>
+
+          {brandSections.map((section) => {
+            const logo = getBrandLogoOrPlaceholder(section.logo, section.brandName)
+            return (
+              <article key={section.brandName} className="brand-catalog-card">
+                <div className="brand-catalog-header brand-catalog-header-static">
+                  <div className="brand-catalog-identity">
+                    <img src={logo} alt={section.brandName} className="brand-catalog-logo" />
+                    <div>
+                      <div className="brand-catalog-title-row">
+                        <h2 className="brand-catalog-title">{section.brandName}</h2>
+                        <span className="brand-catalog-badge">{section.count} {section.count === 1 ? t.pages.opinionSingle : t.pages.opinionPlural}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="brand-catalog-actions">
+                    <button
+                      type="button"
+                      className="catalog-action-btn"
+                      onClick={() => {
+                        setSelectedBrand(section.brandName)
+                        setSelectedModel('all')
+                      }}
+                    >
+                      {selectedBrand === section.brandName ? t.pages.modelFilterLabel : t.pages.brandLabel}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            )
+          })}
+        </section>
+      )}
+
       <div className="opinions-filters">
         <div className="filter-group">
           <label className="form-label">{t.pages.searchModels}</label>
@@ -149,9 +264,16 @@ export default function OpinionsPage() {
 
         <div className="filter-group">
           <label className="form-label">{t.pages.brandLabel}</label>
-          <select className="form-input" value={selectedBrand} onChange={(e) => setSelectedBrand(e.target.value)}>
+          <select
+            className="form-input"
+            value={selectedBrand}
+            onChange={(e) => {
+              setSelectedBrand(e.target.value)
+              setSelectedModel('all')
+            }}
+          >
             <option value="all">{t.pages.allLabel}</option>
-            {brands.map((brand) => (
+            {availableBrands.map((brand) => (
               <option key={brand} value={brand}>{brand}</option>
             ))}
           </select>
