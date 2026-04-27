@@ -25,8 +25,9 @@ class CarModelListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CarModel
-        fields = ['id', 'brand_id', 'brand_name', 'name', 'slug', 'vehicle_type', 'year_introduced', 
-                  'image', 'price_range', 'avg_rating', 'opinions_count', 'is_featured']
+        fields = ['id', 'brand_id', 'brand_name', 'name', 'slug', 'vehicle_type', 'year_introduced',
+                  'description', 'engine_type', 'production_status', 'image', 'price_range',
+                  'avg_rating', 'opinions_count', 'is_featured']
 
     def get_avg_rating(self, obj):
         return round(obj.avg_rating, 1) if obj.avg_rating else 0
