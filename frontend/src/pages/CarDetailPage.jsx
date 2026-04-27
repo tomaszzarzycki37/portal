@@ -219,6 +219,7 @@ export default function CarDetailPage() {
 
   const currentYear = new Date().getFullYear()
   const modelAge = car.year_introduced ? Math.max(currentYear - car.year_introduced, 0) : null
+  const latestReviews = opinions.slice(0, 3)
 
   return (
     <div className="detail-wrap">
@@ -332,6 +333,36 @@ export default function CarDetailPage() {
             </div>
           </div>
         </article>
+      </section>
+
+      <section className="detail-reviews-card">
+        <div className="detail-section-header">
+          <div>
+            <h2 className="detail-section-title">{t.pages.reviewsSectionTitle}</h2>
+            <p className="detail-section-subtitle">{t.pages.reviewsSectionIntro}</p>
+          </div>
+          <Link to={`/cars/${car.id}/reviews`} className="btn btn-primary btn-sm">
+            {t.pages.openReviewsPage}
+          </Link>
+        </div>
+
+        {latestReviews.length === 0 ? (
+          <div className="page-card">{t.pages.noReviewsYet}</div>
+        ) : (
+          <div className="detail-reviews-preview-grid">
+            {latestReviews.map((review) => (
+              <article key={review.id} className="opinion-card-item">
+                <h3 className="opinion-title">{review.title}</h3>
+                <p className="opinion-meta">{review.author?.username || t.pages.unknownAuthor}</p>
+                <p className="opinion-text">{review.content}</p>
+                <div className="opinion-rating-row">
+                  <span className="rating">★ {review.rating}</span>
+                  <span className="opinion-counts">👍 {review.helpful_count} | 👎 {review.unhelpful_count}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="detail-opinions">
