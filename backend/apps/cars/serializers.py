@@ -18,13 +18,14 @@ class CarImageSerializer(serializers.ModelSerializer):
 
 
 class CarModelListSerializer(serializers.ModelSerializer):
+    brand_id = serializers.IntegerField(source='brand.id', read_only=True)
     brand_name = serializers.CharField(source='brand.name', read_only=True)
     avg_rating = serializers.SerializerMethodField()
     opinions_count = serializers.SerializerMethodField()
 
     class Meta:
         model = CarModel
-        fields = ['id', 'brand_name', 'name', 'slug', 'vehicle_type', 'year_introduced', 
+        fields = ['id', 'brand_id', 'brand_name', 'name', 'slug', 'vehicle_type', 'year_introduced', 
                   'image', 'price_range', 'avg_rating', 'opinions_count', 'is_featured']
 
     def get_avg_rating(self, obj):

@@ -75,7 +75,8 @@ export default function CarsListPage() {
     const groups = new Map()
 
     filteredCars.forEach((car) => {
-      const brandKey = car.brand
+      const brandKey = car.brand_id
+      if (!brandKey) return
       if (!groups.has(brandKey)) {
         groups.set(brandKey, [])
       }
@@ -88,7 +89,8 @@ export default function CarsListPage() {
   const matchedCountByBrand = useMemo(() => {
     const byBrandId = new Map()
     filteredCars.forEach((car) => {
-      const key = car.brand
+      const key = car.brand_id
+      if (!key) return
       byBrandId.set(key, (byBrandId.get(key) || 0) + 1)
     })
     return byBrandId
