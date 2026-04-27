@@ -12,6 +12,18 @@ function detectDriveType(engineType) {
   return 'other'
 }
 
+function formatModelLabel(count, lang) {
+  const value = Number(count) || 0
+  if (lang === 'pl') {
+    const mod10 = value % 10
+    const mod100 = value % 100
+    if (value === 1) return 'model'
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'modele'
+    return 'modeli'
+  }
+  return value === 1 ? 'model' : 'models'
+}
+
 export default function CarsListPage() {
   const [brands, setBrands] = useState([])
   const [cars, setCars] = useState([])
@@ -202,6 +214,7 @@ export default function CarsListPage() {
             const modelCount = Number.isFinite(Number(brand.model_count)) ? Number(brand.model_count) : 0
             const matchedCount = matchedCountByBrand.get(brand.id) || modelCount
             const brandCars = groupedCarsByBrand.get(brand.id) || []
+            const modelLabel = formatModelLabel(matchedCount, lang)
             const brandDescription = lang === 'pl'
               ? (brand.description_pl || brand.description_en || brand.description)
               : (brand.description_en || brand.description)
@@ -215,7 +228,7 @@ export default function CarsListPage() {
                     <div>
                       <div className="brand-catalog-title-row">
                         <h2 className="brand-catalog-title">{brand.name}</h2>
-                        <span className="brand-catalog-badge">{matchedCount} {t.pages.modelsLabel}</span>
+                        <span className="brand-catalog-badge">{matchedCount} {modelLabel}</span>
                       </div>
                       {brandDescription && (
                         <p className="brand-catalog-description">{brandDescription}</p>
@@ -224,7 +237,7 @@ export default function CarsListPage() {
                         {brand.founded_year && (
                           <span className="brand-catalog-meta-pill">{t.pages.brandFounded}: {brand.founded_year}</span>
                         )}
-                        <span className="brand-catalog-meta-pill">{matchedCount} {t.pages.modelsLabel}</span>
+                        <span className="brand-catalog-meta-pill">{matchedCount} {modelLabel}</span>
                       </div>
                     </div>
                   </div>

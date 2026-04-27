@@ -76,6 +76,18 @@ function convertPriceValue(value, fromCurrency, toCurrency) {
   return String(rounded)
 }
 
+function formatModelLabel(count, lang) {
+  const value = Number(count) || 0
+  if (lang === 'pl') {
+    const mod10 = value % 10
+    const mod100 = value % 100
+    if (value === 1) return 'model'
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'modele'
+    return 'modeli'
+  }
+  return value === 1 ? 'model' : 'models'
+}
+
 export default function BrandDetailPage() {
   const { slug } = useParams()
   const { t, lang } = useTranslation()
@@ -481,7 +493,7 @@ export default function BrandDetailPage() {
                 <div className="brand-lineup-group-header">
                   <h3 className="brand-lineup-group-title">{group.label}</h3>
                   <span className="brand-lineup-group-count">
-                    {group.cars.length} {t.pages.modelsLabel}
+                    {group.cars.length} {formatModelLabel(group.cars.length, lang)}
                   </span>
                 </div>
 
