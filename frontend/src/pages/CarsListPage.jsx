@@ -132,7 +132,7 @@ export default function CarsListPage() {
   return (
     <div>
       <h1 className="page-title">{t.pages.carsCatalog}</h1>
-      <p className="admin-subtitle">{t.pages.brandCatalogIntro}</p>
+      <p className="admin-subtitle" style={{marginBottom: '1.5rem'}}>{t.pages.brandCatalogIntro}</p>
 
       {loading ? (
         <div className="page-loading">{t.pages.loading}</div>
