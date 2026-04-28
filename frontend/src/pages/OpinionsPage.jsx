@@ -156,7 +156,7 @@ export default function OpinionsPage() {
       ) : (
         <div className="brand-catalog-list">
           <p className="admin-subtitle" style={{ marginBottom: '0.5rem' }}>
-            {normalizedOpinions.length} {normalizedOpinions.length === 1 ? t.pages.opinionSingle : t.pages.opinionPlural}
+            {t.pages.allOpinionsLabel}: {normalizedOpinions.length}
           </p>
 
           {groupedByBrandAndModel.map((brandGroup) => {
