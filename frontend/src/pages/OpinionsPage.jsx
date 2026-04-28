@@ -10,10 +10,6 @@ export default function OpinionsPage() {
   const [brandCatalog, setBrandCatalog] = useState([])
   const [carBrandById, setCarBrandById] = useState({})
   const [loading, setLoading] = useState(true)
-  const [ratingFilter, setRatingFilter] = useState('all')
-  const [sortBy, setSortBy] = useState('newest')
-  const [selectedBrand, setSelectedBrand] = useState('all')
-  const [selectedModel, setSelectedModel] = useState('all')
   const [expandedBrands, setExpandedBrands] = useState(new Set())
   const [expandedModels, setExpandedModels] = useState(new Set())
 
@@ -93,66 +89,10 @@ export default function OpinionsPage() {
     return map
   }, [brandCatalog])
 
-  const availableBrands = useMemo(() => {
-    const values = new Set(normalizedOpinions.map((opinion) => String(opinion._brandName || '').trim()).filter(Boolean))
-    return Array.from(values).sort((a, b) => a.localeCompare(b))
-  }, [normalizedOpinions])
-
-  const models = useMemo(() => {
-    const byModelId = new Map()
-
-    normalizedOpinions.forEach((opinion) => {
-      if (selectedBrand !== 'all' && opinion._brandName !== selectedBrand) return
-      if (!opinion.car_id || !opinion.car_name) return
-      byModelId.set(opinion.car_id, opinion.car_name)
-    })
-
-    return Array.from(byModelId.entries())
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  }, [normalizedOpinions, selectedBrand])
-
-  useEffect(() => {
-    if (selectedModel === 'all') return
-    const stillAvailable = models.some((model) => String(model.id) === String(selectedModel))
-    if (!stillAvailable) {
-      setSelectedModel('all')
-    }
-  }, [models, selectedModel])
-
-  const filteredAndSortedOpinions = useMemo(() => {
-    let filtered = normalizedOpinions
-
-    if (selectedBrand !== 'all') {
-      filtered = filtered.filter((op) => op._brandName === selectedBrand)
-    }
-
-    if (selectedModel !== 'all') {
-      filtered = filtered.filter((op) => String(op.car_id) === String(selectedModel))
-    }
-
-    if (ratingFilter !== 'all') {
-      filtered = filtered.filter((op) => op.rating === Number(ratingFilter))
-    }
-
-    const sorted = [...filtered]
-    if (sortBy === 'newest') {
-      sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    } else if (sortBy === 'oldest') {
-      sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-    } else if (sortBy === 'highest-rated') {
-      sorted.sort((a, b) => b.rating - a.rating)
-    } else if (sortBy === 'most-helpful') {
-      sorted.sort((a, b) => b.helpful_count - a.helpful_count)
-    }
-
-    return sorted
-  }, [normalizedOpinions, selectedBrand, selectedModel, ratingFilter, sortBy])
-
   const groupedByBrandAndModel = useMemo(() => {
     const brandMap = new Map()
 
-    filteredAndSortedOpinions.forEach((opinion) => {
+    normalizedOpinions.forEach((opinion) => {
       const brandName = opinion._brandName || t.pages.unknownBrand
       const modelName = opinion.car_name || '-'
       const modelId = opinion.car_id || `no-id-${modelName}`
@@ -175,7 +115,7 @@ export default function OpinionsPage() {
         brandName,
         models: Array.from(modelMap.values()).sort((a, b) => a.modelName.localeCompare(b.modelName)),
       }))
-  }, [filteredAndSortedOpinions, t.pages.unknownBrand])
+  }, [normalizedOpinions, t.pages.unknownBrand])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -209,57 +149,6 @@ export default function OpinionsPage() {
       <h1 className="page-title">{t.nav.opinions}</h1>
       <p className="admin-subtitle">{t.pages.opinionsCatalogIntro}</p>
 
-      <div className="opinions-filters">
-        <div className="filter-group">
-          <label className="form-label">{t.pages.brandLabel}</label>
-          <select
-            className="form-input"
-            value={selectedBrand}
-            onChange={(e) => {
-              setSelectedBrand(e.target.value)
-              setSelectedModel('all')
-            }}
-          >
-            <option value="all">{t.pages.allLabel}</option>
-            {availableBrands.map((brand) => (
-              <option key={brand} value={brand}>{brand}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label className="form-label">{t.pages.modelFilterLabel}</label>
-          <select className="form-input" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
-            <option value="all">{t.pages.allLabel}</option>
-            {models.map((model) => (
-              <option key={model.id} value={model.id}>{model.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label className="form-label">{t.pages.averageRating}</label>
-          <select className="form-input" value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)}>
-            <option value="all">{t.pages.allLabel}</option>
-            <option value="5">⭐ 5</option>
-            <option value="4">⭐ 4</option>
-            <option value="3">⭐ 3</option>
-            <option value="2">⭐ 2</option>
-            <option value="1">⭐ 1</option>
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label className="form-label">{t.pages.sortBy}</label>
-          <select className="form-input" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="newest">{t.pages.sortNewest}</option>
-            <option value="oldest">{t.pages.sortOldest}</option>
-            <option value="highest-rated">{t.pages.sortHighestRated}</option>
-            <option value="most-helpful">{t.pages.sortMostHelpful}</option>
-          </select>
-        </div>
-      </div>
-
       {loading ? (
         <div className="page-loading">{t.pages.loading}</div>
       ) : groupedByBrandAndModel.length === 0 ? (
@@ -267,7 +156,7 @@ export default function OpinionsPage() {
       ) : (
         <div className="brand-catalog-list">
           <p className="admin-subtitle" style={{ marginBottom: '0.5rem' }}>
-            {filteredAndSortedOpinions.length} {filteredAndSortedOpinions.length === 1 ? t.pages.opinionSingle : t.pages.opinionPlural}
+            {normalizedOpinions.length} {normalizedOpinions.length === 1 ? t.pages.opinionSingle : t.pages.opinionPlural}
           </p>
 
           {groupedByBrandAndModel.map((brandGroup) => {
