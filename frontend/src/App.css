@@ -872,6 +872,34 @@
 }
 /* ── End Rich Review Cards ─────────────────────────────── */
 
+/* ── Admin structured review form ─────────────────────── */
+.review-struct-section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+}
+
+.review-result-row {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.review-result-row .form-input:first-child {
+	flex: 2;
+}
+
+.review-result-row .form-input:nth-child(2) {
+	flex: 1;
+}
+
+.review-result-row .btn {
+	flex-shrink: 0;
+	padding: 0.3rem 0.6rem;
+	line-height: 1;
+}
+/* ── End Admin structured review form ──────────────────── */
+
 .home-cta h2 {
 	margin: 0 0 0.35rem;
 	font-size: clamp(1.4rem, 3vw, 2rem);

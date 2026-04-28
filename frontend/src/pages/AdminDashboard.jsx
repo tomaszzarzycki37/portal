@@ -19,6 +19,59 @@ const API_ORIGIN = import.meta.env.VITE_API_URL
     ? 'http://localhost:8000'
     : ''
 
+// ── Review content helpers ──────────────────────────────────
+function parseContentToStructured(content) {
+  const lines = (content || '').split('\n')
+  const overview = []
+  const images = ['', '', '']
+  const testResults = []
+  const verdict = []
+  let imageIdx = 0
+  let section = null
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (trimmed === 'Overview') { section = 'overview'; continue }
+    if (trimmed === 'Example photo gallery') { section = 'gallery'; continue }
+    if (trimmed === 'Test results') { section = 'results'; continue }
+    if (trimmed === 'Verdict') { section = 'verdict'; continue }
+    if (!trimmed) continue
+    if (section === 'overview') overview.push(trimmed)
+    else if (section === 'gallery') {
+      const m = trimmed.match(/^\d+\.\s+(https?:\/\/.+)/)
+      if (m && imageIdx < 3) { images[imageIdx++] = m[1].trim() }
+    } else if (section === 'results') {
+      const m = trimmed.match(/^-\s+(.+?):\s+(.+)/)
+      if (m) testResults.push({ key: m[1].trim(), value: m[2].trim() })
+    } else if (section === 'verdict') verdict.push(trimmed)
+  }
+  return {
+    overview: overview.join(' '),
+    images,
+    testResults: testResults.length ? testResults : [{ key: '', value: '' }],
+    verdict: verdict.join(' '),
+  }
+}
+
+function buildContentFromStructured({ overview, images, testResults, verdict }) {
+  const lines = []
+  if (overview) { lines.push('Overview', overview, '') }
+  const validImgs = images.filter((u) => u.trim())
+  if (validImgs.length) {
+    lines.push('Example photo gallery')
+    validImgs.forEach((u, i) => lines.push(`${i + 1}. ${u.trim()}`))
+    lines.push('')
+  }
+  const validResults = testResults.filter((r) => r.key.trim())
+  if (validResults.length) {
+    lines.push('Test results')
+    validResults.forEach((r) => lines.push(`- ${r.key.trim()}: ${r.value.trim()}`))
+    lines.push('')
+  }
+  if (verdict) { lines.push('Verdict', verdict) }
+  return lines.join('\n').trim()
+}
+// ── End review content helpers ──────────────────────────────
+
 function resolveMediaUrl(url) {
   if (!url) return ''
   if (url.startsWith('http://') || url.startsWith('https://')) return url
@@ -136,7 +189,10 @@ export default function AdminDashboard() {
   const [newReviewCarId, setNewReviewCarId] = useState('')
   const [newReviewTitle, setNewReviewTitle] = useState('')
   const [newReviewSummary, setNewReviewSummary] = useState('')
-  const [newReviewContent, setNewReviewContent] = useState('')
+  const [newReviewOverview, setNewReviewOverview] = useState('')
+  const [newReviewImages, setNewReviewImages] = useState(['', '', ''])
+  const [newReviewTestResults, setNewReviewTestResults] = useState([{ key: '', value: '' }])
+  const [newReviewVerdict, setNewReviewVerdict] = useState('')
   const [newReviewPublication, setNewReviewPublication] = useState('')
   const [newReviewPublicationUrl, setNewReviewPublicationUrl] = useState('')
   const [newReviewAuthor, setNewReviewAuthor] = useState('')
@@ -530,10 +586,11 @@ export default function AdminDashboard() {
     setCreateReviewError('')
 
     const parsedCarId = Number.parseInt(newReviewCarId, 10)
+    const builtContent = buildContentFromStructured({ overview: newReviewOverview, images: newReviewImages, testResults: newReviewTestResults, verdict: newReviewVerdict })
     if (
       Number.isNaN(parsedCarId) ||
       !newReviewTitle.trim() ||
-      !newReviewContent.trim() ||
+      !builtContent.trim() ||
       !newReviewPublication.trim() ||
       !newReviewPublishedAt
     ) {
@@ -547,7 +604,7 @@ export default function AdminDashboard() {
         car_model: parsedCarId,
         title: newReviewTitle.trim(),
         summary: newReviewSummary.trim(),
-        content: newReviewContent.trim(),
+        content: builtContent,
         publication_name: newReviewPublication.trim(),
         publication_url: newReviewPublicationUrl.trim(),
         author_name: newReviewAuthor.trim(),
@@ -558,7 +615,10 @@ export default function AdminDashboard() {
 
       setNewReviewTitle('')
       setNewReviewSummary('')
-      setNewReviewContent('')
+      setNewReviewOverview('')
+      setNewReviewImages(['', '', ''])
+      setNewReviewTestResults([{ key: '', value: '' }])
+      setNewReviewVerdict('')
       setNewReviewPublication('')
       setNewReviewPublicationUrl('')
       setNewReviewAuthor('')
@@ -586,6 +646,7 @@ export default function AdminDashboard() {
         car_model: String(detail.car_id || ''),
         title: detail.title || '',
         summary: detail.summary || '',
+        _structured: parseContentToStructured(detail.content || ''),
         content: detail.content || '',
         publication_name: detail.publication_name || '',
         publication_url: detail.publication_url || '',
@@ -609,7 +670,7 @@ export default function AdminDashboard() {
     if (
       !reviewEditDraft.car_model ||
       !reviewEditDraft.title.trim() ||
-      !reviewEditDraft.content.trim() ||
+      !buildContentFromStructured(reviewEditDraft._structured || parseContentToStructured(reviewEditDraft.content || '')).trim() ||
       !reviewEditDraft.publication_name.trim() ||
       !reviewEditDraft.published_at
     ) {
@@ -624,7 +685,7 @@ export default function AdminDashboard() {
         car_model: Number.parseInt(reviewEditDraft.car_model, 10),
         title: reviewEditDraft.title.trim(),
         summary: reviewEditDraft.summary.trim(),
-        content: reviewEditDraft.content.trim(),
+        content: buildContentFromStructured(reviewEditDraft._structured || parseContentToStructured(reviewEditDraft.content || '')),
         publication_name: reviewEditDraft.publication_name.trim(),
         publication_url: reviewEditDraft.publication_url.trim(),
         author_name: reviewEditDraft.author_name.trim(),
@@ -1706,13 +1767,84 @@ export default function AdminDashboard() {
                         </div>
 
                         <div className="admin-form-grid-full">
-                          <label className="form-label" htmlFor={`edit-review-content-${review.id}`}>{t.adminPanel.reviewContent}</label>
+                          <label className="form-label">Overview</label>
                           <textarea
-                            id={`edit-review-content-${review.id}`}
                             className="form-input form-textarea"
-                            rows={6}
-                            value={reviewEditDraft.content}
-                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, content: e.target.value }))}
+                            rows={3}
+                            value={reviewEditDraft._structured?.overview || ''}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, overview: e.target.value } }))}
+                          />
+                        </div>
+
+                        <div className="admin-form-grid-full review-struct-section">
+                          <label className="form-label">Photo URLs</label>
+                          {[0, 1, 2].map((i) => (
+                            <input
+                              key={i}
+                              type="url"
+                              className="form-input"
+                              placeholder={`Photo ${i + 1} URL`}
+                              value={reviewEditDraft._structured?.images?.[i] || ''}
+                              onChange={(e) => {
+                                const imgs = [...(reviewEditDraft._structured?.images || ['', '', ''])]
+                                imgs[i] = e.target.value
+                                setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, images: imgs } }))
+                              }}
+                            />
+                          ))}
+                        </div>
+
+                        <div className="admin-form-grid-full review-struct-section">
+                          <label className="form-label">Test Results</label>
+                          {(reviewEditDraft._structured?.testResults || []).map((row, i) => (
+                            <div key={i} className="review-result-row">
+                              <input
+                                type="text"
+                                className="form-input"
+                                placeholder="Metric (e.g. 0-100 km/h)"
+                                value={row.key}
+                                onChange={(e) => {
+                                  const rows = [...(reviewEditDraft._structured?.testResults || [])]
+                                  rows[i] = { ...rows[i], key: e.target.value }
+                                  setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, testResults: rows } }))
+                                }}
+                              />
+                              <input
+                                type="text"
+                                className="form-input"
+                                placeholder="Value (e.g. 5.8 s)"
+                                value={row.value}
+                                onChange={(e) => {
+                                  const rows = [...(reviewEditDraft._structured?.testResults || [])]
+                                  rows[i] = { ...rows[i], value: e.target.value }
+                                  setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, testResults: rows } }))
+                                }}
+                              />
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => {
+                                  const rows = (reviewEditDraft._structured?.testResults || []).filter((_, idx) => idx !== i)
+                                  setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, testResults: rows.length ? rows : [{ key: '', value: '' }] } }))
+                                }}
+                              >✕</button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{ marginTop: '0.4rem', alignSelf: 'flex-start' }}
+                            onClick={() => setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, testResults: [...(prev._structured?.testResults || []), { key: '', value: '' }] } }))}
+                          >+ Add row</button>
+                        </div>
+
+                        <div className="admin-form-grid-full">
+                          <label className="form-label">Verdict</label>
+                          <textarea
+                            className="form-input form-textarea"
+                            rows={3}
+                            value={reviewEditDraft._structured?.verdict || ''}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, verdict: e.target.value } }))}
                           />
                         </div>
                       </div>
@@ -1852,13 +1984,84 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="admin-form-grid-full">
-                  <label className="form-label" htmlFor="new-review-content">{t.adminPanel.reviewContent}</label>
+                  <label className="form-label">Overview</label>
                   <textarea
-                    id="new-review-content"
                     className="form-input form-textarea"
-                    rows={6}
-                    value={newReviewContent}
-                    onChange={(e) => setNewReviewContent(e.target.value)}
+                    rows={3}
+                    value={newReviewOverview}
+                    onChange={(e) => setNewReviewOverview(e.target.value)}
+                  />
+                </div>
+
+                <div className="admin-form-grid-full review-struct-section">
+                  <label className="form-label">Photo URLs</label>
+                  {[0, 1, 2].map((i) => (
+                    <input
+                      key={i}
+                      type="url"
+                      className="form-input"
+                      placeholder={`Photo ${i + 1} URL`}
+                      value={newReviewImages[i]}
+                      onChange={(e) => {
+                        const imgs = [...newReviewImages]
+                        imgs[i] = e.target.value
+                        setNewReviewImages(imgs)
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <div className="admin-form-grid-full review-struct-section">
+                  <label className="form-label">Test Results</label>
+                  {newReviewTestResults.map((row, i) => (
+                    <div key={i} className="review-result-row">
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Metric (e.g. 0-100 km/h)"
+                        value={row.key}
+                        onChange={(e) => {
+                          const rows = [...newReviewTestResults]
+                          rows[i] = { ...rows[i], key: e.target.value }
+                          setNewReviewTestResults(rows)
+                        }}
+                      />
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Value (e.g. 5.8 s)"
+                        value={row.value}
+                        onChange={(e) => {
+                          const rows = [...newReviewTestResults]
+                          rows[i] = { ...rows[i], value: e.target.value }
+                          setNewReviewTestResults(rows)
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => {
+                          const rows = newReviewTestResults.filter((_, idx) => idx !== i)
+                          setNewReviewTestResults(rows.length ? rows : [{ key: '', value: '' }])
+                        }}
+                      >✕</button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    style={{ marginTop: '0.4rem', alignSelf: 'flex-start' }}
+                    onClick={() => setNewReviewTestResults((prev) => [...prev, { key: '', value: '' }])}
+                  >+ Add row</button>
+                </div>
+
+                <div className="admin-form-grid-full">
+                  <label className="form-label">Verdict</label>
+                  <textarea
+                    className="form-input form-textarea"
+                    rows={3}
+                    value={newReviewVerdict}
+                    onChange={(e) => setNewReviewVerdict(e.target.value)}
                   />
                 </div>
               </div>
