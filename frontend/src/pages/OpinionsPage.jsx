@@ -12,7 +12,6 @@ export default function OpinionsPage() {
   const [loading, setLoading] = useState(true)
   const [ratingFilter, setRatingFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
-  const [searchTerm, setSearchTerm] = useState('')
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [selectedModel, setSelectedModel] = useState('all')
   const [expandedBrands, setExpandedBrands] = useState(new Set())
@@ -136,14 +135,6 @@ export default function OpinionsPage() {
       filtered = filtered.filter((op) => op.rating === Number(ratingFilter))
     }
 
-    if (searchTerm.trim()) {
-      const normalizedSearch = searchTerm.toLowerCase()
-      filtered = filtered.filter((op) => {
-        const searchableText = `${op.title || ''} ${op.content || ''} ${op.car_name || ''} ${op._brandName || ''} ${op.author?.username || ''}`.toLowerCase()
-        return searchableText.includes(normalizedSearch)
-      })
-    }
-
     const sorted = [...filtered]
     if (sortBy === 'newest') {
       sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -156,7 +147,7 @@ export default function OpinionsPage() {
     }
 
     return sorted
-  }, [normalizedOpinions, selectedBrand, selectedModel, ratingFilter, sortBy, searchTerm])
+  }, [normalizedOpinions, selectedBrand, selectedModel, ratingFilter, sortBy])
 
   const groupedByBrandAndModel = useMemo(() => {
     const brandMap = new Map()
@@ -219,17 +210,6 @@ export default function OpinionsPage() {
       <p className="admin-subtitle">{t.pages.opinionsCatalogIntro}</p>
 
       <div className="opinions-filters">
-        <div className="filter-group">
-          <label className="form-label">{t.pages.searchModels}</label>
-          <input
-            type="text"
-            className="form-input"
-            placeholder={t.pages.searchModelsPlaceholder}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
         <div className="filter-group">
           <label className="form-label">{t.pages.brandLabel}</label>
           <select
