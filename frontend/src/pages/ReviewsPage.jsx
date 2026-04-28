@@ -3,6 +3,35 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 
+function parseReviewContent(content) {
+  const lines = (content || '').split('\n')
+  const overview = []
+  const images = []
+  const testResults = []
+  const verdict = []
+  let section = null
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (trimmed === 'Overview') { section = 'overview'; continue }
+    if (trimmed === 'Example photo gallery') { section = 'gallery'; continue }
+    if (trimmed === 'Test results') { section = 'results'; continue }
+    if (trimmed === 'Verdict') { section = 'verdict'; continue }
+    if (!trimmed) continue
+
+    if (section === 'overview') overview.push(trimmed)
+    else if (section === 'gallery') {
+      const match = trimmed.match(/^\d+\.\s+(https?:\/\/.+)/)
+      if (match) images.push(match[1].trim())
+    } else if (section === 'results') {
+      const match = trimmed.match(/^-\s+(.+?):\s+(.+)/)
+      if (match) testResults.push({ key: match[1].trim(), value: match[2].trim() })
+    } else if (section === 'verdict') verdict.push(trimmed)
+  }
+
+  return { overview: overview.join(' '), images, testResults, verdict: verdict.join(' ') }
+}
+
 export default function ReviewsPage() {
   const { t, lang } = useTranslation()
   const [reviews, setReviews] = useState([])
@@ -156,35 +185,99 @@ export default function ReviewsPage() {
           </p>
 
           <div className="opinions-list">
-            {filteredAndSortedReviews.map((review) => (
-              <article key={review.id} className="opinion-list-item">
-                <div className="opinion-list-header">
-                  <h4 className="opinion-title">{review.title}</h4>
-                  <span className="opinion-rating">★ {review.rating}/5</span>
-                </div>
+            {filteredAndSortedReviews.map((review) => {
+              const parsed = parseReviewContent(review.content)
+              return (
+                <article key={review.id} className="review-card-rich">
+                  {/* Header */}
+                  <div className="review-card-header">
+                    <div className="review-card-meta-top">
+                      <span className="review-publication">{review.publication_name}</span>
+                      {review.author_name && <span className="review-author-name"> · {review.author_name}</span>}
+                      <span className="review-date-tag"> · {formatDate(review.published_at)}</span>
+                    </div>
+                    <h3 className="review-card-title">{review.title}</h3>
+                    {review.summary && <p className="review-card-summary">{review.summary}</p>}
+                    {(review.car_brand_name || review.car_name) && (
+                      <div className="review-car-tag">
+                        {review.car_id ? (
+                          <Link to={`/cars/${review.car_id}`}>{review.car_brand_name} {review.car_name}</Link>
+                        ) : (
+                          <span>{review.car_brand_name} {review.car_name}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
-                <div className="opinion-list-meta">
-                  <span className="opinion-author">{review.publication_name}{review.author_name ? ` - ${review.author_name}` : ''}</span>
-                  <span className="opinion-date">{formatDate(review.published_at)}</span>
-                </div>
-
-                <p className="opinion-content">{review.content}</p>
-
-                <div className="opinion-list-footer">
-                  <span className="opinion-votes">{review.published_at}</span>
-                  {review.publication_url && (
-                    <a href={review.publication_url} target="_blank" rel="noreferrer" className="opinion-view-car">
-                      {t.pages.openSourceArticle}
-                    </a>
+                  {/* Image gallery */}
+                  {parsed.images.length > 0 && (
+                    <div className="review-gallery">
+                      <img
+                        src={parsed.images[0]}
+                        alt={review.title}
+                        className="review-gallery-main"
+                        loading="lazy"
+                      />
+                      {parsed.images.length > 1 && (
+                        <div className="review-gallery-thumbs">
+                          {parsed.images.slice(1).map((img, i) => (
+                            <img
+                              key={i}
+                              src={img}
+                              alt={`${review.title} ${i + 2}`}
+                              className="review-gallery-thumb"
+                              loading="lazy"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
-                  {review.car_id && (
-                    <Link to={`/cars/${review.car_id}`} className="opinion-view-car">
-                      {t.pages.viewCar}
-                    </Link>
+
+                  {/* Overview */}
+                  {parsed.overview && (
+                    <p className="review-overview-text">{parsed.overview}</p>
                   )}
-                </div>
-              </article>
-            ))}
+
+                  {/* Test results */}
+                  {parsed.testResults.length > 0 && (
+                    <div className="review-results">
+                      <h4 className="review-results-title">Test Results</h4>
+                      <div className="review-results-grid">
+                        {parsed.testResults.map((result, i) => (
+                          <div key={i} className="review-result-item">
+                            <span className="review-result-value">{result.value}</span>
+                            <span className="review-result-key">{result.key}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Verdict */}
+                  {parsed.verdict && (
+                    <div className="review-verdict">
+                      <span className="review-verdict-label">Verdict</span>
+                      <p className="review-verdict-text">{parsed.verdict}</p>
+                    </div>
+                  )}
+
+                  {/* Footer links */}
+                  <div className="review-card-footer">
+                    {review.publication_url && (
+                      <a href={review.publication_url} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
+                        {t.pages.openSourceArticle}
+                      </a>
+                    )}
+                    {review.car_id && (
+                      <Link to={`/cars/${review.car_id}`} className="btn btn-primary btn-sm">
+                        {t.pages.viewCar}
+                      </Link>
+                    )}
+                  </div>
+                </article>
+              )
+            })}
           </div>
         </div>
       )}

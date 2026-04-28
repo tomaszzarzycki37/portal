@@ -676,6 +676,202 @@
 	font-size: 0.92rem;
 }
 
+/* ── Rich Review Cards ─────────────────────────────────── */
+.review-card-rich {
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 1rem;
+	overflow: hidden;
+	transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.review-card-rich:hover {
+	border-color: #f59e0b;
+	box-shadow: 0 6px 24px rgba(245, 158, 11, 0.12);
+}
+
+.review-card-header {
+	padding: 1.5rem 1.5rem 1rem;
+}
+
+.review-card-meta-top {
+	font-size: 0.78rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	font-weight: 700;
+	color: #9a3412;
+	margin-bottom: 0.5rem;
+}
+
+.review-author-name,
+.review-date-tag {
+	font-weight: 400;
+	color: #64748b;
+	text-transform: none;
+	letter-spacing: 0;
+}
+
+.review-card-title {
+	margin: 0 0 0.5rem;
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: #0f172a;
+	line-height: 1.35;
+}
+
+.review-card-summary {
+	margin: 0 0 0.75rem;
+	font-size: 0.95rem;
+	color: #475569;
+	line-height: 1.55;
+}
+
+.review-car-tag {
+	display: inline-block;
+	background: #fef3c7;
+	border: 1px solid #fcd34d;
+	border-radius: 9999px;
+	padding: 0.2rem 0.75rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #92400e;
+}
+
+.review-car-tag a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.review-car-tag a:hover {
+	text-decoration: underline;
+}
+
+/* Gallery */
+.review-gallery {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0 1.5rem;
+}
+
+.review-gallery-main {
+	width: 100%;
+	height: 280px;
+	object-fit: cover;
+	border-radius: 0.6rem;
+	display: block;
+}
+
+.review-gallery-thumbs {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.review-gallery-thumb {
+	flex: 1;
+	height: 90px;
+	object-fit: cover;
+	border-radius: 0.45rem;
+	cursor: pointer;
+	transition: opacity 0.15s ease;
+}
+
+.review-gallery-thumb:hover {
+	opacity: 0.85;
+}
+
+/* Overview */
+.review-overview-text {
+	margin: 1rem 1.5rem 0;
+	font-size: 0.95rem;
+	color: #374151;
+	line-height: 1.65;
+}
+
+/* Test Results */
+.review-results {
+	margin: 1.25rem 1.5rem 0;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 0.75rem;
+	padding: 1rem;
+}
+
+.review-results-title {
+	margin: 0 0 0.85rem;
+	font-size: 0.78rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: #64748b;
+}
+
+.review-results-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+	gap: 0.65rem;
+}
+
+.review-result-item {
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 0.6rem;
+	padding: 0.65rem 0.85rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+}
+
+.review-result-value {
+	font-size: 1.05rem;
+	font-weight: 700;
+	color: #0f172a;
+	line-height: 1.2;
+}
+
+.review-result-key {
+	font-size: 0.73rem;
+	color: #64748b;
+	line-height: 1.3;
+}
+
+/* Verdict */
+.review-verdict {
+	margin: 1.25rem 1.5rem 0;
+	background: #fffbeb;
+	border-left: 4px solid #f59e0b;
+	border-radius: 0 0.5rem 0.5rem 0;
+	padding: 0.85rem 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+.review-verdict-label {
+	font-size: 0.72rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: #92400e;
+}
+
+.review-verdict-text {
+	margin: 0;
+	font-size: 0.93rem;
+	color: #374151;
+	line-height: 1.6;
+	font-style: italic;
+}
+
+/* Footer */
+.review-card-footer {
+	padding: 1rem 1.5rem 1.5rem;
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+/* ── End Rich Review Cards ─────────────────────────────── */
+
 .home-cta h2 {
 	margin: 0 0 0.35rem;
 	font-size: clamp(1.4rem, 3vw, 2rem);
