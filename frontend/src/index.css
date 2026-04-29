@@ -101,6 +101,60 @@ body.app-theme-dark .footer-bottom {
   color: #9ca3af;
 }
 
+body.app-theme-dark .detail-section-title,
+body.app-theme-dark .brand-catalog-title,
+body.app-theme-dark .detail-title,
+body.app-theme-dark .detail-extra-title {
+  color: #f3f4f6;
+}
+
+body.app-theme-dark .brand-catalog-description,
+body.app-theme-dark .brand-catalog-empty,
+body.app-theme-dark .car-meta,
+body.app-theme-dark .car-type,
+body.app-theme-dark .car-count,
+body.app-theme-dark .detail-description,
+body.app-theme-dark .detail-kicker,
+body.app-theme-dark .detail-section-subtitle,
+body.app-theme-dark .detail-kv-row span {
+  color: #cbd5e1;
+}
+
+body.app-theme-dark .brand-catalog-badge {
+  background: #384152;
+  color: #dbeafe;
+}
+
+body.app-theme-dark .brand-catalog-meta-pill,
+body.app-theme-dark .car-count-badge,
+body.app-theme-dark .detail-badge,
+body.app-theme-dark .detail-kv-row {
+  background: #2f353f;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+body.app-theme-dark .brand-catalog-logo,
+body.app-theme-dark .detail-image {
+  border-color: #4b5563;
+  background: #1f232a;
+}
+
+body.app-theme-dark .brand-catalog-empty,
+body.app-theme-dark .detail-extra-card,
+body.app-theme-dark .detail-admin-card,
+body.app-theme-dark .detail-hero,
+body.app-theme-dark .detail-specs-card,
+body.app-theme-dark .detail-reviews-card {
+  background: #22262d;
+  border-color: #3b414b;
+}
+
+body.app-theme-dark .brand-catalog-list .brand-catalog-card .brand-catalog-card {
+  background: #2a2e36 !important;
+  border-color: #4b5563 !important;
+}
+
 a {
   color: inherit;
   text-decoration: none;
