@@ -88,6 +88,43 @@ function readFileAsDataUrl(file) {
   })
 }
 
+function extractApiErrorMessage(error, fallbackMessage) {
+  const payload = error?.response?.data
+  if (!payload) return fallbackMessage
+
+  if (typeof payload === 'string') return payload
+  if (Array.isArray(payload)) {
+    const joined = payload.map((item) => String(item || '').trim()).filter(Boolean).join(' ')
+    return joined || fallbackMessage
+  }
+
+  if (typeof payload === 'object') {
+    if (typeof payload.detail === 'string' && payload.detail.trim()) return payload.detail.trim()
+    if (typeof payload.error === 'string' && payload.error.trim()) return payload.error.trim()
+
+    const messages = []
+    Object.entries(payload).forEach(([field, value]) => {
+      if (!value) return
+      if (Array.isArray(value)) {
+        const text = value.map((entry) => String(entry || '').trim()).filter(Boolean).join(' ')
+        if (!text) return
+        if (field === 'non_field_errors') messages.push(text)
+        else messages.push(`${field}: ${text}`)
+        return
+      }
+
+      const text = String(value).trim()
+      if (!text) return
+      if (field === 'non_field_errors') messages.push(text)
+      else messages.push(`${field}: ${text}`)
+    })
+
+    if (messages.length > 0) return messages.join(' | ')
+  }
+
+  return fallbackMessage
+}
+
 export default function AdminDashboard() {
   const { t, lang } = useTranslation()
   const [density, setDensity] = useState(() => localStorage.getItem('admin_density') || 'comfortable')
@@ -795,9 +832,7 @@ export default function AdminDashboard() {
         formData.append('image', imageFile)
       }
 
-      const response = await api.patch(`/cars/${selectedId}/`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      const response = await api.patch(`/cars/${selectedId}/`, formData)
 
       const updated = response.data
       setCars((prev) => prev.map((car) => (String(car.id) === String(selectedId) ? { ...car, ...updated } : car)))
@@ -806,17 +841,15 @@ export default function AdminDashboard() {
       if (brandLogoFile && brandSlug) {
         const brandFormData = new FormData()
         brandFormData.append('logo', brandLogoFile)
-        const brandResponse = await api.patch(`/cars/brands/${brandSlug}/`, brandFormData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
+        const brandResponse = await api.patch(`/cars/brands/${brandSlug}/`, brandFormData)
         setBrandLogoPreview(resolveMediaUrl(brandResponse.data.logo || ''))
       }
 
       setImageFile(null)
       setBrandLogoFile(null)
       setMessage(t.adminPanel.saved)
-    } catch {
-      setError(t.adminPanel.loadError)
+    } catch (error) {
+      setError(extractApiErrorMessage(error, t.adminPanel.loadError))
     } finally {
       setSaving(false)
     }
