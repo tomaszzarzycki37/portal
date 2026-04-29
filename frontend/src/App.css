@@ -1108,12 +1108,16 @@
 	border-top: 0;
 	border-radius: 0 0 0.6rem 0.6rem;
 	min-height: 240px;
+	height: auto;
 	background: #ffffff;
-	overflow: hidden;
+	overflow: visible;
 }
 
 .admin-rich-editor .ql-editor {
 	min-height: 210px;
+	height: auto;
+	max-height: none;
+	overflow-y: visible;
 	line-height: 1.55;
 	font-size: 0.96rem;
 }
