@@ -681,11 +681,11 @@
 .home-featured-review-thumb {
 	width: 236px;
 	height: 132px;
-	object-fit: cover;
+	object-fit: contain;
 	object-position: center;
 	border-radius: 0.45rem;
 	border: 1px solid #fdba74;
-	background: #fff7ed;
+	background: #f8fafc;
 	flex-shrink: 0;
 }
 
