@@ -99,6 +99,38 @@ export default function CarsListPage() {
     return groups
   }, [filteredCars])
 
+  const groupedModelFamiliesByBrand = useMemo(() => {
+    const families = new Map()
+
+    groupedCarsByBrand.forEach((brandCars, brandId) => {
+      const byName = new Map()
+
+      brandCars.forEach((car) => {
+        const familyKey = String(car.name || '').trim().toLowerCase()
+        if (!familyKey) return
+
+        if (!byName.has(familyKey)) {
+          byName.set(familyKey, {
+            key: `${brandId}-${familyKey}`,
+            name: car.name,
+            variants: [],
+          })
+        }
+
+        byName.get(familyKey).variants.push(car)
+      })
+
+      const familiesList = Array.from(byName.values()).map((family) => ({
+        ...family,
+        variants: [...family.variants].sort((a, b) => Number(b.year_introduced || 0) - Number(a.year_introduced || 0)),
+      }))
+
+      families.set(brandId, familiesList)
+    })
+
+    return families
+  }, [groupedCarsByBrand])
+
   const matchedCountByBrand = useMemo(() => {
     const byBrandId = new Map()
     filteredCars.forEach((car) => {
@@ -214,7 +246,7 @@ export default function CarsListPage() {
             const brandLogo = getBrandLogoOrPlaceholder(brand.logo || '', brand.name)
             const modelCount = Number.isFinite(Number(brand.model_count)) ? Number(brand.model_count) : 0
             const matchedCount = matchedCountByBrand.get(brand.id) || modelCount
-            const brandCars = groupedCarsByBrand.get(brand.id) || []
+            const brandCars = groupedModelFamiliesByBrand.get(brand.id) || []
             const modelLabel = formatModelLabel(matchedCount, lang)
             const brandDescription = lang === 'pl'
               ? (brand.description_pl || brand.description_en || brand.description)
@@ -253,35 +285,47 @@ export default function CarsListPage() {
                   {brandCars.length === 0 ? (
                     <div className="page-card">{hasActiveFilters ? t.pages.noModelsFound : t.pages.noModelsInBrand}</div>
                   ) : (
-                    brandCars.map((car) => (
-                      <article key={car.id} className="brand-catalog-card" style={{ margin: 0, boxShadow: 'none', borderRadius: '0.6rem', background: '#f8fafc' }}>
+                    brandCars.map((family) => {
+                      const primaryVariant = family.variants[0]
+                      const familyYears = family.variants
+                        .map((variant) => variant.year_introduced)
+                        .filter(Boolean)
+                        .join(' / ')
+
+                      return (
+                      <article key={family.key} className="brand-catalog-card" style={{ margin: 0, boxShadow: 'none', borderRadius: '0.6rem', background: '#f8fafc' }}>
                         <div className="brand-catalog-header brand-catalog-header-static" style={{ padding: '0.4rem 0.65rem' }}>
                           <div className="brand-catalog-identity" style={{ gridTemplateColumns: '76px 1fr' }}>
                             <img
-                              src={getCarImage(car)}
-                              alt={car.name}
+                              src={getCarImage(primaryVariant)}
+                              alt={family.name}
                               style={{ width: '76px', height: '48px', objectFit: 'cover', borderRadius: '0.4rem', border: '1px solid #dbe4f0', flexShrink: 0 }}
                             />
                             <div>
                               <div className="brand-catalog-title-row">
-                                <h3 className="brand-catalog-title" style={{ fontSize: '0.88rem' }}>{car.name}</h3>
-                                <span className="brand-catalog-badge" style={{ fontSize: '0.63rem', padding: '0.1rem 0.35rem' }}>{car.vehicle_type || '-'}</span>
+                                <h3 className="brand-catalog-title" style={{ fontSize: '0.88rem' }}>{family.name}</h3>
+                                <span className="brand-catalog-badge" style={{ fontSize: '0.63rem', padding: '0.1rem 0.35rem' }}>{primaryVariant.vehicle_type || '-'}</span>
+                                {familyYears && (
+                                  <span className="brand-catalog-badge" style={{ fontSize: '0.63rem', padding: '0.1rem 0.35rem' }}>{familyYears}</span>
+                                )}
                               </div>
-                              <div className="brand-catalog-meta-row" style={{ marginTop: '0.2rem', gap: '0.2rem' }}>
-                                <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 600, padding: '0.08rem 0.3rem' }}>{t.pages.engine}: {car.engine_type || '-'}</span>
-                                <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 600, padding: '0.08rem 0.3rem' }}>{t.pages.year}: {car.year_introduced || '-'}</span>
-                                <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 600, padding: '0.08rem 0.3rem' }}>{t.pages.productionStatus}: {car.production_status || '-'}</span>
-                              </div>
+                              {family.variants.map((variant) => (
+                                <div key={variant.id} className="brand-catalog-meta-row" style={{ marginTop: '0.2rem', gap: '0.2rem' }}>
+                                  <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 700, padding: '0.08rem 0.3rem' }}>{t.pages.year}: {variant.year_introduced || '-'}</span>
+                                  <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 600, padding: '0.08rem 0.3rem' }}>{t.pages.engine}: {variant.engine_type || '-'}</span>
+                                  <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 600, padding: '0.08rem 0.3rem' }}>{t.pages.productionStatus}: {variant.production_status || '-'}</span>
+                                </div>
+                              ))}
                             </div>
                           </div>
                           <div className="brand-catalog-actions">
-                            <Link to={`/cars/${car.id}`} className="catalog-action-btn">
+                            <Link to={`/cars/${primaryVariant.id}`} className="catalog-action-btn">
                               {t.pages.readMore}
                             </Link>
                           </div>
                         </div>
                       </article>
-                    ))
+                    )})
                   )}
                 </div>
               </section>
