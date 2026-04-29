@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
+import { getCarImage } from '../utils/carImages'
 
 const FALLBACK_HERO_IMAGE = 'https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&w=1800&q=80'
 
@@ -84,6 +85,14 @@ export default function HomePage() {
       return true
     })
   }, [cars, searchTerm, selectedBrand, engineSearch, vehicleTypeFilter, statusFilter])
+
+  const carById = useMemo(() => {
+    const byId = new Map()
+    cars.forEach((car) => {
+      if (car?.id != null) byId.set(car.id, car)
+    })
+    return byId
+  }, [cars])
 
   const heroBackgroundImage = FALLBACK_HERO_IMAGE
 
@@ -221,7 +230,15 @@ export default function HomePage() {
             >
               {featuredReviews.map((review) => (
                 <article key={review.id} className="home-featured-review-card">
-                  <p className="home-featured-review-meta">{review.car_brand_name} {review.car_name}</p>
+                  <div className="home-featured-review-top">
+                    <p className="home-featured-review-meta">{review.car_brand_name} {review.car_name}</p>
+                    <img
+                      className="home-featured-review-thumb"
+                      src={getCarImage(carById.get(review.car_id))}
+                      alt={`${review.car_brand_name} ${review.car_name}`.trim()}
+                      loading="lazy"
+                    />
+                  </div>
                   <h3>{review.title}</h3>
                   <p>{review.summary || String(review.content || '').slice(0, 160)}</p>
                   <div className="home-featured-review-footer">
