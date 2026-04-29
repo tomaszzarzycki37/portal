@@ -316,6 +316,28 @@ export default function AdminDashboard() {
   }, [themeMode])
 
   useEffect(() => {
+    const readTheme = () => localStorage.getItem('admin_theme_mode') || 'light'
+    const syncTheme = (nextMode) => {
+      const normalized = nextMode === 'dark' ? 'dark' : 'light'
+      setThemeMode((prev) => (prev === normalized ? prev : normalized))
+    }
+
+    const handleStorage = (event) => {
+      if (event.key === 'admin_theme_mode') syncTheme(event.newValue)
+    }
+
+    const handleThemeChange = (event) => syncTheme(event?.detail)
+
+    window.addEventListener('storage', handleStorage)
+    window.addEventListener('theme-mode-changed', handleThemeChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('theme-mode-changed', handleThemeChange)
+    }
+  }, [])
+
+  useEffect(() => {
     setContentLang(lang)
   }, [lang])
 
@@ -1199,24 +1221,6 @@ export default function AdminDashboard() {
           <p className="admin-subtitle">{t.adminPanel.subtitle}</p>
         </div>
         <div className="admin-hero-right">
-          <div className="admin-density-switch" role="group" aria-label={t.adminPanel.themeLabel}>
-            <span className="admin-density-label">{t.adminPanel.themeLabel}</span>
-            <button
-              type="button"
-              className={`admin-density-btn ${themeMode === 'light' ? 'active' : ''}`}
-              onClick={() => setThemeMode('light')}
-            >
-              {t.adminPanel.themeLight}
-            </button>
-            <button
-              type="button"
-              className={`admin-density-btn ${themeMode === 'dark' ? 'active' : ''}`}
-              onClick={() => setThemeMode('dark')}
-            >
-              {t.adminPanel.themeDark}
-            </button>
-          </div>
-
           <div className="admin-owner-badge">
             <span className="admin-owner-avatar">{dashboardOwnerInitial}</span>
             <div>

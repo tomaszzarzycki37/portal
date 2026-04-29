@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from '../i18n'
 import { isAdminUser } from '../utils/auth'
 
@@ -19,11 +19,38 @@ function resolveBrandLogoSrc(url) {
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [themeMode, setThemeMode] = useState(() => localStorage.getItem('admin_theme_mode') || 'light')
   const token = localStorage.getItem('access_token')
   const isAdmin = isAdminUser()
   const { t, lang, setLang } = useTranslation()
   const brandLogoSrc = resolveBrandLogoSrc(t.nav.brandLogoUrl)
   const hasBrandLogo = Boolean(brandLogoSrc)
+
+  useEffect(() => {
+    const readTheme = () => localStorage.getItem('admin_theme_mode') || 'light'
+    const syncTheme = (nextMode) => setThemeMode(nextMode || readTheme())
+
+    const handleStorage = (event) => {
+      if (event.key === 'admin_theme_mode') syncTheme(event.newValue)
+    }
+
+    const handleThemeChange = (event) => syncTheme(event?.detail)
+
+    syncTheme(readTheme())
+    window.addEventListener('storage', handleStorage)
+    window.addEventListener('theme-mode-changed', handleThemeChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('theme-mode-changed', handleThemeChange)
+    }
+  }, [])
+
+  const applyThemeMode = (nextMode) => {
+    setThemeMode(nextMode)
+    localStorage.setItem('admin_theme_mode', nextMode)
+    window.dispatchEvent(new CustomEvent('theme-mode-changed', { detail: nextMode }))
+  }
 
   return (
     <header className="site-header">
@@ -59,6 +86,23 @@ export default function Header() {
             onClick={() => setLang('en')}
           >
             EN
+          </button>
+        </div>
+
+        <div className="lang-switch desktop-only" aria-label="Theme switcher">
+          <button
+            type="button"
+            className={`lang-btn ${themeMode === 'light' ? 'active' : ''}`}
+            onClick={() => applyThemeMode('light')}
+          >
+            {t.nav.themeLight}
+          </button>
+          <button
+            type="button"
+            className={`lang-btn ${themeMode === 'dark' ? 'active' : ''}`}
+            onClick={() => applyThemeMode('dark')}
+          >
+            {t.nav.themeDark}
           </button>
         </div>
 
@@ -120,6 +164,22 @@ export default function Header() {
                 onClick={() => setLang('en')}
               >
                 EN
+              </button>
+            </div>
+            <div className="lang-switch" aria-label="Theme switcher">
+              <button
+                type="button"
+                className={`lang-btn ${themeMode === 'light' ? 'active' : ''}`}
+                onClick={() => applyThemeMode('light')}
+              >
+                {t.nav.themeLight}
+              </button>
+              <button
+                type="button"
+                className={`lang-btn ${themeMode === 'dark' ? 'active' : ''}`}
+                onClick={() => applyThemeMode('dark')}
+              >
+                {t.nav.themeDark}
               </button>
             </div>
             {token && (
