@@ -1199,13 +1199,29 @@ body.app-theme-dark .home-cta h2 {
 body.app-theme-dark .feature-tile-red,
 body.app-theme-dark .feature-tile-amber,
 body.app-theme-dark .feature-tile-slate {
-	background: #22262d;
 	border-color: #3b414b;
 }
 
+body.app-theme-dark .feature-tile-red {
+	background: linear-gradient(160deg, #262229, #211f25);
+}
+
+body.app-theme-dark .feature-tile-amber {
+	background: linear-gradient(160deg, #2a2821, #23211c);
+}
+
+body.app-theme-dark .feature-tile-slate {
+	background: linear-gradient(160deg, #232a33, #1f252d);
+}
+
 body.app-theme-dark .home-featured-reviews {
-	background: #22262d;
-	border-color: #3b414b;
+	background: #242a33;
+	border-color: #3f4754;
+}
+
+body.app-theme-dark .home-featured-review-card {
+	background: #1d232b;
+	border-color: #374151;
 }
 
 body.app-theme-dark .home-featured-reviews-head h2 {
