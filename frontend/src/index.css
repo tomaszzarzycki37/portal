@@ -615,6 +615,37 @@ a {
   color: #111827;
 }
 
+.admin-wrap.admin-theme-dark .admin-inline-toggle {
+  border-color: #4b5563;
+  background: #1f232a;
+  color: #e5e7eb;
+}
+
+.admin-wrap.admin-theme-dark .admin-inline-toggle:hover {
+  border-color: #fbbf24;
+  background: #252a33;
+  color: #f8fafc;
+}
+
+.admin-wrap.admin-theme-dark .admin-inline-gear,
+.admin-wrap.admin-theme-dark .admin-inline-gear:hover,
+.admin-wrap.admin-theme-dark .admin-inline-gear.is-open,
+.admin-wrap.admin-theme-dark .admin-collapsible-toggle .admin-inline-gear.is-open,
+.admin-wrap.admin-theme-dark .admin-preview-actions .admin-inline-gear.is-open {
+  border-color: rgba(251, 191, 36, 0.85);
+  background: rgba(30, 41, 59, 0.96);
+  color: #f8fafc;
+  box-shadow: 0 10px 16px rgba(15, 23, 42, 0.24);
+}
+
+.admin-wrap.admin-theme-dark .admin-inline-gear:hover,
+.admin-wrap.admin-theme-dark .admin-inline-gear.is-open,
+.admin-wrap.admin-theme-dark .admin-collapsible-toggle .admin-inline-gear.is-open,
+.admin-wrap.admin-theme-dark .admin-preview-actions .admin-inline-gear.is-open {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
 .admin-wrap.admin-theme-dark .admin-car-list-item {
   background: #1f232a;
   border-color: #4b5563;
@@ -812,8 +843,8 @@ a {
 }
 
 .admin-collapsible-toggle .admin-inline-gear.is-open {
-  border-color: rgba(29, 78, 216, 0.7);
-  background: linear-gradient(180deg, #58c8f6, #2563eb);
+  border-color: rgba(251, 191, 36, 0.85);
+  background: rgba(30, 41, 59, 0.96);
   color: #f8fafc;
 }
 
@@ -872,8 +903,8 @@ a {
 }
 
 .admin-preview-actions .admin-inline-gear.is-open {
-  border-color: rgba(29, 78, 216, 0.7);
-  background: linear-gradient(180deg, #58c8f6, #2563eb);
+  border-color: rgba(251, 191, 36, 0.85);
+  background: rgba(30, 41, 59, 0.96);
   color: #f8fafc;
 }
 
@@ -1467,8 +1498,9 @@ a {
 }
 
 .admin-inline-gear:hover {
-  border-color: rgba(29, 78, 216, 0.7);
-  background: linear-gradient(180deg, #58c8f6, #2563eb);
+  border-color: rgba(251, 191, 36, 0.85);
+  background: rgba(30, 41, 59, 0.96);
+  color: #fbbf24;
 }
 
 .admin-inline-icon {
