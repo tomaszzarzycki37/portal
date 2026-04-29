@@ -684,18 +684,22 @@ a {
 .admin-form-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--admin-space-grid-gap, 0.65rem);
+  gap: var(--admin-space-grid-gap, 1rem);
 }
 
 .admin-form-grid > div {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.3rem;
+  align-content: start;
+  min-width: 0;
 }
 
 .admin-form-grid-full {
   grid-column: 1 / -1;
   display: grid;
-  gap: 0.2rem;
+  gap: 0.3rem;
+  align-content: start;
+  min-width: 0;
 }
 
 .brand-description-switch-row {
@@ -801,9 +805,9 @@ a {
 }
 
 .admin-review-edit-grid {
-  margin-top: 0.85rem;
+  margin-top: 1rem;
   border-top: 1px solid #e2e8f0;
-  padding-top: 0.85rem;
+  padding-top: 1rem;
 }
 
 .cars-grid {
