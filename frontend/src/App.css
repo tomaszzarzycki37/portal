@@ -411,6 +411,11 @@
 .home-search-empty {
 	margin-top: 0.8rem;
 	border: 1px dashed #cbd5e1;
+	border-radius: 0.7rem;
+	padding: 0.75rem;
+	color: #475569;
+	background: #f8fafc;
+}
 
 	/* Opinions Page */
 	.opinions-page-wrap {
@@ -556,11 +561,6 @@
 		background: #d97706;
 		text-decoration: underline;
 	}
-	border-radius: 0.7rem;
-	padding: 0.75rem;
-	color: #475569;
-	background: #f8fafc;
-}
 
 .home-cta {
 	margin-top: 1.2rem;
