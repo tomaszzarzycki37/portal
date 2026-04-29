@@ -1200,9 +1200,15 @@ a {
 .brand-catalog-toggle {
   flex-shrink: 0;
   padding: 0.4rem 0.75rem;
-  color: #eff6ff;
-  background: linear-gradient(180deg, #67d4ff, #2f87d6);
-  box-shadow: 0 10px 16px rgba(37, 99, 235, 0.18);
+  color: #f8fafc;
+  border: 1px solid rgba(251, 191, 36, 0.85);
+  background: rgba(30, 41, 59, 0.96);
+  box-shadow: 0 10px 16px rgba(15, 23, 42, 0.2);
+}
+
+.brand-catalog-header:hover .brand-catalog-toggle {
+  color: #fbbf24;
+  border-color: #fbbf24;
 }
 
 .brand-catalog-actions,
