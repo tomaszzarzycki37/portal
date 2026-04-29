@@ -1057,9 +1057,26 @@
 	gap: 0.35rem;
 }
 
+.admin-rich-toolbar-advanced {
+	padding-top: 0.15rem;
+	border-top: 1px dashed #cbd5e1;
+}
+
 .admin-rich-textarea {
 	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 	line-height: 1.45;
+}
+
+.review-font-sm {
+	font-size: 0.86em;
+}
+
+.review-font-md {
+	font-size: 1em;
+}
+
+.review-font-lg {
+	font-size: 1.15em;
 }
 
 .home-cta h2 {

@@ -83,6 +83,7 @@ function estimateReadingTimeMinutes(text) {
 
 function RichTextEditor({ id, label, value, onChange, rows = 4 }) {
   const textRef = useRef(null)
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const insertAtSelection = (before, after = before) => {
     const textarea = textRef.current
@@ -125,7 +126,17 @@ function RichTextEditor({ id, label, value, onChange, rows = 4 }) {
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('## ', '')}>H2</button>
         <button type="button" className="btn btn-secondary btn-sm" onClick={insertListItem}>List</button>
         <button type="button" className="btn btn-secondary btn-sm" onClick={insertLink}>Link</button>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowAdvanced((prev) => !prev)}>
+          {showAdvanced ? 'Hide advanced' : 'Advanced tools'}
+        </button>
       </div>
+      {showAdvanced && (
+        <div className="admin-rich-toolbar admin-rich-toolbar-advanced">
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('[size=sm]', '[/size]')}>A-</button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('[size=md]', '[/size]')}>A</button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('[size=lg]', '[/size]')}>A+</button>
+        </div>
+      )}
       <textarea
         ref={textRef}
         id={id}

@@ -3,6 +3,33 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+function formatEditorialText(value) {
+  let html = escapeHtml(value)
+
+  html = html.replace(/\[size=(sm|md|lg)\]([\s\S]*?)\[\/size\]/g, (_, size, content) => {
+    return `<span class="review-font-${size}">${content}</span>`
+  })
+
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+  html = html.replace(/_([^_]+)_/g, '<em>$1</em>')
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>')
+  html = html.replace(/^##\s+(.+)$/gm, '<h4>$1</h4>')
+  html = html.replace(/^-\s+(.+)$/gm, '<li>$1</li>')
+  html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+  html = html.replace(/\n/g, '<br/>')
+
+  return html
+}
+
 function parseReviewContent(content) {
   const lines = (content || '').split('\n')
   const overview = []
@@ -239,7 +266,7 @@ export default function ReviewsPage() {
 
                   {/* Overview */}
                   {parsed.overview && (
-                    <p className="review-overview-text">{parsed.overview}</p>
+                    <p className="review-overview-text" dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.overview) }} />
                   )}
 
                   {/* Test results */}
@@ -261,7 +288,7 @@ export default function ReviewsPage() {
                   {parsed.verdict && (
                     <div className="review-verdict">
                       <span className="review-verdict-label">Verdict</span>
-                      <p className="review-verdict-text">{parsed.verdict}</p>
+                      <p className="review-verdict-text" dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.verdict) }} />
                     </div>
                   )}
 
