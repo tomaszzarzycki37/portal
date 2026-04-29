@@ -1045,6 +1045,23 @@
 	word-break: break-word;
 }
 
+.admin-rich-editor {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.admin-rich-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+
+.admin-rich-textarea {
+	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+	line-height: 1.45;
+}
+
 .home-cta h2 {
 	margin: 0 0 0.35rem;
 	font-size: clamp(1.4rem, 3vw, 2rem);

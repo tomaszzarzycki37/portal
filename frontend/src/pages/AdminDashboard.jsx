@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getBaseTranslationValue, getTranslationKeys, useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCurrentUser, isAdminUser } from '../utils/auth'
@@ -79,6 +79,63 @@ function estimateReadingTimeMinutes(text) {
     .filter(Boolean).length
   if (!words) return 0
   return Math.max(1, Math.ceil(words / 200))
+}
+
+function RichTextEditor({ id, label, value, onChange, rows = 4 }) {
+  const textRef = useRef(null)
+
+  const insertAtSelection = (before, after = before) => {
+    const textarea = textRef.current
+    if (!textarea) return
+
+    const start = textarea.selectionStart ?? 0
+    const end = textarea.selectionEnd ?? 0
+    const selected = value.slice(start, end)
+    const nextValue = `${value.slice(0, start)}${before}${selected}${after}${value.slice(end)}`
+    onChange(nextValue)
+
+    requestAnimationFrame(() => {
+      textarea.focus()
+      const cursorPos = start + before.length + selected.length + after.length
+      textarea.setSelectionRange(cursorPos, cursorPos)
+    })
+  }
+
+  const insertListItem = () => {
+    const textarea = textRef.current
+    if (!textarea) return
+    const start = textarea.selectionStart ?? 0
+    const lineStart = value.lastIndexOf('\n', start - 1) + 1
+    const nextValue = `${value.slice(0, lineStart)}- ${value.slice(lineStart)}`
+    onChange(nextValue)
+  }
+
+  const insertLink = () => {
+    const url = window.prompt('Enter URL')
+    if (!url) return
+    insertAtSelection('[', `](${url.trim()})`)
+  }
+
+  return (
+    <div className="admin-rich-editor">
+      <label className="form-label" htmlFor={id}>{label}</label>
+      <div className="admin-rich-toolbar">
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('**')}>B</button>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('_')}>I</button>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('## ', '')}>H2</button>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={insertListItem}>List</button>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={insertLink}>Link</button>
+      </div>
+      <textarea
+        ref={textRef}
+        id={id}
+        className="form-input form-textarea admin-rich-textarea"
+        rows={rows}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  )
 }
 // ── End review content helpers ──────────────────────────────
 
@@ -1876,12 +1933,15 @@ export default function AdminDashboard() {
                         </div>
 
                         <div className="admin-form-grid-full">
-                          <label className="form-label">Overview</label>
-                          <textarea
-                            className="form-input form-textarea"
-                            rows={3}
+                          <RichTextEditor
+                            id={`edit-review-overview-${review.id}`}
+                            label="Overview"
+                            rows={4}
                             value={reviewEditDraft._structured?.overview || ''}
-                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, overview: e.target.value } }))}
+                            onChange={(nextValue) => setReviewEditDraft((prev) => ({
+                              ...prev,
+                              _structured: { ...prev._structured, overview: nextValue },
+                            }))}
                           />
                         </div>
 
@@ -1948,23 +2008,25 @@ export default function AdminDashboard() {
                         </div>
 
                         <div className="admin-form-grid-full">
-                          <label className="form-label">Verdict</label>
-                          <textarea
-                            className="form-input form-textarea"
-                            rows={3}
+                          <RichTextEditor
+                            id={`edit-review-verdict-${review.id}`}
+                            label="Verdict"
+                            rows={4}
                             value={reviewEditDraft._structured?.verdict || ''}
-                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, verdict: e.target.value } }))}
+                            onChange={(nextValue) => setReviewEditDraft((prev) => ({
+                              ...prev,
+                              _structured: { ...prev._structured, verdict: nextValue },
+                            }))}
                           />
                         </div>
 
                         <div className="admin-form-grid-full">
-                          <label className="form-label" htmlFor={`edit-review-notes-${review.id}`}>Internal notes (admin only)</label>
-                          <textarea
+                          <RichTextEditor
                             id={`edit-review-notes-${review.id}`}
-                            className="form-input form-textarea"
-                            rows={3}
+                            label="Internal notes (admin only)"
+                            rows={4}
                             value={reviewEditDraft.internal_notes}
-                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, internal_notes: e.target.value }))}
+                            onChange={(nextValue) => setReviewEditDraft((prev) => ({ ...prev, internal_notes: nextValue }))}
                           />
                         </div>
                       </div>
@@ -2172,12 +2234,12 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="admin-form-grid-full">
-                  <label className="form-label">Overview</label>
-                  <textarea
-                    className="form-input form-textarea"
-                    rows={3}
+                  <RichTextEditor
+                    id="new-review-overview"
+                    label="Overview"
+                    rows={4}
                     value={newReviewOverview}
-                    onChange={(e) => setNewReviewOverview(e.target.value)}
+                    onChange={setNewReviewOverview}
                   />
                 </div>
 
@@ -2244,23 +2306,22 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="admin-form-grid-full">
-                  <label className="form-label">Verdict</label>
-                  <textarea
-                    className="form-input form-textarea"
-                    rows={3}
+                  <RichTextEditor
+                    id="new-review-verdict"
+                    label="Verdict"
+                    rows={4}
                     value={newReviewVerdict}
-                    onChange={(e) => setNewReviewVerdict(e.target.value)}
+                    onChange={setNewReviewVerdict}
                   />
                 </div>
 
                 <div className="admin-form-grid-full">
-                  <label className="form-label" htmlFor="new-review-internal-notes">Internal notes (admin only)</label>
-                  <textarea
+                  <RichTextEditor
                     id="new-review-internal-notes"
-                    className="form-input form-textarea"
-                    rows={3}
+                    label="Internal notes (admin only)"
+                    rows={4}
                     value={newReviewInternalNotes}
-                    onChange={(e) => setNewReviewInternalNotes(e.target.value)}
+                    onChange={setNewReviewInternalNotes}
                   />
                 </div>
               </div>
