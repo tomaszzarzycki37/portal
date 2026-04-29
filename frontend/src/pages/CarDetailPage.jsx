@@ -653,13 +653,17 @@ export default function CarDetailPage() {
             </label>
 
             <label className="form-label" htmlFor="admin-image">{t.adminPanel.image}</label>
-            <input
-              id="admin-image"
-              type="file"
-              accept="image/*"
-              className="form-input"
-              onChange={(e) => setAdminImage(e.target.files?.[0] || null)}
-            />
+            <div className="admin-file-picker-row">
+              <input
+                id="admin-image"
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={(e) => setAdminImage(e.target.files?.[0] || null)}
+              />
+              <label htmlFor="admin-image" className="btn btn-secondary btn-sm">{t.adminInline.chooseFile}</label>
+              <span className="admin-file-picker-name">{adminImage ? adminImage.name : t.adminInline.noFileSelected}</span>
+            </div>
 
             {adminMessage && <p className="form-success">{adminMessage}</p>}
             {adminError && <p className="form-error">{adminError}</p>}

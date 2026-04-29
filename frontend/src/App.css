@@ -926,6 +926,19 @@
 }
 /* ── End Admin structured review form ──────────────────── */
 
+.admin-file-picker-row {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	flex-wrap: wrap;
+}
+
+.admin-file-picker-name {
+	color: #475569;
+	font-size: 0.92rem;
+	word-break: break-word;
+}
+
 .home-cta h2 {
 	margin: 0 0 0.35rem;
 	font-size: clamp(1.4rem, 3vw, 2rem);
