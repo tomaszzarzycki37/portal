@@ -888,6 +888,34 @@
 	line-height: 1.65;
 }
 
+.review-html-content {
+	margin: 1rem 1.5rem 0;
+	font-size: 0.95rem;
+	color: #1f2937;
+	line-height: 1.65;
+}
+
+.review-html-content p,
+.review-html-content h1,
+.review-html-content h2,
+.review-html-content h3,
+.review-html-content h4,
+.review-html-content ul,
+.review-html-content ol,
+.review-html-content blockquote {
+	margin: 0 0 0.85rem;
+}
+
+.review-html-content ul,
+.review-html-content ol {
+	padding-left: 1.25rem;
+}
+
+.review-html-content a {
+	color: #2563eb;
+	text-decoration: underline;
+}
+
 /* Test Results */
 .review-results {
 	margin: 1.25rem 1.5rem 0;
@@ -1049,6 +1077,26 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
+}
+
+.admin-rich-editor .ql-toolbar.ql-snow {
+	border: 1px solid #cbd5e1;
+	border-radius: 0.6rem 0.6rem 0 0;
+	background: #f8fafc;
+}
+
+.admin-rich-editor .ql-container.ql-snow {
+	border: 1px solid #cbd5e1;
+	border-top: 0;
+	border-radius: 0 0 0.6rem 0.6rem;
+	min-height: 240px;
+	background: #ffffff;
+}
+
+.admin-rich-editor .ql-editor {
+	min-height: 210px;
+	line-height: 1.55;
+	font-size: 0.96rem;
 }
 
 .admin-rich-toolbar {

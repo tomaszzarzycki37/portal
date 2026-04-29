@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
 import { getBaseTranslationValue, getTranslationKeys, useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCurrentUser, isAdminUser } from '../utils/auth'
@@ -19,58 +21,6 @@ const API_ORIGIN = import.meta.env.VITE_API_URL
     ? 'http://localhost:8000'
     : ''
 
-// ── Review content helpers ──────────────────────────────────
-function parseContentToStructured(content) {
-  const lines = (content || '').split('\n')
-  const overview = []
-  const images = ['', '', '']
-  const testResults = []
-  const verdict = []
-  let imageIdx = 0
-  let section = null
-  for (const line of lines) {
-    const trimmed = line.trim()
-    if (trimmed === 'Overview') { section = 'overview'; continue }
-    if (trimmed === 'Example photo gallery') { section = 'gallery'; continue }
-    if (trimmed === 'Test results') { section = 'results'; continue }
-    if (trimmed === 'Verdict') { section = 'verdict'; continue }
-    if (!trimmed) continue
-    if (section === 'overview') overview.push(trimmed)
-    else if (section === 'gallery') {
-      const m = trimmed.match(/^\d+\.\s+(https?:\/\/.+)/)
-      if (m && imageIdx < 3) { images[imageIdx++] = m[1].trim() }
-    } else if (section === 'results') {
-      const m = trimmed.match(/^-\s+(.+?):\s+(.+)/)
-      if (m) testResults.push({ key: m[1].trim(), value: m[2].trim() })
-    } else if (section === 'verdict') verdict.push(trimmed)
-  }
-  return {
-    overview: overview.join(' '),
-    images,
-    testResults: testResults.length ? testResults : [{ key: '', value: '' }],
-    verdict: verdict.join(' '),
-  }
-}
-
-function buildContentFromStructured({ overview, images, testResults, verdict }) {
-  const lines = []
-  if (overview) { lines.push('Overview', overview, '') }
-  const validImgs = images.filter((u) => u.trim())
-  if (validImgs.length) {
-    lines.push('Example photo gallery')
-    validImgs.forEach((u, i) => lines.push(`${i + 1}. ${u.trim()}`))
-    lines.push('')
-  }
-  const validResults = testResults.filter((r) => r.key.trim())
-  if (validResults.length) {
-    lines.push('Test results')
-    validResults.forEach((r) => lines.push(`- ${r.key.trim()}: ${r.value.trim()}`))
-    lines.push('')
-  }
-  if (verdict) { lines.push('Verdict', verdict) }
-  return lines.join('\n').trim()
-}
-
 function estimateReadingTimeMinutes(text) {
   const words = String(text || '')
     .replace(/\s+/g, ' ')
@@ -81,69 +31,40 @@ function estimateReadingTimeMinutes(text) {
   return Math.max(1, Math.ceil(words / 200))
 }
 
-function RichTextEditor({ id, label, value, onChange, rows = 4 }) {
-  const textRef = useRef(null)
-  const [showAdvanced, setShowAdvanced] = useState(false)
+const WORD_LIKE_MODULES = {
+  toolbar: [
+    [{ font: [] }, { size: ['small', false, 'large', 'huge'] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ color: [] }, { background: [] }],
+    [{ align: [] }],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ indent: '-1' }, { indent: '+1' }],
+    ['blockquote', 'code-block'],
+    ['link', 'clean'],
+  ],
+}
 
-  const insertAtSelection = (before, after = before) => {
-    const textarea = textRef.current
-    if (!textarea) return
+const WORD_LIKE_FORMATS = [
+  'font', 'size',
+  'bold', 'italic', 'underline', 'strike',
+  'color', 'background',
+  'align', 'list', 'bullet', 'indent',
+  'blockquote', 'code-block',
+  'link',
+]
 
-    const start = textarea.selectionStart ?? 0
-    const end = textarea.selectionEnd ?? 0
-    const selected = value.slice(start, end)
-    const nextValue = `${value.slice(0, start)}${before}${selected}${after}${value.slice(end)}`
-    onChange(nextValue)
-
-    requestAnimationFrame(() => {
-      textarea.focus()
-      const cursorPos = start + before.length + selected.length + after.length
-      textarea.setSelectionRange(cursorPos, cursorPos)
-    })
-  }
-
-  const insertListItem = () => {
-    const textarea = textRef.current
-    if (!textarea) return
-    const start = textarea.selectionStart ?? 0
-    const lineStart = value.lastIndexOf('\n', start - 1) + 1
-    const nextValue = `${value.slice(0, lineStart)}- ${value.slice(lineStart)}`
-    onChange(nextValue)
-  }
-
-  const insertLink = () => {
-    const url = window.prompt('Enter URL')
-    if (!url) return
-    insertAtSelection('[', `](${url.trim()})`)
-  }
-
+function RichTextEditor({ id, label, value, onChange }) {
   return (
     <div className="admin-rich-editor">
       <label className="form-label" htmlFor={id}>{label}</label>
-      <div className="admin-rich-toolbar">
-        <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('**')}>B</button>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('_')}>I</button>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('## ', '')}>H2</button>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={insertListItem}>List</button>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={insertLink}>Link</button>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowAdvanced((prev) => !prev)}>
-          {showAdvanced ? 'Hide advanced' : 'Advanced tools'}
-        </button>
-      </div>
-      {showAdvanced && (
-        <div className="admin-rich-toolbar admin-rich-toolbar-advanced">
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('[size=sm]', '[/size]')}>A-</button>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('[size=md]', '[/size]')}>A</button>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => insertAtSelection('[size=lg]', '[/size]')}>A+</button>
-        </div>
-      )}
-      <textarea
-        ref={textRef}
+      <ReactQuill
         id={id}
-        className="form-input form-textarea admin-rich-textarea"
-        rows={rows}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        theme="snow"
+        value={value || ''}
+        onChange={onChange}
+        modules={WORD_LIKE_MODULES}
+        formats={WORD_LIKE_FORMATS}
+        placeholder="Write article content..."
       />
     </div>
   )
@@ -304,10 +225,7 @@ export default function AdminDashboard() {
   const [newReviewCarId, setNewReviewCarId] = useState('')
   const [newReviewTitle, setNewReviewTitle] = useState('')
   const [newReviewSummary, setNewReviewSummary] = useState('')
-  const [newReviewOverview, setNewReviewOverview] = useState('')
-  const [newReviewImages, setNewReviewImages] = useState(['', '', ''])
-  const [newReviewTestResults, setNewReviewTestResults] = useState([{ key: '', value: '' }])
-  const [newReviewVerdict, setNewReviewVerdict] = useState('')
+  const [newReviewContent, setNewReviewContent] = useState('')
   const [newReviewPublication, setNewReviewPublication] = useState('')
   const [newReviewSlug, setNewReviewSlug] = useState('')
   const [newReviewCategory, setNewReviewCategory] = useState('test')
@@ -706,12 +624,12 @@ export default function AdminDashboard() {
     setCreateReviewError('')
 
     const parsedCarId = Number.parseInt(newReviewCarId, 10)
-    const builtContent = buildContentFromStructured({ overview: newReviewOverview, images: newReviewImages, testResults: newReviewTestResults, verdict: newReviewVerdict })
+    const normalizedContent = String(newReviewContent || '').trim()
     const parsedReadingTime = Number.parseInt(String(newReviewReadingTime || '').trim(), 10)
     if (
       Number.isNaN(parsedCarId) ||
       !newReviewTitle.trim() ||
-      !builtContent.trim() ||
+      !normalizedContent ||
       !newReviewPublication.trim() ||
       !newReviewPublishedAt
     ) {
@@ -726,10 +644,10 @@ export default function AdminDashboard() {
         title: newReviewTitle.trim(),
         slug: newReviewSlug.trim(),
         summary: newReviewSummary.trim(),
-        content: builtContent,
+        content: normalizedContent,
         category: newReviewCategory,
         tags: newReviewTags.trim(),
-        reading_time_minutes: Number.isNaN(parsedReadingTime) ? estimateReadingTimeMinutes(`${newReviewSummary} ${builtContent}`) : parsedReadingTime,
+        reading_time_minutes: Number.isNaN(parsedReadingTime) ? estimateReadingTimeMinutes(`${newReviewSummary} ${normalizedContent}`) : parsedReadingTime,
         internal_notes: newReviewInternalNotes.trim(),
         publication_name: newReviewPublication.trim(),
         author_name: newReviewAuthor.trim(),
@@ -741,10 +659,7 @@ export default function AdminDashboard() {
 
       setNewReviewTitle('')
       setNewReviewSummary('')
-      setNewReviewOverview('')
-      setNewReviewImages(['', '', ''])
-      setNewReviewTestResults([{ key: '', value: '' }])
-      setNewReviewVerdict('')
+      setNewReviewContent('')
       setNewReviewPublication('')
       setNewReviewSlug('')
       setNewReviewCategory('test')
@@ -778,7 +693,6 @@ export default function AdminDashboard() {
         title: detail.title || '',
         slug: detail.slug || '',
         summary: detail.summary || '',
-        _structured: parseContentToStructured(detail.content || ''),
         content: detail.content || '',
         category: detail.category || 'test',
         tags: detail.tags || '',
@@ -807,7 +721,7 @@ export default function AdminDashboard() {
     if (
       !reviewEditDraft.car_model ||
       !reviewEditDraft.title.trim() ||
-      !buildContentFromStructured(reviewEditDraft._structured || parseContentToStructured(reviewEditDraft.content || '')).trim() ||
+      !String(reviewEditDraft.content || '').trim() ||
       !reviewEditDraft.publication_name.trim() ||
       !reviewEditDraft.published_at
     ) {
@@ -823,11 +737,11 @@ export default function AdminDashboard() {
         title: reviewEditDraft.title.trim(),
         slug: reviewEditDraft.slug.trim(),
         summary: reviewEditDraft.summary.trim(),
-        content: buildContentFromStructured(reviewEditDraft._structured || parseContentToStructured(reviewEditDraft.content || '')),
+        content: String(reviewEditDraft.content || '').trim(),
         category: reviewEditDraft.category,
         tags: reviewEditDraft.tags.trim(),
         reading_time_minutes: Number.isNaN(parsedReadingTime)
-          ? estimateReadingTimeMinutes(`${reviewEditDraft.summary} ${buildContentFromStructured(reviewEditDraft._structured || parseContentToStructured(reviewEditDraft.content || ''))}`)
+          ? estimateReadingTimeMinutes(`${reviewEditDraft.summary} ${reviewEditDraft.content || ''}`)
           : parsedReadingTime,
         internal_notes: reviewEditDraft.internal_notes.trim(),
         publication_name: reviewEditDraft.publication_name.trim(),
@@ -1945,89 +1859,10 @@ export default function AdminDashboard() {
 
                         <div className="admin-form-grid-full">
                           <RichTextEditor
-                            id={`edit-review-overview-${review.id}`}
-                            label="Overview"
-                            rows={4}
-                            value={reviewEditDraft._structured?.overview || ''}
-                            onChange={(nextValue) => setReviewEditDraft((prev) => ({
-                              ...prev,
-                              _structured: { ...prev._structured, overview: nextValue },
-                            }))}
-                          />
-                        </div>
-
-                        <div className="admin-form-grid-full review-struct-section">
-                          <label className="form-label">Photo URLs</label>
-                          {[0, 1, 2].map((i) => (
-                            <input
-                              key={i}
-                              type="url"
-                              className="form-input"
-                              placeholder={`Photo ${i + 1} URL`}
-                              value={reviewEditDraft._structured?.images?.[i] || ''}
-                              onChange={(e) => {
-                                const imgs = [...(reviewEditDraft._structured?.images || ['', '', ''])]
-                                imgs[i] = e.target.value
-                                setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, images: imgs } }))
-                              }}
-                            />
-                          ))}
-                        </div>
-
-                        <div className="admin-form-grid-full review-struct-section">
-                          <label className="form-label">Test Results</label>
-                          {(reviewEditDraft._structured?.testResults || []).map((row, i) => (
-                            <div key={i} className="review-result-row">
-                              <input
-                                type="text"
-                                className="form-input"
-                                placeholder="Metric (e.g. 0-100 km/h)"
-                                value={row.key}
-                                onChange={(e) => {
-                                  const rows = [...(reviewEditDraft._structured?.testResults || [])]
-                                  rows[i] = { ...rows[i], key: e.target.value }
-                                  setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, testResults: rows } }))
-                                }}
-                              />
-                              <input
-                                type="text"
-                                className="form-input"
-                                placeholder="Value (e.g. 5.8 s)"
-                                value={row.value}
-                                onChange={(e) => {
-                                  const rows = [...(reviewEditDraft._structured?.testResults || [])]
-                                  rows[i] = { ...rows[i], value: e.target.value }
-                                  setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, testResults: rows } }))
-                                }}
-                              />
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => {
-                                  const rows = (reviewEditDraft._structured?.testResults || []).filter((_, idx) => idx !== i)
-                                  setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, testResults: rows.length ? rows : [{ key: '', value: '' }] } }))
-                                }}
-                              >✕</button>
-                            </div>
-                          ))}
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            style={{ marginTop: '0.4rem', alignSelf: 'flex-start' }}
-                            onClick={() => setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, testResults: [...(prev._structured?.testResults || []), { key: '', value: '' }] } }))}
-                          >+ Add row</button>
-                        </div>
-
-                        <div className="admin-form-grid-full">
-                          <RichTextEditor
-                            id={`edit-review-verdict-${review.id}`}
-                            label="Verdict"
-                            rows={4}
-                            value={reviewEditDraft._structured?.verdict || ''}
-                            onChange={(nextValue) => setReviewEditDraft((prev) => ({
-                              ...prev,
-                              _structured: { ...prev._structured, verdict: nextValue },
-                            }))}
+                            id={`edit-review-content-${review.id}`}
+                            label="Article content"
+                            value={reviewEditDraft.content}
+                            onChange={(nextValue) => setReviewEditDraft((prev) => ({ ...prev, content: nextValue }))}
                           />
                         </div>
 
@@ -2047,10 +1882,9 @@ export default function AdminDashboard() {
                           type="button"
                           className="btn btn-secondary btn-sm"
                           onClick={() => {
-                            const builtContent = buildContentFromStructured(reviewEditDraft._structured || parseContentToStructured(reviewEditDraft.content || ''))
                             setReviewEditDraft((prev) => ({
                               ...prev,
-                              reading_time_minutes: String(estimateReadingTimeMinutes(`${prev.summary} ${builtContent}`)),
+                              reading_time_minutes: String(estimateReadingTimeMinutes(`${prev.summary} ${prev.content || ''}`)),
                               slug: prev.slug || toSlug(prev.title),
                             }))
                           }}
@@ -2246,83 +2080,10 @@ export default function AdminDashboard() {
 
                 <div className="admin-form-grid-full">
                   <RichTextEditor
-                    id="new-review-overview"
-                    label="Overview"
-                    rows={4}
-                    value={newReviewOverview}
-                    onChange={setNewReviewOverview}
-                  />
-                </div>
-
-                <div className="admin-form-grid-full review-struct-section">
-                  <label className="form-label">Photo URLs</label>
-                  {[0, 1, 2].map((i) => (
-                    <input
-                      key={i}
-                      type="url"
-                      className="form-input"
-                      placeholder={`Photo ${i + 1} URL`}
-                      value={newReviewImages[i]}
-                      onChange={(e) => {
-                        const imgs = [...newReviewImages]
-                        imgs[i] = e.target.value
-                        setNewReviewImages(imgs)
-                      }}
-                    />
-                  ))}
-                </div>
-
-                <div className="admin-form-grid-full review-struct-section">
-                  <label className="form-label">Test Results</label>
-                  {newReviewTestResults.map((row, i) => (
-                    <div key={i} className="review-result-row">
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Metric (e.g. 0-100 km/h)"
-                        value={row.key}
-                        onChange={(e) => {
-                          const rows = [...newReviewTestResults]
-                          rows[i] = { ...rows[i], key: e.target.value }
-                          setNewReviewTestResults(rows)
-                        }}
-                      />
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Value (e.g. 5.8 s)"
-                        value={row.value}
-                        onChange={(e) => {
-                          const rows = [...newReviewTestResults]
-                          rows[i] = { ...rows[i], value: e.target.value }
-                          setNewReviewTestResults(rows)
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => {
-                          const rows = newReviewTestResults.filter((_, idx) => idx !== i)
-                          setNewReviewTestResults(rows.length ? rows : [{ key: '', value: '' }])
-                        }}
-                      >✕</button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    style={{ marginTop: '0.4rem', alignSelf: 'flex-start' }}
-                    onClick={() => setNewReviewTestResults((prev) => [...prev, { key: '', value: '' }])}
-                  >+ Add row</button>
-                </div>
-
-                <div className="admin-form-grid-full">
-                  <RichTextEditor
-                    id="new-review-verdict"
-                    label="Verdict"
-                    rows={4}
-                    value={newReviewVerdict}
-                    onChange={setNewReviewVerdict}
+                    id="new-review-content"
+                    label="Article content"
+                    value={newReviewContent}
+                    onChange={setNewReviewContent}
                   />
                 </div>
 
@@ -2342,13 +2103,7 @@ export default function AdminDashboard() {
                   type="button"
                   className="btn btn-secondary btn-sm"
                   onClick={() => {
-                    const builtContent = buildContentFromStructured({
-                      overview: newReviewOverview,
-                      images: newReviewImages,
-                      testResults: newReviewTestResults,
-                      verdict: newReviewVerdict,
-                    })
-                    setNewReviewReadingTime(String(estimateReadingTimeMinutes(`${newReviewSummary} ${builtContent}`)))
+                    setNewReviewReadingTime(String(estimateReadingTimeMinutes(`${newReviewSummary} ${newReviewContent || ''}`)))
                     if (!newReviewSlug.trim()) setNewReviewSlug(toSlug(newReviewTitle))
                   }}
                 >

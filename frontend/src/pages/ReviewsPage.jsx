@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import DOMPurify from 'dompurify'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
+
+function sanitizeEditorialHtml(value) {
+  return DOMPurify.sanitize(String(value || ''))
+}
 
 function escapeHtml(value) {
   return String(value || '')
@@ -213,7 +218,9 @@ export default function ReviewsPage() {
 
           <div className="opinions-list">
             {filteredAndSortedReviews.map((review) => {
-              const parsed = parseReviewContent(review.content)
+              const content = String(review.content || '')
+              const isHtmlContent = /<\/?[a-z][\s\S]*>/i.test(content)
+              const parsed = isHtmlContent ? null : parseReviewContent(content)
               return (
                 <article key={review.id} className="review-card-rich">
                   {/* Header */}
@@ -239,8 +246,8 @@ export default function ReviewsPage() {
                     )}
                   </div>
 
-                  {/* Image gallery */}
-                  {parsed.images.length > 0 && (
+                  {/* Image gallery (legacy content only) */}
+                  {parsed && parsed.images.length > 0 && (
                     <div className="review-gallery">
                       <img
                         src={parsed.images[0]}
@@ -264,13 +271,21 @@ export default function ReviewsPage() {
                     </div>
                   )}
 
-                  {/* Overview */}
-                  {parsed.overview && (
+                  {/* Rich HTML content */}
+                  {isHtmlContent && (
+                    <div
+                      className="review-html-content"
+                      dangerouslySetInnerHTML={{ __html: sanitizeEditorialHtml(content) }}
+                    />
+                  )}
+
+                  {/* Overview (legacy content only) */}
+                  {parsed && parsed.overview && (
                     <p className="review-overview-text" dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.overview) }} />
                   )}
 
-                  {/* Test results */}
-                  {parsed.testResults.length > 0 && (
+                  {/* Test results (legacy content only) */}
+                  {parsed && parsed.testResults.length > 0 && (
                     <div className="review-results">
                       <h4 className="review-results-title">Test Results</h4>
                       <div className="review-results-grid">
@@ -284,8 +299,8 @@ export default function ReviewsPage() {
                     </div>
                   )}
 
-                  {/* Verdict */}
-                  {parsed.verdict && (
+                  {/* Verdict (legacy content only) */}
+                  {parsed && parsed.verdict && (
                     <div className="review-verdict">
                       <span className="review-verdict-label">Verdict</span>
                       <p className="review-verdict-text" dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.verdict) }} />
