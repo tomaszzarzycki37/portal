@@ -1077,12 +1077,17 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
+	position: relative;
+	z-index: 0;
+	margin-bottom: 0.55rem;
 }
 
 .admin-rich-editor .ql-toolbar.ql-snow {
 	border: 1px solid #cbd5e1;
 	border-radius: 0.6rem 0.6rem 0 0;
 	background: #f8fafc;
+	position: relative;
+	z-index: 1;
 }
 
 .admin-rich-editor .ql-container.ql-snow {
@@ -1091,6 +1096,8 @@
 	border-radius: 0 0 0.6rem 0.6rem;
 	min-height: 240px;
 	background: #ffffff;
+	position: relative;
+	z-index: 1;
 }
 
 .admin-rich-editor .ql-editor {
