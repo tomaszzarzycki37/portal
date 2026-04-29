@@ -660,8 +660,8 @@
 }
 
 .home-featured-review-thumb {
-	width: 88px;
-	height: 56px;
+	width: 104px;
+	height: 66px;
 	object-fit: cover;
 	border-radius: 0.45rem;
 	border: 1px solid #fdba74;
@@ -721,8 +721,8 @@
 
 @media (max-width: 640px) {
 	.home-featured-review-thumb {
-		width: 72px;
-		height: 48px;
+		width: 86px;
+		height: 56px;
 	}
 }
 
