@@ -106,8 +106,9 @@ class PressReviewListSerializer(serializers.ModelSerializer):
         model = PressReview
         fields = [
             'id', 'car_id', 'car_name', 'car_brand_name', 'title', 'summary', 'content',
+            'slug', 'category', 'tags', 'reading_time_minutes',
             'publication_name', 'publication_url', 'author_name', 'published_at',
-            'is_featured', 'created_at'
+            'is_featured', 'is_pinned', 'created_at'
         ]
 
 
@@ -120,8 +121,9 @@ class PressReviewDetailSerializer(serializers.ModelSerializer):
         model = PressReview
         fields = [
             'id', 'car_id', 'car_name', 'car_brand_name', 'title', 'summary', 'content',
+            'slug', 'category', 'tags', 'reading_time_minutes', 'internal_notes',
             'publication_name', 'publication_url', 'author_name', 'published_at',
-            'is_featured', 'is_published', 'created_at', 'updated_at'
+            'is_featured', 'is_pinned', 'is_published', 'created_at', 'updated_at'
         ]
 
 
@@ -129,6 +131,8 @@ class PressReviewWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = PressReview
         fields = [
-            'car_model', 'title', 'summary', 'content', 'publication_name',
-            'publication_url', 'author_name', 'published_at', 'is_featured', 'is_published'
+            'car_model', 'title', 'slug', 'summary', 'content',
+            'category', 'tags', 'reading_time_minutes', 'internal_notes',
+            'publication_name', 'publication_url', 'author_name', 'published_at',
+            'is_featured', 'is_pinned', 'is_published'
         ]

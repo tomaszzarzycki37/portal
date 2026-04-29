@@ -116,10 +116,10 @@ class PressReviewViewSet(viewsets.ModelViewSet):
     queryset = PressReview.objects.select_related('car_model', 'car_model__brand')
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['car_model', 'is_featured']
-    search_fields = ['title', 'summary', 'content', 'publication_name', 'author_name', 'car_model__name']
-    ordering_fields = ['published_at', 'created_at']
-    ordering = ['-published_at', '-created_at']
+    filterset_fields = ['car_model', 'is_featured', 'is_pinned', 'category']
+    search_fields = ['title', 'summary', 'content', 'publication_name', 'author_name', 'tags', 'slug', 'car_model__name']
+    ordering_fields = ['is_pinned', 'published_at', 'created_at', 'reading_time_minutes']
+    ordering = ['-is_pinned', '-published_at', '-created_at']
 
     def get_queryset(self):
         queryset = PressReview.objects.select_related('car_model', 'car_model__brand')
@@ -143,6 +143,6 @@ class PressReviewViewSet(viewsets.ModelViewSet):
         except (TypeError, ValueError):
             parsed_limit = 6
 
-        featured_qs = self.get_queryset().filter(is_featured=True).order_by('-published_at', '-created_at')
+        featured_qs = self.get_queryset().filter(is_featured=True).order_by('-is_pinned', '-published_at', '-created_at')
         serializer = PressReviewListSerializer(featured_qs[:parsed_limit], many=True, context={'request': request})
         return Response(serializer.data)

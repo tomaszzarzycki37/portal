@@ -70,6 +70,16 @@ function buildContentFromStructured({ overview, images, testResults, verdict }) 
   if (verdict) { lines.push('Verdict', verdict) }
   return lines.join('\n').trim()
 }
+
+function estimateReadingTimeMinutes(text) {
+  const words = String(text || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean).length
+  if (!words) return 0
+  return Math.max(1, Math.ceil(words / 200))
+}
 // ── End review content helpers ──────────────────────────────
 
 function resolveMediaUrl(url) {
@@ -231,10 +241,15 @@ export default function AdminDashboard() {
   const [newReviewTestResults, setNewReviewTestResults] = useState([{ key: '', value: '' }])
   const [newReviewVerdict, setNewReviewVerdict] = useState('')
   const [newReviewPublication, setNewReviewPublication] = useState('')
-  const [newReviewPublicationUrl, setNewReviewPublicationUrl] = useState('')
+  const [newReviewSlug, setNewReviewSlug] = useState('')
+  const [newReviewCategory, setNewReviewCategory] = useState('test')
+  const [newReviewTags, setNewReviewTags] = useState('')
+  const [newReviewReadingTime, setNewReviewReadingTime] = useState('')
+  const [newReviewInternalNotes, setNewReviewInternalNotes] = useState('')
   const [newReviewAuthor, setNewReviewAuthor] = useState('')
   const [newReviewPublishedAt, setNewReviewPublishedAt] = useState('')
   const [newReviewFeatured, setNewReviewFeatured] = useState(false)
+  const [newReviewPinned, setNewReviewPinned] = useState(false)
   const [newReviewPublished, setNewReviewPublished] = useState(true)
   const [creatingReview, setCreatingReview] = useState(false)
   const [createReviewMessage, setCreateReviewMessage] = useState('')
@@ -624,6 +639,7 @@ export default function AdminDashboard() {
 
     const parsedCarId = Number.parseInt(newReviewCarId, 10)
     const builtContent = buildContentFromStructured({ overview: newReviewOverview, images: newReviewImages, testResults: newReviewTestResults, verdict: newReviewVerdict })
+    const parsedReadingTime = Number.parseInt(String(newReviewReadingTime || '').trim(), 10)
     if (
       Number.isNaN(parsedCarId) ||
       !newReviewTitle.trim() ||
@@ -640,13 +656,18 @@ export default function AdminDashboard() {
       await api.post('/reviews/', {
         car_model: parsedCarId,
         title: newReviewTitle.trim(),
+        slug: newReviewSlug.trim(),
         summary: newReviewSummary.trim(),
         content: builtContent,
+        category: newReviewCategory,
+        tags: newReviewTags.trim(),
+        reading_time_minutes: Number.isNaN(parsedReadingTime) ? estimateReadingTimeMinutes(`${newReviewSummary} ${builtContent}`) : parsedReadingTime,
+        internal_notes: newReviewInternalNotes.trim(),
         publication_name: newReviewPublication.trim(),
-        publication_url: newReviewPublicationUrl.trim(),
         author_name: newReviewAuthor.trim(),
         published_at: newReviewPublishedAt,
         is_featured: newReviewFeatured,
+        is_pinned: newReviewPinned,
         is_published: newReviewPublished,
       })
 
@@ -657,10 +678,15 @@ export default function AdminDashboard() {
       setNewReviewTestResults([{ key: '', value: '' }])
       setNewReviewVerdict('')
       setNewReviewPublication('')
-      setNewReviewPublicationUrl('')
+      setNewReviewSlug('')
+      setNewReviewCategory('test')
+      setNewReviewTags('')
+      setNewReviewReadingTime('')
+      setNewReviewInternalNotes('')
       setNewReviewAuthor('')
       setNewReviewPublishedAt('')
       setNewReviewFeatured(false)
+      setNewReviewPinned(false)
       setNewReviewPublished(true)
       setCreateReviewMessage(t.adminPanel.reviewCreated)
       await loadPressReviews()
@@ -682,14 +708,19 @@ export default function AdminDashboard() {
       setReviewEditDraft({
         car_model: String(detail.car_id || ''),
         title: detail.title || '',
+        slug: detail.slug || '',
         summary: detail.summary || '',
         _structured: parseContentToStructured(detail.content || ''),
         content: detail.content || '',
+        category: detail.category || 'test',
+        tags: detail.tags || '',
+        reading_time_minutes: String(detail.reading_time_minutes ?? ''),
+        internal_notes: detail.internal_notes || '',
         publication_name: detail.publication_name || '',
-        publication_url: detail.publication_url || '',
         author_name: detail.author_name || '',
         published_at: publishedDate,
         is_featured: !!detail.is_featured,
+        is_pinned: !!detail.is_pinned,
         is_published: !!detail.is_published,
       })
     } catch {
@@ -704,6 +735,7 @@ export default function AdminDashboard() {
 
   const handleSaveReviewEdit = async (reviewId) => {
     if (!reviewEditDraft) return
+    const parsedReadingTime = Number.parseInt(String(reviewEditDraft.reading_time_minutes || '').trim(), 10)
     if (
       !reviewEditDraft.car_model ||
       !reviewEditDraft.title.trim() ||
@@ -721,13 +753,20 @@ export default function AdminDashboard() {
       await api.patch(`/reviews/${reviewId}/`, {
         car_model: Number.parseInt(reviewEditDraft.car_model, 10),
         title: reviewEditDraft.title.trim(),
+        slug: reviewEditDraft.slug.trim(),
         summary: reviewEditDraft.summary.trim(),
         content: buildContentFromStructured(reviewEditDraft._structured || parseContentToStructured(reviewEditDraft.content || '')),
+        category: reviewEditDraft.category,
+        tags: reviewEditDraft.tags.trim(),
+        reading_time_minutes: Number.isNaN(parsedReadingTime)
+          ? estimateReadingTimeMinutes(`${reviewEditDraft.summary} ${buildContentFromStructured(reviewEditDraft._structured || parseContentToStructured(reviewEditDraft.content || ''))}`)
+          : parsedReadingTime,
+        internal_notes: reviewEditDraft.internal_notes.trim(),
         publication_name: reviewEditDraft.publication_name.trim(),
-        publication_url: reviewEditDraft.publication_url.trim(),
         author_name: reviewEditDraft.author_name.trim(),
         published_at: reviewEditDraft.published_at,
         is_featured: !!reviewEditDraft.is_featured,
+        is_pinned: !!reviewEditDraft.is_pinned,
         is_published: !!reviewEditDraft.is_published,
       })
       setReviewsMessage(t.adminPanel.reviewUpdated)
@@ -1700,7 +1739,7 @@ export default function AdminDashboard() {
                   <div className="admin-review-card-head">
                     <div>
                       <h3 className="admin-review-title">{review.title}</h3>
-                      <p className="admin-meta">{review.car_brand_name} {review.car_name} • {review.publication_name}</p>
+                      <p className="admin-meta">{review.car_brand_name} {review.car_name} • {review.publication_name} • {String(review.category || 'test').toUpperCase()} {review.is_pinned ? '• PINNED' : ''}</p>
                     </div>
                     <div className="admin-actions-row">
                       <button
@@ -1779,12 +1818,49 @@ export default function AdminDashboard() {
                         </div>
 
                         <div>
-                          <label className="form-label" htmlFor={`edit-review-url-${review.id}`}>{t.adminPanel.reviewSourceUrl}</label>
+                          <label className="form-label" htmlFor={`edit-review-slug-${review.id}`}>Slug</label>
                           <input
-                            id={`edit-review-url-${review.id}`}
+                            id={`edit-review-slug-${review.id}`}
                             className="form-input"
-                            value={reviewEditDraft.publication_url}
-                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, publication_url: e.target.value }))}
+                            value={reviewEditDraft.slug}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, slug: e.target.value }))}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="form-label" htmlFor={`edit-review-category-${review.id}`}>Category</label>
+                          <select
+                            id={`edit-review-category-${review.id}`}
+                            className="form-input"
+                            value={reviewEditDraft.category}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, category: e.target.value }))}
+                          >
+                            <option value="test">Test</option>
+                            <option value="news">News</option>
+                            <option value="guide">Guide</option>
+                            <option value="opinion">Opinion</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="form-label" htmlFor={`edit-review-reading-time-${review.id}`}>Reading time (min)</label>
+                          <input
+                            id={`edit-review-reading-time-${review.id}`}
+                            type="number"
+                            min="0"
+                            className="form-input"
+                            value={reviewEditDraft.reading_time_minutes}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, reading_time_minutes: e.target.value }))}
+                          />
+                        </div>
+
+                        <div className="admin-form-grid-full">
+                          <label className="form-label" htmlFor={`edit-review-tags-${review.id}`}>Tags (comma separated)</label>
+                          <input
+                            id={`edit-review-tags-${review.id}`}
+                            className="form-input"
+                            value={reviewEditDraft.tags}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, tags: e.target.value }))}
                           />
                         </div>
 
@@ -1880,6 +1956,34 @@ export default function AdminDashboard() {
                             onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, _structured: { ...prev._structured, verdict: e.target.value } }))}
                           />
                         </div>
+
+                        <div className="admin-form-grid-full">
+                          <label className="form-label" htmlFor={`edit-review-notes-${review.id}`}>Internal notes (admin only)</label>
+                          <textarea
+                            id={`edit-review-notes-${review.id}`}
+                            className="form-input form-textarea"
+                            rows={3}
+                            value={reviewEditDraft.internal_notes}
+                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, internal_notes: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="admin-actions-row" style={{ justifyContent: 'flex-start' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => {
+                            const builtContent = buildContentFromStructured(reviewEditDraft._structured || parseContentToStructured(reviewEditDraft.content || ''))
+                            setReviewEditDraft((prev) => ({
+                              ...prev,
+                              reading_time_minutes: String(estimateReadingTimeMinutes(`${prev.summary} ${builtContent}`)),
+                              slug: prev.slug || toSlug(prev.title),
+                            }))
+                          }}
+                        >
+                          Auto calculate tools
+                        </button>
                       </div>
 
                       <label className="form-checkbox-row">
@@ -1889,6 +1993,15 @@ export default function AdminDashboard() {
                           onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, is_featured: e.target.checked }))}
                         />
                         {t.adminPanel.reviewFeatured}
+                      </label>
+
+                      <label className="form-checkbox-row">
+                        <input
+                          type="checkbox"
+                          checked={reviewEditDraft.is_pinned}
+                          onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, is_pinned: e.target.checked }))}
+                        />
+                        Pin article at top
                       </label>
 
                       <label className="form-checkbox-row">
@@ -1959,7 +2072,11 @@ export default function AdminDashboard() {
                     id="new-review-title"
                     className="form-input"
                     value={newReviewTitle}
-                    onChange={(e) => setNewReviewTitle(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setNewReviewTitle(value)
+                      if (!newReviewSlug.trim()) setNewReviewSlug(toSlug(value))
+                    }}
                   />
                 </div>
 
@@ -1995,13 +2112,51 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="form-label" htmlFor="new-review-url">{t.adminPanel.reviewSourceUrl}</label>
+                  <label className="form-label" htmlFor="new-review-slug">Slug</label>
                   <input
-                    id="new-review-url"
+                    id="new-review-slug"
                     className="form-input"
-                    value={newReviewPublicationUrl}
-                    onChange={(e) => setNewReviewPublicationUrl(e.target.value)}
-                    placeholder="https://..."
+                    value={newReviewSlug}
+                    onChange={(e) => setNewReviewSlug(e.target.value)}
+                    placeholder="auto-from-title"
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label" htmlFor="new-review-category">Category</label>
+                  <select
+                    id="new-review-category"
+                    className="form-input"
+                    value={newReviewCategory}
+                    onChange={(e) => setNewReviewCategory(e.target.value)}
+                  >
+                    <option value="test">Test</option>
+                    <option value="news">News</option>
+                    <option value="guide">Guide</option>
+                    <option value="opinion">Opinion</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="form-label" htmlFor="new-review-reading-time">Reading time (min)</label>
+                  <input
+                    id="new-review-reading-time"
+                    type="number"
+                    min="0"
+                    className="form-input"
+                    value={newReviewReadingTime}
+                    onChange={(e) => setNewReviewReadingTime(e.target.value)}
+                  />
+                </div>
+
+                <div className="admin-form-grid-full">
+                  <label className="form-label" htmlFor="new-review-tags">Tags (comma separated)</label>
+                  <input
+                    id="new-review-tags"
+                    className="form-input"
+                    value={newReviewTags}
+                    onChange={(e) => setNewReviewTags(e.target.value)}
+                    placeholder="battery, range, comfort"
                   />
                 </div>
 
@@ -2097,6 +2252,36 @@ export default function AdminDashboard() {
                     onChange={(e) => setNewReviewVerdict(e.target.value)}
                   />
                 </div>
+
+                <div className="admin-form-grid-full">
+                  <label className="form-label" htmlFor="new-review-internal-notes">Internal notes (admin only)</label>
+                  <textarea
+                    id="new-review-internal-notes"
+                    className="form-input form-textarea"
+                    rows={3}
+                    value={newReviewInternalNotes}
+                    onChange={(e) => setNewReviewInternalNotes(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="admin-actions-row" style={{ justifyContent: 'flex-start' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    const builtContent = buildContentFromStructured({
+                      overview: newReviewOverview,
+                      images: newReviewImages,
+                      testResults: newReviewTestResults,
+                      verdict: newReviewVerdict,
+                    })
+                    setNewReviewReadingTime(String(estimateReadingTimeMinutes(`${newReviewSummary} ${builtContent}`)))
+                    if (!newReviewSlug.trim()) setNewReviewSlug(toSlug(newReviewTitle))
+                  }}
+                >
+                  Auto calculate tools
+                </button>
               </div>
 
               <label className="form-checkbox-row">
@@ -2106,6 +2291,15 @@ export default function AdminDashboard() {
                   onChange={(e) => setNewReviewFeatured(e.target.checked)}
                 />
                 {t.adminPanel.reviewFeatured}
+              </label>
+
+              <label className="form-checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={newReviewPinned}
+                  onChange={(e) => setNewReviewPinned(e.target.checked)}
+                />
+                Pin article at top
               </label>
 
               <label className="form-checkbox-row">
@@ -2148,7 +2342,11 @@ export default function AdminDashboard() {
 
         {isCreateModelSectionOpen && (
           <div id="admin-create-model-content">
-            <p className="admin-subtitle">{t.adminPanel.createModelSubtitle}</p>
+                            onChange={(e) => setReviewEditDraft((prev) => ({
+                              ...prev,
+                              title: e.target.value,
+                              slug: prev.slug || toSlug(e.target.value),
+                            }))}
 
             <form onSubmit={handleCreateModel}>
           <div className="admin-form-grid">

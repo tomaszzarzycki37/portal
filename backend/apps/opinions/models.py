@@ -1,5 +1,6 @@
 """Models for opinions app"""
 from django.db import models
+from django.utils.text import slugify
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from apps.cars.models import CarModel
@@ -71,21 +72,45 @@ class Vote(models.Model):
 
 class PressReview(models.Model):
     """Editorial/press review article about a car model."""
+    CATEGORY_CHOICES = [
+        ('test', 'Test'),
+        ('news', 'News'),
+        ('guide', 'Guide'),
+        ('opinion', 'Opinion'),
+    ]
+
     car_model = models.ForeignKey(CarModel, on_delete=models.CASCADE, related_name='press_reviews')
     title = models.CharField(max_length=220)
+    slug = models.SlugField(max_length=240, blank=True, db_index=True)
     summary = models.TextField(blank=True)
     content = models.TextField()
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='test')
+    tags = models.CharField(max_length=300, blank=True, help_text='Comma-separated tags')
+    reading_time_minutes = models.PositiveSmallIntegerField(default=0)
+    internal_notes = models.TextField(blank=True)
     publication_name = models.CharField(max_length=180)
     publication_url = models.URLField(blank=True)
     author_name = models.CharField(max_length=120, blank=True)
     published_at = models.DateField()
     is_featured = models.BooleanField(default=False)
+    is_pinned = models.BooleanField(default=False)
     is_published = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-published_at', '-created_at']
+        ordering = ['-is_pinned', '-published_at', '-created_at']
 
     def __str__(self):
         return f"{self.title} ({self.publication_name})"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.title)[:220] or 'article'
+            candidate = base_slug
+            suffix = 2
+            while PressReview.objects.exclude(pk=self.pk).filter(slug=candidate).exists():
+                candidate = f"{base_slug[:210]}-{suffix}"
+                suffix += 1
+            self.slug = candidate
+        super().save(*args, **kwargs)

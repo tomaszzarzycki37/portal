@@ -195,9 +195,12 @@ export default function ReviewsPage() {
                       <span className="review-publication">{review.publication_name}</span>
                       {review.author_name && <span className="review-author-name"> · {review.author_name}</span>}
                       <span className="review-date-tag"> · {formatDate(review.published_at)}</span>
+                      {review.reading_time_minutes ? <span className="review-date-tag"> · {review.reading_time_minutes} min read</span> : null}
                     </div>
                     <h3 className="review-card-title">{review.title}</h3>
                     {review.summary && <p className="review-card-summary">{review.summary}</p>}
+                    {review.category && <p className="admin-meta">{String(review.category).toUpperCase()}</p>}
+                    {review.tags && <p className="admin-meta">{review.tags}</p>}
                     {(review.car_brand_name || review.car_name) && (
                       <div className="review-car-tag">
                         {review.car_id ? (
@@ -264,11 +267,6 @@ export default function ReviewsPage() {
 
                   {/* Footer links */}
                   <div className="review-card-footer">
-                    {review.publication_url && (
-                      <a href={review.publication_url} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
-                        {t.pages.openSourceArticle}
-                      </a>
-                    )}
                     {review.car_id && (
                       <Link to={`/cars/${review.car_id}`} className="btn btn-primary btn-sm">
                         {t.pages.viewCar}
