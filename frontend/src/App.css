@@ -1103,6 +1103,12 @@
 	background: #f8fafc;
 }
 
+.admin-wrap.admin-theme-dark .admin-rich-editor .ql-toolbar.ql-snow {
+	background: #111827;
+	border-color: #475569;
+	color: #e2e8f0;
+}
+
 .admin-rich-editor .ql-container.ql-snow {
 	border: 1px solid #cbd5e1;
 	border-top: 0;
@@ -1113,6 +1119,12 @@
 	overflow: visible;
 }
 
+.admin-wrap.admin-theme-dark .admin-rich-editor .ql-container.ql-snow {
+	background: #0b1220;
+	border-color: #475569;
+	color: #f8fafc;
+}
+
 .admin-rich-editor .ql-editor {
 	min-height: 210px;
 	height: auto;
@@ -1120,6 +1132,28 @@
 	overflow-y: visible;
 	line-height: 1.55;
 	font-size: 0.96rem;
+}
+
+.admin-wrap.admin-theme-dark .admin-rich-editor .ql-editor.ql-blank::before {
+	color: #94a3b8;
+}
+
+.admin-wrap.admin-theme-dark .ql-snow .ql-stroke {
+	stroke: #cbd5e1;
+}
+
+.admin-wrap.admin-theme-dark .ql-snow .ql-fill {
+	fill: #cbd5e1;
+}
+
+.admin-wrap.admin-theme-dark .ql-snow .ql-picker {
+	color: #e2e8f0;
+}
+
+.admin-wrap.admin-theme-dark .ql-snow .ql-picker-options {
+	background: #111827;
+	border-color: #475569;
+	color: #e2e8f0;
 }
 
 .admin-rich-editor-compact .ql-container.ql-snow {

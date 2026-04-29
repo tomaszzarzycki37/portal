@@ -126,7 +126,7 @@ function extractApiErrorMessage(error, fallbackMessage) {
 
 export default function AdminDashboard() {
   const { t, lang } = useTranslation()
-  const [density, setDensity] = useState(() => localStorage.getItem('admin_density') || 'comfortable')
+  const [themeMode, setThemeMode] = useState(() => localStorage.getItem('admin_theme_mode') || 'light')
   const [cars, setCars] = useState([])
   const [brands, setBrands] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -311,8 +311,8 @@ export default function AdminDashboard() {
   )
 
   useEffect(() => {
-    localStorage.setItem('admin_density', density)
-  }, [density])
+    localStorage.setItem('admin_theme_mode', themeMode)
+  }, [themeMode])
 
   useEffect(() => {
     setContentLang(lang)
@@ -1191,28 +1191,28 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className={`admin-wrap ${density === 'compact' ? 'density-compact' : 'density-comfortable'}`}>
+    <div className={`admin-wrap density-comfortable ${themeMode === 'dark' ? 'admin-theme-dark' : 'admin-theme-light'}`}>
       <div className="page-card admin-hero-card">
         <div>
           <h1 className="page-title">{t.adminPanel.title}</h1>
           <p className="admin-subtitle">{t.adminPanel.subtitle}</p>
         </div>
         <div className="admin-hero-right">
-          <div className="admin-density-switch" role="group" aria-label={t.adminPanel.densityLabel}>
-            <span className="admin-density-label">{t.adminPanel.densityLabel}</span>
+          <div className="admin-density-switch" role="group" aria-label={t.adminPanel.themeLabel}>
+            <span className="admin-density-label">{t.adminPanel.themeLabel}</span>
             <button
               type="button"
-              className={`admin-density-btn ${density === 'compact' ? 'active' : ''}`}
-              onClick={() => setDensity('compact')}
+              className={`admin-density-btn ${themeMode === 'light' ? 'active' : ''}`}
+              onClick={() => setThemeMode('light')}
             >
-              {t.adminPanel.densityCompact}
+              {t.adminPanel.themeLight}
             </button>
             <button
               type="button"
-              className={`admin-density-btn ${density === 'comfortable' ? 'active' : ''}`}
-              onClick={() => setDensity('comfortable')}
+              className={`admin-density-btn ${themeMode === 'dark' ? 'active' : ''}`}
+              onClick={() => setThemeMode('dark')}
             >
-              {t.adminPanel.densityComfortable}
+              {t.adminPanel.themeDark}
             </button>
           </div>
 
