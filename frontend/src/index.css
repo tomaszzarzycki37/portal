@@ -14,6 +14,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+body.admin-dark-mode {
+  background: #060d1a;
+  color: #e2e8f0;
+}
+
+body.admin-dark-mode .site-main {
+  background: radial-gradient(circle at 20% 0%, #0f1b33 0%, #060d1a 62%);
+}
+
 a {
   color: inherit;
   text-decoration: none;

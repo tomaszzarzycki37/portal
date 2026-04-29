@@ -315,6 +315,16 @@ export default function AdminDashboard() {
   }, [themeMode])
 
   useEffect(() => {
+    const darkClass = 'admin-dark-mode'
+    if (themeMode === 'dark') document.body.classList.add(darkClass)
+    else document.body.classList.remove(darkClass)
+
+    return () => {
+      document.body.classList.remove(darkClass)
+    }
+  }, [themeMode])
+
+  useEffect(() => {
     setContentLang(lang)
   }, [lang])
 
