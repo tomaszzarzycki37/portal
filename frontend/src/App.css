@@ -1078,16 +1078,14 @@
 	flex-direction: column;
 	gap: 0.4rem;
 	position: relative;
-	z-index: 0;
-	margin-bottom: 0.55rem;
+	z-index: auto;
+	margin-bottom: 0.9rem;
 }
 
 .admin-rich-editor .ql-toolbar.ql-snow {
 	border: 1px solid #cbd5e1;
 	border-radius: 0.6rem 0.6rem 0 0;
 	background: #f8fafc;
-	position: relative;
-	z-index: 1;
 }
 
 .admin-rich-editor .ql-container.ql-snow {
@@ -1096,8 +1094,7 @@
 	border-radius: 0 0 0.6rem 0.6rem;
 	min-height: 240px;
 	background: #ffffff;
-	position: relative;
-	z-index: 1;
+	overflow: hidden;
 }
 
 .admin-rich-editor .ql-editor {
@@ -1107,11 +1104,11 @@
 }
 
 .admin-rich-editor-compact .ql-container.ql-snow {
-	min-height: 140px;
+	min-height: 110px;
 }
 
 .admin-rich-editor-compact .ql-editor {
-	min-height: 110px;
+	min-height: 80px;
 }
 
 .admin-rich-toolbar {
