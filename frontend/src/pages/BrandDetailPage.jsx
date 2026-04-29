@@ -466,7 +466,7 @@ export default function BrandDetailPage() {
               </div>
             </div>
 
-            {brandMessage && <p className="form-success">{brandMessage}</p>}
+            {brandMessage && <p className="form-success" style={{ marginTop: '1.5rem' }}>{brandMessage}</p>}
             {brandError && <p className="form-error">{brandError}</p>}
 
             <div className="admin-actions-row">
