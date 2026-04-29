@@ -170,7 +170,7 @@ export default function CarsListPage() {
         <div className="page-loading">{t.pages.loading}</div>
       ) : (
         <>
-          <section className="admin-form-card">
+          <section className="admin-form-card catalog-search-card">
             <h2 className="detail-section-title">{t.pages.modelSearchTitle}</h2>
             <div className="admin-fields-grid">
               <div>

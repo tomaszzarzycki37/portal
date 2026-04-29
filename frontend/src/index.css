@@ -737,6 +737,9 @@ a {
 }
 
 .admin-stat-label {
+.catalog-search-card {
+  margin-bottom: 1.6rem;
+}
   margin: 0;
   color: #64748b;
   font-size: 0.8rem;
@@ -1087,6 +1090,7 @@ a {
 }
 
 .brand-catalog-list {
+  margin-top: 1.35rem;
   display: grid;
   gap: 1rem;
 }
