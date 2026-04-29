@@ -231,7 +231,10 @@ export default function HomePage() {
               {featuredReviews.map((review) => (
                 <article key={review.id} className="home-featured-review-card">
                   <div className="home-featured-review-top">
-                    <p className="home-featured-review-meta">{review.car_brand_name} {review.car_name}</p>
+                    <div className="home-featured-review-heading">
+                      <p className="home-featured-review-meta">{review.car_brand_name} {review.car_name}</p>
+                      <h3>{review.title}</h3>
+                    </div>
                     <img
                       className="home-featured-review-thumb"
                       src={getCarImage(carById.get(review.car_id))}
@@ -239,8 +242,7 @@ export default function HomePage() {
                       loading="lazy"
                     />
                   </div>
-                  <h3>{review.title}</h3>
-                  <p>{review.summary || String(review.content || '').slice(0, 160)}</p>
+                  <p className="home-featured-review-summary">{review.summary || String(review.content || '').slice(0, 160)}</p>
                   <div className="home-featured-review-footer">
                     <span>{review.publication_name}</span>
                     <Link to={`/cars/${review.car_id}/reviews`}>{t.home.openFeaturedReview}</Link>

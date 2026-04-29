@@ -659,6 +659,19 @@
 	gap: 0.75rem;
 }
 
+.home-featured-review-heading {
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+	min-width: 0;
+	padding-top: 0.1rem;
+	flex: 1;
+}
+
+.home-featured-review-heading h3 {
+	margin: 0;
+}
+
 .home-featured-review-thumb {
 	width: 156px;
 	height: 96px;
@@ -677,6 +690,10 @@
 	gap: 0.6rem;
 	font-size: 0.83rem;
 	color: #64748b;
+}
+
+.home-featured-review-summary {
+	padding-right: 0.35rem;
 }
 
 .home-featured-review-footer a {
@@ -720,6 +737,10 @@
 }
 
 @media (max-width: 640px) {
+	.home-featured-review-top {
+		gap: 0.6rem;
+	}
+
 	.home-featured-review-thumb {
 		width: 120px;
 		height: 76px;
