@@ -1099,6 +1099,14 @@
 	font-size: 0.96rem;
 }
 
+.admin-rich-editor-compact .ql-container.ql-snow {
+	min-height: 140px;
+}
+
+.admin-rich-editor-compact .ql-editor {
+	min-height: 110px;
+}
+
 .admin-rich-toolbar {
 	display: flex;
 	flex-wrap: wrap;

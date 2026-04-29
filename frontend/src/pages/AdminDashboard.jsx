@@ -53,9 +53,9 @@ const WORD_LIKE_FORMATS = [
   'link',
 ]
 
-function RichTextEditor({ id, label, value, onChange }) {
+function RichTextEditor({ id, label, value, onChange, compact = false }) {
   return (
-    <div className="admin-rich-editor">
+    <div className={`admin-rich-editor ${compact ? 'admin-rich-editor-compact' : ''}`}>
       <label className="form-label" htmlFor={id}>{label}</label>
       <ReactQuill
         id={id}
@@ -1847,13 +1847,12 @@ export default function AdminDashboard() {
                         </div>
 
                         <div className="admin-form-grid-full">
-                          <label className="form-label" htmlFor={`edit-review-summary-${review.id}`}>{t.adminPanel.reviewSummary}</label>
-                          <textarea
+                          <RichTextEditor
                             id={`edit-review-summary-${review.id}`}
-                            className="form-input form-textarea"
-                            rows={3}
+                            label={t.adminPanel.reviewSummary}
                             value={reviewEditDraft.summary}
-                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, summary: e.target.value }))}
+                            onChange={(nextValue) => setReviewEditDraft((prev) => ({ ...prev, summary: nextValue }))}
+                            compact
                           />
                         </div>
 
@@ -2068,13 +2067,12 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="admin-form-grid-full">
-                  <label className="form-label" htmlFor="new-review-summary">{t.adminPanel.reviewSummary}</label>
-                  <textarea
+                  <RichTextEditor
                     id="new-review-summary"
-                    className="form-input form-textarea"
-                    rows={3}
+                    label={t.adminPanel.reviewSummary}
                     value={newReviewSummary}
-                    onChange={(e) => setNewReviewSummary(e.target.value)}
+                    onChange={setNewReviewSummary}
+                    compact
                   />
                 </div>
 

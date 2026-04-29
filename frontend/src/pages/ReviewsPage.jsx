@@ -232,7 +232,12 @@ export default function ReviewsPage() {
                       {review.reading_time_minutes ? <span className="review-date-tag"> · {review.reading_time_minutes} min read</span> : null}
                     </div>
                     <h3 className="review-card-title">{review.title}</h3>
-                    {review.summary && <p className="review-card-summary">{review.summary}</p>}
+                    {review.summary && (
+                      <p
+                        className="review-card-summary"
+                        dangerouslySetInnerHTML={{ __html: sanitizeEditorialHtml(review.summary) }}
+                      />
+                    )}
                     {review.category && <p className="admin-meta">{String(review.category).toUpperCase()}</p>}
                     {review.tags && <p className="admin-meta">{review.tags}</p>}
                     {(review.car_brand_name || review.car_name) && (
