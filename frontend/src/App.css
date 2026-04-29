@@ -631,7 +631,7 @@
 
 .home-featured-review-main {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) 180px;
+	grid-template-columns: minmax(0, 1fr) 236px;
 	gap: 0.9rem;
 	height: 100%;
 }
@@ -679,9 +679,10 @@
 }
 
 .home-featured-review-thumb {
-	width: 180px;
-	height: 166px;
+	width: 236px;
+	height: 132px;
 	object-fit: cover;
+	object-position: center;
 	border-radius: 0.45rem;
 	border: 1px solid #fdba74;
 	background: #fff7ed;
@@ -760,8 +761,8 @@
 	}
 
 	.home-featured-review-thumb {
-		width: 132px;
-		height: 84px;
+		width: min(100%, 280px);
+		height: 150px;
 	}
 }
 
