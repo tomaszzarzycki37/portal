@@ -1183,6 +1183,63 @@ body.app-theme-dark .opinion-list-meta {
 	color: #cbd5e1;
 }
 
+body.app-theme-dark .feature-tile {
+	color: #f3f4f6;
+}
+
+body.app-theme-dark .feature-tile p,
+body.app-theme-dark .home-cta p {
+	color: #cbd5e1;
+}
+
+body.app-theme-dark .home-cta h2 {
+	color: #f3f4f6;
+}
+
+body.app-theme-dark .feature-tile-red,
+body.app-theme-dark .feature-tile-amber,
+body.app-theme-dark .feature-tile-slate {
+	background: #22262d;
+	border-color: #3b414b;
+}
+
+body.app-theme-dark .home-featured-reviews {
+	background: #22262d;
+	border-color: #3b414b;
+}
+
+body.app-theme-dark .home-featured-reviews-head h2 {
+	color: #f3f4f6;
+}
+
+body.app-theme-dark .home-featured-reviews-head p,
+body.app-theme-dark .home-featured-reviews-empty,
+body.app-theme-dark .home-featured-review-source {
+	color: #cbd5e1;
+}
+
+body.app-theme-dark .home-featured-reviews-link,
+body.app-theme-dark .home-featured-review-open-link {
+	color: #fbbf24;
+}
+
+body.app-theme-dark .home-featured-review-meta,
+body.app-theme-dark .review-card-meta-top {
+	color: #f59e0b;
+}
+
+body.app-theme-dark .home-featured-review-thumb {
+	border-color: #4b5563;
+}
+
+body.app-theme-dark .home-featured-reviews-dot {
+	background: #4b5563;
+}
+
+body.app-theme-dark .home-featured-reviews-dot.active {
+	background: #f59e0b;
+}
+
 .admin-rich-editor-compact .ql-container.ql-snow {
 	min-height: 110px;
 }
