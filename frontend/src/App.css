@@ -1079,11 +1079,22 @@
 	gap: 0.55rem;
 	position: relative;
 	z-index: auto;
-	margin: 0.5rem 0 1.4rem;
+	margin: 0.55rem 0 1.55rem;
 }
 
 .admin-rich-editor .form-label {
-	margin: 0.55rem 0 0.38rem;
+	margin: 0.62rem 0 0.42rem;
+}
+
+.admin-auto-tools-row {
+	margin: 0.3rem 0 0.55rem;
+	align-items: center;
+}
+
+.admin-auto-tools-btn {
+	line-height: 1.25;
+	padding-top: 0.58rem;
+	padding-bottom: 0.58rem;
 }
 
 .admin-rich-editor .ql-toolbar.ql-snow {

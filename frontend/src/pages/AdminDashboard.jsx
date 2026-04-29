@@ -1876,10 +1876,10 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      <div className="admin-actions-row" style={{ justifyContent: 'flex-start' }}>
+                      <div className="admin-actions-row admin-auto-tools-row" style={{ justifyContent: 'flex-start' }}>
                         <button
                           type="button"
-                          className="btn btn-secondary btn-sm"
+                          className="btn btn-secondary btn-sm admin-auto-tools-btn"
                           onClick={() => {
                             setReviewEditDraft((prev) => ({
                               ...prev,
@@ -2096,10 +2096,10 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="admin-actions-row" style={{ justifyContent: 'flex-start' }}>
+              <div className="admin-actions-row admin-auto-tools-row" style={{ justifyContent: 'flex-start' }}>
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-secondary btn-sm admin-auto-tools-btn"
                   onClick={() => {
                     setNewReviewReadingTime(String(estimateReadingTimeMinutes(`${newReviewSummary} ${newReviewContent || ''}`)))
                     if (!newReviewSlug.trim()) setNewReviewSlug(toSlug(newReviewTitle))
