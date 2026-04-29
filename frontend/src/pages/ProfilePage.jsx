@@ -170,12 +170,20 @@ export default function ProfilePage() {
               <label htmlFor="avatar-upload" className="profile-label">
                 { t.profile.avatar || 'Profile Photo' }
               </label>
+              <div className="file-input-row">
+                <label htmlFor="avatar-upload" className="file-input-btn">
+                  { t.profile.chooseFile || 'Choose file' }
+                </label>
+                <span className="file-input-name">
+                  { avatarFile?.name || t.profile.noFileSelected || 'No file selected.' }
+                </span>
+              </div>
               <input
                 id="avatar-upload"
                 type="file"
                 accept="image/*"
                 onChange={ handleAvatarChange }
-                className="file-input"
+                className="file-input file-input-hidden"
               />
               <p className="file-hint">{ t.profile.photoHint || 'JPG, PNG up to 5MB' }</p>
             </div>

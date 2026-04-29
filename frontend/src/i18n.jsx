@@ -193,6 +193,8 @@ const baseTranslations = {
     profile: {
       myProfile: 'My Profile',
       avatar: 'Profile Photo',
+      chooseFile: 'Choose file',
+      noFileSelected: 'No file selected.',
       photoHint: 'JPG, PNG up to 5MB',
       personalInfo: 'Personal Information',
       username: 'Username',
@@ -540,6 +542,8 @@ const baseTranslations = {
     profile: {
       myProfile: 'Mój profil',
       avatar: 'Zdjęcie profilowe',
+      chooseFile: 'Wybierz plik',
+      noFileSelected: 'Nie wybrano pliku.',
       photoHint: 'JPG, PNG do 5MB',
       personalInfo: 'Informacje osobiste',
       username: 'Nazwa użytkownika',

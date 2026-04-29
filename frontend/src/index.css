@@ -1981,6 +1981,45 @@ a {
   cursor: pointer;
 }
 
+.file-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.5rem;
+}
+
+.file-input-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.65rem;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.83rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.file-input-name {
+  font-size: 0.84rem;
+  color: #64748b;
+}
+
+.file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .file-hint,
 .field-hint {
   font-size: 0.8rem;
@@ -2060,6 +2099,63 @@ a {
   padding: 2rem;
   max-width: 600px;
   margin: 2rem auto;
+}
+
+body.app-theme-dark .profile-card {
+  background: #22262d;
+  border-color: #3b414b;
+  box-shadow: 0 12px 24px rgba(3, 6, 12, 0.35);
+}
+
+body.app-theme-dark .profile-title,
+body.app-theme-dark .profile-section-title {
+  color: #f3f4f6;
+}
+
+body.app-theme-dark .profile-label,
+body.app-theme-dark .file-hint,
+body.app-theme-dark .field-hint,
+body.app-theme-dark .char-count,
+body.app-theme-dark .file-input-name {
+  color: #cbd5e1;
+}
+
+body.app-theme-dark .profile-avatar-section,
+body.app-theme-dark .profile-form-actions {
+  border-color: #3b414b;
+}
+
+body.app-theme-dark .avatar-preview,
+body.app-theme-dark .avatar-placeholder {
+  border-color: #4b5563;
+}
+
+body.app-theme-dark .profile-card .form-input,
+body.app-theme-dark .profile-card .form-textarea {
+  background: #171b22;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+body.app-theme-dark .profile-card .form-input::placeholder,
+body.app-theme-dark .profile-card .form-textarea::placeholder {
+  color: #94a3b8;
+}
+
+body.app-theme-dark .profile-card .form-input.disabled {
+  background: #202630;
+  color: #9ca3af;
+}
+
+body.app-theme-dark .file-input-btn {
+  border-color: rgba(251, 191, 36, 0.85);
+  background: rgba(30, 41, 59, 0.96);
+  color: #f8fafc;
+}
+
+body.app-theme-dark .file-input-btn:hover {
+  border-color: #fbbf24;
+  color: #fbbf24;
 }
 
 @media (max-width: 768px) {
