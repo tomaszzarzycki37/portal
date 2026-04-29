@@ -312,16 +312,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     localStorage.setItem('admin_theme_mode', themeMode)
-  }, [themeMode])
-
-  useEffect(() => {
-    const darkClass = 'admin-dark-mode'
-    if (themeMode === 'dark') document.body.classList.add(darkClass)
-    else document.body.classList.remove(darkClass)
-
-    return () => {
-      document.body.classList.remove(darkClass)
-    }
+    window.dispatchEvent(new CustomEvent('theme-mode-changed', { detail: themeMode }))
   }, [themeMode])
 
   useEffect(() => {

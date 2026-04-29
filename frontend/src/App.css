@@ -1104,8 +1104,8 @@
 }
 
 .admin-wrap.admin-theme-dark .admin-rich-editor .ql-toolbar.ql-snow {
-	background: #111827;
-	border-color: #475569;
+	background: #1b1f25;
+	border-color: #525a67;
 	color: #e2e8f0;
 }
 
@@ -1120,8 +1120,8 @@
 }
 
 .admin-wrap.admin-theme-dark .admin-rich-editor .ql-container.ql-snow {
-	background: #0b1220;
-	border-color: #475569;
+	background: #161a20;
+	border-color: #525a67;
 	color: #f8fafc;
 }
 
@@ -1151,9 +1151,36 @@
 }
 
 .admin-wrap.admin-theme-dark .ql-snow .ql-picker-options {
-	background: #111827;
-	border-color: #475569;
+	background: #1f232a;
+	border-color: #525a67;
 	color: #e2e8f0;
+}
+
+body.app-theme-dark .hero-graphic,
+body.app-theme-dark .home-hero-search-card,
+body.app-theme-dark .home-featured-review-card,
+body.app-theme-dark .review-card-rich,
+body.app-theme-dark .opinion-list-item,
+body.app-theme-dark .opinions-filters,
+body.app-theme-dark .car-card {
+	background: #22262d;
+	border-color: #3b414b;
+	color: #e5e7eb;
+}
+
+body.app-theme-dark .hero-title,
+body.app-theme-dark .home-hero-search-card h2,
+body.app-theme-dark .home-featured-review-card h3,
+body.app-theme-dark .review-card-title,
+body.app-theme-dark .opinion-title {
+	color: #f3f4f6;
+}
+
+body.app-theme-dark .hero-text,
+body.app-theme-dark .home-featured-review-card p,
+body.app-theme-dark .review-card-summary,
+body.app-theme-dark .opinion-list-meta {
+	color: #cbd5e1;
 }
 
 .admin-rich-editor-compact .ql-container.ql-snow {

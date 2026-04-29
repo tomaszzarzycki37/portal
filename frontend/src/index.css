@@ -14,13 +14,91 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body.admin-dark-mode {
-  background: #060d1a;
-  color: #e2e8f0;
+body.app-theme-dark {
+  background: #1c1f24;
+  color: #e5e7eb;
 }
 
-body.admin-dark-mode .site-main {
-  background: radial-gradient(circle at 20% 0%, #0f1b33 0%, #060d1a 62%);
+body.app-theme-dark .site-main {
+  background: linear-gradient(180deg, #272b32 0%, #1c1f24 42%, #1c1f24 100%);
+}
+
+body.app-theme-dark .site-header {
+  background: linear-gradient(90deg, rgba(38, 42, 49, 0.94), rgba(31, 35, 42, 0.94));
+  border-bottom-color: rgba(120, 128, 140, 0.45);
+}
+
+body.app-theme-dark .mobile-nav-wrap {
+  background: rgba(31, 35, 42, 0.98);
+  border-top-color: rgba(120, 128, 140, 0.35);
+}
+
+body.app-theme-dark .menu-toggle {
+  background: linear-gradient(180deg, #6b7280, #4b5563);
+  border-color: rgba(148, 163, 184, 0.45);
+  box-shadow: 0 8px 14px rgba(2, 6, 23, 0.35);
+}
+
+body.app-theme-dark .lang-btn {
+  background: rgba(17, 24, 39, 0.65);
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+body.app-theme-dark .page-card,
+body.app-theme-dark .auth-card,
+body.app-theme-dark .admin-form-card,
+body.app-theme-dark .admin-stat-card,
+body.app-theme-dark .admin-review-card,
+body.app-theme-dark .brand-catalog-card {
+  background: #22262d;
+  border-color: #3b414b;
+  box-shadow: 0 12px 24px rgba(3, 6, 12, 0.35);
+}
+
+body.app-theme-dark .page-title,
+body.app-theme-dark .auth-title,
+body.app-theme-dark .admin-section-heading,
+body.app-theme-dark .admin-review-title,
+body.app-theme-dark .admin-stat-value,
+body.app-theme-dark .admin-preview-title {
+  color: #f3f4f6;
+}
+
+body.app-theme-dark .admin-subtitle,
+body.app-theme-dark .admin-meta,
+body.app-theme-dark .admin-stat-label,
+body.app-theme-dark .admin-preview-sub,
+body.app-theme-dark .admin-field-note,
+body.app-theme-dark .form-label,
+body.app-theme-dark .form-checkbox-row,
+body.app-theme-dark .spec-item span,
+body.app-theme-dark .spec-item strong {
+  color: #cbd5e1;
+}
+
+body.app-theme-dark .form-input {
+  background: #171b22;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+body.app-theme-dark .form-input::placeholder {
+  color: #94a3b8;
+}
+
+body.app-theme-dark .site-footer {
+  background: #191d23;
+  border-top: 1px solid #323844;
+}
+
+body.app-theme-dark .footer-title {
+  color: #f3f4f6;
+}
+
+body.app-theme-dark .footer-muted,
+body.app-theme-dark .footer-links,
+body.app-theme-dark .footer-bottom {
+  color: #9ca3af;
 }
 
 a {
@@ -400,8 +478,8 @@ a {
 .admin-wrap.admin-theme-dark .admin-form-card,
 .admin-wrap.admin-theme-dark .admin-stat-card,
 .admin-wrap.admin-theme-dark .admin-review-card {
-  background: #0f172a;
-  border-color: #334155;
+  background: #22262d;
+  border-color: #3b414b;
   box-shadow: 0 12px 26px rgba(2, 6, 23, 0.45);
 }
 
@@ -425,36 +503,36 @@ a {
 }
 
 .admin-wrap.admin-theme-dark .admin-density-switch {
-  background: #111827;
-  border-color: #334155;
+  background: #1b1f25;
+  border-color: #3b414b;
 }
 
 .admin-wrap.admin-theme-dark .admin-density-btn {
-  background: #1f2937;
-  border-color: #475569;
+  background: #2a2f37;
+  border-color: #525a67;
   color: #e2e8f0;
 }
 
 .admin-wrap.admin-theme-dark .admin-density-btn.active {
-  background: #1e3a8a;
-  border-color: #60a5fa;
-  color: #dbeafe;
+  background: #4b5563;
+  border-color: #9ca3af;
+  color: #f3f4f6;
 }
 
 .admin-wrap.admin-theme-dark .admin-owner-badge {
-  border-color: #334155;
-  background: linear-gradient(135deg, #111827, #1f2937);
+  border-color: #3b414b;
+  background: linear-gradient(135deg, #1f232a, #2a3038);
 }
 
 .admin-wrap.admin-theme-dark .admin-owner-avatar {
-  border-color: #475569;
-  background: #1f2937;
+  border-color: #525a67;
+  background: #2a2f37;
   color: #f8fafc;
 }
 
 .admin-wrap.admin-theme-dark .form-input {
-  background: #111827;
-  border-color: #475569;
+  background: #171b22;
+  border-color: #4b5563;
   color: #f8fafc;
 }
 
@@ -463,20 +541,20 @@ a {
 }
 
 .admin-wrap.admin-theme-dark .admin-car-list-item {
-  background: #111827;
-  border-color: #475569;
+  background: #1f232a;
+  border-color: #4b5563;
   color: #e2e8f0;
 }
 
 .admin-wrap.admin-theme-dark .admin-car-list-item.active {
-  background: #1e293b;
-  border-color: #60a5fa;
-  color: #bfdbfe;
+  background: #2f353f;
+  border-color: #9ca3af;
+  color: #f3f4f6;
 }
 
 .admin-wrap.admin-theme-dark .admin-preview-meta {
-  background: #111827;
-  border-color: #334155;
+  background: #1b1f25;
+  border-color: #3b414b;
 }
 
 .admin-hero-card {
