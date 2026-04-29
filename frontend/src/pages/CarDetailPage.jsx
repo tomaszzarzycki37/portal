@@ -403,7 +403,7 @@ export default function CarDetailPage() {
                 <p className="opinion-text">{review.summary || review.content}</p>
                 {review.publication_url && (
                   <div className="opinion-rating-row">
-                    <a href={review.publication_url} target="_blank" rel="noreferrer" className="opinion-view-car">
+                    <a href={review.publication_url} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
                       {t.pages.openSourceArticle}
                     </a>
                   </div>
