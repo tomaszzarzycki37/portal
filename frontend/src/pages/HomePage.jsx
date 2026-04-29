@@ -9,6 +9,7 @@ export default function HomePage() {
   const { t } = useTranslation()
   const [cars, setCars] = useState([])
   const [featuredReviews, setFeaturedReviews] = useState([])
+  const [featuredSlideIndex, setFeaturedSlideIndex] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [engineSearch, setEngineSearch] = useState('')
@@ -40,6 +41,19 @@ export default function HomePage() {
 
     loadFeaturedReviews()
   }, [])
+
+  useEffect(() => {
+    if (featuredReviews.length <= 1) {
+      setFeaturedSlideIndex(0)
+      return
+    }
+
+    const timer = setInterval(() => {
+      setFeaturedSlideIndex((prev) => (prev + 1) % featuredReviews.length)
+    }, 5000)
+
+    return () => clearInterval(timer)
+  }, [featuredReviews])
 
   const vehicleTypes = useMemo(() => {
     const values = new Set(cars.map((car) => String(car.vehicle_type || '').trim()).filter(Boolean))
@@ -200,18 +214,38 @@ export default function HomePage() {
         </div>
 
         {featuredReviews.length > 0 ? (
-          <div className="home-featured-reviews-rail">
-            {featuredReviews.map((review) => (
-              <article key={review.id} className="home-featured-review-card">
-                <p className="home-featured-review-meta">{review.car_brand_name} {review.car_name}</p>
-                <h3>{review.title}</h3>
-                <p>{review.summary || String(review.content || '').slice(0, 160)}</p>
-                <div className="home-featured-review-footer">
-                  <span>{review.publication_name}</span>
-                  <Link to={`/cars/${review.car_id}/reviews`}>{t.home.openFeaturedReview}</Link>
-                </div>
-              </article>
-            ))}
+          <div className="home-featured-reviews-slider" aria-live="polite">
+            <div
+              className="home-featured-reviews-track"
+              style={{ transform: `translateX(-${featuredSlideIndex * 100}%)` }}
+            >
+              {featuredReviews.map((review) => (
+                <article key={review.id} className="home-featured-review-card">
+                  <p className="home-featured-review-meta">{review.car_brand_name} {review.car_name}</p>
+                  <h3>{review.title}</h3>
+                  <p>{review.summary || String(review.content || '').slice(0, 160)}</p>
+                  <div className="home-featured-review-footer">
+                    <span>{review.publication_name}</span>
+                    <Link to={`/cars/${review.car_id}/reviews`}>{t.home.openFeaturedReview}</Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            {featuredReviews.length > 1 && (
+              <div className="home-featured-reviews-dots" role="tablist" aria-label="Featured reviews slider">
+                {featuredReviews.map((review, index) => (
+                  <button
+                    key={review.id}
+                    type="button"
+                    className={`home-featured-reviews-dot${index === featuredSlideIndex ? ' active' : ''}`}
+                    aria-label={`Go to slide ${index + 1}`}
+                    aria-selected={index === featuredSlideIndex}
+                    onClick={() => setFeaturedSlideIndex(index)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <p className="home-featured-reviews-empty">{t.home.noFeaturedReviews}</p>
