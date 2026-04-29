@@ -861,6 +861,38 @@
 	line-height: 1.3;
 }
 
+/* Scroll to Top Button */
+.scroll-to-top-btn {
+	position: fixed;
+	bottom: 2rem;
+	right: 2rem;
+	width: 2.8rem;
+	height: 2.8rem;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: #0f172a;
+	color: #ffffff;
+	font-size: 1.4rem;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	transition: all 0.3s ease;
+	z-index: 999;
+}
+
+.scroll-to-top-btn:hover {
+	background: #1e293b;
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+	transform: translateY(-2px);
+}
+
+.scroll-to-top-btn:active {
+	transform: translateY(0);
+}
+
 /* Verdict */
 .review-verdict {
 	margin: 1.25rem 1.5rem 0;
