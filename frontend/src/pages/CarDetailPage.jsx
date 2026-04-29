@@ -5,6 +5,43 @@ import api from '../services/api'
 import { getCarImage } from '../utils/carImages'
 import { isAdminUser } from '../utils/auth'
 
+function extractApiErrorMessage(error, fallbackMessage) {
+  const payload = error?.response?.data
+  if (!payload) return fallbackMessage
+
+  if (typeof payload === 'string') return payload
+  if (Array.isArray(payload)) {
+    const joined = payload.map((item) => String(item || '').trim()).filter(Boolean).join(' ')
+    return joined || fallbackMessage
+  }
+
+  if (typeof payload === 'object') {
+    if (typeof payload.detail === 'string' && payload.detail.trim()) return payload.detail.trim()
+    if (typeof payload.error === 'string' && payload.error.trim()) return payload.error.trim()
+
+    const messages = []
+    Object.entries(payload).forEach(([field, value]) => {
+      if (!value) return
+      if (Array.isArray(value)) {
+        const text = value.map((entry) => String(entry || '').trim()).filter(Boolean).join(' ')
+        if (!text) return
+        if (field === 'non_field_errors') messages.push(text)
+        else messages.push(`${field}: ${text}`)
+        return
+      }
+
+      const text = String(value).trim()
+      if (!text) return
+      if (field === 'non_field_errors') messages.push(text)
+      else messages.push(`${field}: ${text}`)
+    })
+
+    if (messages.length > 0) return messages.join(' | ')
+  }
+
+  return fallbackMessage
+}
+
 export default function CarDetailPage() {
   const { t } = useTranslation()
   const { id } = useParams()
@@ -154,15 +191,13 @@ export default function CarDetailPage() {
         formData.append('image', adminImage)
       }
 
-      const response = await api.patch(`/cars/${id}/`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      const response = await api.patch(`/cars/${id}/`, formData)
 
       setCar(response.data)
       setAdminImage(null)
       setAdminMessage(t.adminInline.saved)
-    } catch {
-      setAdminError(t.adminInline.saveError)
+    } catch (error) {
+      setAdminError(extractApiErrorMessage(error, t.adminInline.saveError))
     } finally {
       setAdminSaving(false)
     }
