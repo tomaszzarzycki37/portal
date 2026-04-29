@@ -230,22 +230,24 @@ export default function HomePage() {
             >
               {featuredReviews.map((review) => (
                 <article key={review.id} className="home-featured-review-card">
-                  <div className="home-featured-review-top">
-                    <div className="home-featured-review-heading">
-                      <p className="home-featured-review-meta">{review.car_brand_name} {review.car_name}</p>
-                      <h3>{review.title}</h3>
+                  <div className="home-featured-review-main">
+                    <div className="home-featured-review-content">
+                      <div className="home-featured-review-heading">
+                        <p className="home-featured-review-meta">{review.car_brand_name} {review.car_name}</p>
+                        <h3>{review.title}</h3>
+                      </div>
+                      <p className="home-featured-review-summary">{review.summary || String(review.content || '').slice(0, 160)}</p>
+                      <span className="home-featured-review-source">{review.publication_name}</span>
                     </div>
-                    <img
-                      className="home-featured-review-thumb"
-                      src={getCarImage(carById.get(review.car_id))}
-                      alt={`${review.car_brand_name} ${review.car_name}`.trim()}
-                      loading="lazy"
-                    />
-                  </div>
-                  <p className="home-featured-review-summary">{review.summary || String(review.content || '').slice(0, 160)}</p>
-                  <div className="home-featured-review-footer">
-                    <span>{review.publication_name}</span>
-                    <Link to={`/cars/${review.car_id}/reviews`}>{t.home.openFeaturedReview}</Link>
+                    <div className="home-featured-review-rail">
+                      <img
+                        className="home-featured-review-thumb"
+                        src={getCarImage(carById.get(review.car_id))}
+                        alt={`${review.car_brand_name} ${review.car_name}`.trim()}
+                        loading="lazy"
+                      />
+                      <Link to={`/cars/${review.car_id}/reviews`} className="home-featured-review-open-link">{t.home.openFeaturedReview}</Link>
+                    </div>
                   </div>
                 </article>
               ))}
