@@ -782,7 +782,45 @@
 	border: 1px solid #e2e8f0;
 	border-radius: 1rem;
 	overflow: hidden;
+	position: relative;
 	transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.review-admin-quick-edit {
+	position: absolute;
+	top: 0.7rem;
+	right: 0.7rem;
+	width: 2rem;
+	height: 2rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	border: 1px solid #cbd5e1;
+	background: #f8fafc;
+	color: #334155;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.18s ease, border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+	z-index: 5;
+}
+
+.review-card-rich:hover .review-admin-quick-edit,
+.review-admin-quick-edit:focus-visible {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.review-admin-quick-edit:hover {
+	border-color: rgba(251, 191, 36, 0.9);
+	background: rgba(30, 41, 59, 0.96);
+	color: #fbbf24;
+}
+
+.review-admin-quick-edit-icon {
+	width: 15px;
+	height: 15px;
+	fill: currentColor;
 }
 
 .review-card-rich:hover {
@@ -1254,6 +1292,18 @@ body.app-theme-dark .home-featured-reviews-dot {
 
 body.app-theme-dark .home-featured-reviews-dot.active {
 	background: #f59e0b;
+}
+
+body.app-theme-dark .review-admin-quick-edit {
+	border-color: rgba(251, 191, 36, 0.85);
+	background: rgba(30, 41, 59, 0.96);
+	color: #f8fafc;
+}
+
+body.app-theme-dark .review-admin-quick-edit:hover,
+body.app-theme-dark .review-admin-quick-edit:focus-visible {
+	border-color: #fbbf24;
+	color: #fbbf24;
 }
 
 .admin-rich-editor-compact .ql-container.ql-snow {

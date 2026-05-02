@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { getBaseTranslationValue, getTranslationKeys, useTranslation } from '../i18n'
@@ -126,6 +127,7 @@ function extractApiErrorMessage(error, fallbackMessage) {
 
 export default function AdminDashboard() {
   const { t, lang } = useTranslation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [themeMode, setThemeMode] = useState(() => localStorage.getItem('admin_theme_mode') || 'light')
   const [cars, setCars] = useState([])
   const [brands, setBrands] = useState([])
@@ -525,6 +527,31 @@ export default function AdminDashboard() {
 
     loadCars()
   }, [t.adminPanel.loadError])
+
+  useEffect(() => {
+    const editReviewParam = searchParams.get('editReview')
+    if (!editReviewParam) return
+
+    const reviewId = Number.parseInt(editReviewParam, 10)
+    if (Number.isNaN(reviewId)) return
+
+    const openReviewEditor = async () => {
+      setIsManageReviewsSectionOpen(true)
+
+      if (!pressReviews.some((review) => Number(review.id) === reviewId)) {
+        await loadPressReviews()
+      }
+
+      await handleEditReview(reviewId)
+
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.delete('editReview')
+      nextParams.delete('section')
+      setSearchParams(nextParams, { replace: true })
+    }
+
+    openReviewEditor()
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     if (!selectedId) return
