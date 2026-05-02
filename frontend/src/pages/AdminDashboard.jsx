@@ -2137,7 +2137,10 @@ export default function AdminDashboard() {
           aria-expanded={isUserModerationSectionOpen}
           aria-controls="admin-user-moderation-content"
         >
-          <h2 className="admin-section-heading">{t.adminPanel.usersModerationTitle}</h2>
+          <h2 className="admin-section-heading admin-section-heading-with-badge">
+            <span>{t.adminPanel.usersModerationTitle}</span>
+            <span className="admin-main-badge">{t.adminPanel.mainSectionBadge}</span>
+          </h2>
           <span className={`admin-inline-toggle admin-inline-gear ${isUserModerationSectionOpen ? 'is-open' : ''}`} aria-hidden="true">
             <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
@@ -3138,7 +3141,10 @@ export default function AdminDashboard() {
           aria-expanded={isHeaderSectionOpen}
           aria-controls="admin-header-settings-content"
         >
-          <h2 className="admin-section-heading">{t.adminPanel.headerSettingsTitle}</h2>
+          <h2 className="admin-section-heading admin-section-heading-with-badge">
+            <span>{t.adminPanel.headerSettingsTitle}</span>
+            <span className="admin-main-badge">{t.adminPanel.mainSectionBadge}</span>
+          </h2>
           <span className={`admin-inline-toggle admin-inline-gear ${isHeaderSectionOpen ? 'is-open' : ''}`} aria-hidden="true">
             <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
@@ -3264,7 +3270,10 @@ export default function AdminDashboard() {
           aria-expanded={isFooterSectionOpen}
           aria-controls="admin-footer-settings-content"
         >
-          <h2 className="admin-section-heading">{t.adminPanel.footerSettingsTitle}</h2>
+          <h2 className="admin-section-heading admin-section-heading-with-badge">
+            <span>{t.adminPanel.footerSettingsTitle}</span>
+            <span className="admin-main-badge">{t.adminPanel.mainSectionBadge}</span>
+          </h2>
           <span className={`admin-inline-toggle admin-inline-gear ${isFooterSectionOpen ? 'is-open' : ''}`} aria-hidden="true">
             <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
@@ -3321,7 +3330,10 @@ export default function AdminDashboard() {
           aria-expanded={isTextManagerSectionOpen}
           aria-controls="admin-text-manager-content"
         >
-          <h2 className="admin-section-heading">{t.adminPanel.textManagerTitle}</h2>
+          <h2 className="admin-section-heading admin-section-heading-with-badge">
+            <span>{t.adminPanel.textManagerTitle}</span>
+            <span className="admin-main-badge">{t.adminPanel.mainSectionBadge}</span>
+          </h2>
           <span className={`admin-inline-toggle admin-inline-gear ${isTextManagerSectionOpen ? 'is-open' : ''}`} aria-hidden="true">
             <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
