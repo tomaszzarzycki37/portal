@@ -893,6 +893,22 @@ a {
   padding: 0.26rem 0.5rem;
 }
 
+.admin-site-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.45);
+  background: rgba(219, 234, 254, 0.88);
+  color: #1e3a8a;
+  font-size: 0.68rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.26rem 0.5rem;
+}
+
 .admin-collapsible-main .admin-inline-gear {
   border-color: rgba(251, 191, 36, 0.92);
   background: linear-gradient(180deg, #f59e0b, #d97706);
@@ -912,6 +928,12 @@ a {
   border-color: rgba(251, 191, 36, 0.68);
   background: rgba(146, 64, 14, 0.42);
   color: #fcd34d;
+}
+
+.admin-wrap.admin-theme-dark .admin-site-badge {
+  border-color: rgba(96, 165, 250, 0.58);
+  background: rgba(30, 64, 175, 0.35);
+  color: #bfdbfe;
 }
 
 .admin-wrap.admin-theme-dark .admin-collapsible-main .admin-inline-gear {
