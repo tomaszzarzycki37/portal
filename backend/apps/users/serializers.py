@@ -53,6 +53,50 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
+    new_password = serializers.CharField(write_only=True, required=False, min_length=8)
+    profile_phone = serializers.CharField(required=False, allow_blank=True, max_length=20)
+    profile_location = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    profile_bio = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'last_name', 'is_active', 'is_staff']
+        fields = [
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'is_active',
+            'is_staff',
+            'new_password',
+            'profile_phone',
+            'profile_location',
+            'profile_bio',
+        ]
+
+    def update(self, instance, validated_data):
+        new_password = validated_data.pop('new_password', None)
+        profile_phone = validated_data.pop('profile_phone', None)
+        profile_location = validated_data.pop('profile_location', None)
+        profile_bio = validated_data.pop('profile_bio', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if new_password:
+            instance.set_password(new_password)
+
+        instance.save()
+
+        profile = getattr(instance, 'profile', None)
+        if profile is None:
+            profile = UserProfile.objects.create(user=instance)
+
+        if profile_phone is not None:
+            profile.phone = profile_phone
+        if profile_location is not None:
+            profile.location = profile_location
+        if profile_bio is not None:
+            profile.bio = profile_bio
+        profile.save()
+
+        return instance

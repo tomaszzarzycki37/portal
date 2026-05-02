@@ -259,6 +259,9 @@ export default function AdminDashboard() {
   const [usersRoleFilter, setUsersRoleFilter] = useState('all')
   const [usersStatusFilter, setUsersStatusFilter] = useState('all')
   const [usersSort, setUsersSort] = useState('username_asc')
+  const [expandedUserId, setExpandedUserId] = useState(null)
+  const [userEditDraft, setUserEditDraft] = useState(null)
+  const [savingUserDetails, setSavingUserDetails] = useState(false)
 
   const extractVerdictFromContent = (content) => {
     const lines = (content || '').split('\n')
@@ -443,6 +446,82 @@ export default function AdminDashboard() {
       setUsersMessage(t.adminPanel.usersDeleted)
     } catch {
       setUsersError(t.adminPanel.usersDeleteError)
+    }
+  }
+
+  const openUserDetails = (user) => {
+    if (!user) return
+    if (expandedUserId === user.id) {
+      setExpandedUserId(null)
+      setUserEditDraft(null)
+      return
+    }
+
+    setExpandedUserId(user.id)
+    setUserEditDraft({
+      id: user.id,
+      username: user.username || '',
+      email: user.email || '',
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      profile_phone: user.profile?.phone || '',
+      profile_location: user.profile?.location || '',
+      profile_bio: user.profile?.bio || '',
+      new_password: '',
+      confirm_password: '',
+    })
+  }
+
+  const handleUserDraftChange = (field, value) => {
+    setUserEditDraft((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        [field]: value,
+      }
+    })
+  }
+
+  const handleSaveUserDetails = async (user) => {
+    if (!userEditDraft || !user) return
+    if (userEditDraft.new_password && userEditDraft.new_password !== userEditDraft.confirm_password) {
+      setUsersError(t.adminPanel.usersPasswordMismatch)
+      return
+    }
+    if (userEditDraft.new_password && userEditDraft.new_password.length < 8) {
+      setUsersError(t.adminPanel.usersPasswordTooShort)
+      return
+    }
+
+    const payload = {
+      username: userEditDraft.username.trim(),
+      email: userEditDraft.email.trim(),
+      first_name: userEditDraft.first_name.trim(),
+      last_name: userEditDraft.last_name.trim(),
+      profile_phone: userEditDraft.profile_phone.trim(),
+      profile_location: userEditDraft.profile_location.trim(),
+      profile_bio: userEditDraft.profile_bio,
+      is_active: !!user.is_active,
+      is_staff: !!user.is_staff,
+    }
+
+    if (userEditDraft.new_password) {
+      payload.new_password = userEditDraft.new_password
+    }
+
+    setUsersError('')
+    setUsersMessage('')
+    setSavingUserDetails(true)
+    try {
+      await api.patch(`/users/${user.id}/`, payload)
+      await loadUsers()
+      setUsersMessage(t.adminPanel.usersDetailsSaved)
+      setExpandedUserId(null)
+      setUserEditDraft(null)
+    } catch (err) {
+      setUsersError(extractApiErrorMessage(err, t.adminPanel.usersUpdateError))
+    } finally {
+      setSavingUserDetails(false)
     }
   }
 
@@ -2031,6 +2110,14 @@ export default function AdminDashboard() {
                       <button
                         type="button"
                         className="btn btn-secondary"
+                        onClick={() => openUserDetails(user)}
+                        disabled={usersLoading || savingUserDetails}
+                      >
+                        {expandedUserId === user.id ? t.adminPanel.usersHideDetails : t.adminPanel.usersEditDetails}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
                         onClick={() => handleToggleUserRole(user)}
                         disabled={usersLoading || currentUser?.id === user.id || user.is_superuser}
                       >
@@ -2054,6 +2141,117 @@ export default function AdminDashboard() {
                       </button>
                     </div>
                   </div>
+
+                  {expandedUserId === user.id && userEditDraft?.id === user.id && (
+                    <div className="admin-review-edit-grid" style={{ marginTop: '0.85rem' }}>
+                      <div>
+                        <label className="form-label">{t.adminPanel.usersFieldUsername}</label>
+                        <input
+                          className="form-input"
+                          value={userEditDraft.username}
+                          onChange={(e) => handleUserDraftChange('username', e.target.value)}
+                          disabled={savingUserDetails}
+                        />
+                      </div>
+                      <div>
+                        <label className="form-label">{t.adminPanel.usersFieldEmail}</label>
+                        <input
+                          className="form-input"
+                          type="email"
+                          value={userEditDraft.email}
+                          onChange={(e) => handleUserDraftChange('email', e.target.value)}
+                          disabled={savingUserDetails}
+                        />
+                      </div>
+                      <div>
+                        <label className="form-label">{t.adminPanel.usersFieldFirstName}</label>
+                        <input
+                          className="form-input"
+                          value={userEditDraft.first_name}
+                          onChange={(e) => handleUserDraftChange('first_name', e.target.value)}
+                          disabled={savingUserDetails}
+                        />
+                      </div>
+                      <div>
+                        <label className="form-label">{t.adminPanel.usersFieldLastName}</label>
+                        <input
+                          className="form-input"
+                          value={userEditDraft.last_name}
+                          onChange={(e) => handleUserDraftChange('last_name', e.target.value)}
+                          disabled={savingUserDetails}
+                        />
+                      </div>
+                      <div>
+                        <label className="form-label">{t.adminPanel.usersFieldPhone}</label>
+                        <input
+                          className="form-input"
+                          value={userEditDraft.profile_phone}
+                          onChange={(e) => handleUserDraftChange('profile_phone', e.target.value)}
+                          disabled={savingUserDetails}
+                        />
+                      </div>
+                      <div>
+                        <label className="form-label">{t.adminPanel.usersFieldLocation}</label>
+                        <input
+                          className="form-input"
+                          value={userEditDraft.profile_location}
+                          onChange={(e) => handleUserDraftChange('profile_location', e.target.value)}
+                          disabled={savingUserDetails}
+                        />
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label className="form-label">{t.adminPanel.usersFieldBio}</label>
+                        <textarea
+                          className="form-input form-textarea"
+                          rows={3}
+                          value={userEditDraft.profile_bio}
+                          onChange={(e) => handleUserDraftChange('profile_bio', e.target.value)}
+                          disabled={savingUserDetails}
+                        />
+                      </div>
+                      <div>
+                        <label className="form-label">{t.adminPanel.usersFieldNewPassword}</label>
+                        <input
+                          className="form-input"
+                          type="password"
+                          value={userEditDraft.new_password}
+                          onChange={(e) => handleUserDraftChange('new_password', e.target.value)}
+                          disabled={savingUserDetails}
+                          placeholder={t.adminPanel.usersPasswordPlaceholder}
+                        />
+                      </div>
+                      <div>
+                        <label className="form-label">{t.adminPanel.usersFieldConfirmPassword}</label>
+                        <input
+                          className="form-input"
+                          type="password"
+                          value={userEditDraft.confirm_password}
+                          onChange={(e) => handleUserDraftChange('confirm_password', e.target.value)}
+                          disabled={savingUserDetails}
+                          placeholder={t.adminPanel.usersPasswordPlaceholder}
+                        />
+                      </div>
+
+                      <div className="admin-actions-row" style={{ gridColumn: '1 / -1' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => openUserDetails(user)}
+                          disabled={savingUserDetails}
+                        >
+                          {t.adminPanel.cancelEdit}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={() => handleSaveUserDetails(user)}
+                          disabled={savingUserDetails}
+                        >
+                          {savingUserDetails ? t.pages.loading : t.adminPanel.usersSaveDetails}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </article>
               ))}
             </div>

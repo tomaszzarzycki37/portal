@@ -3,6 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth.models import User
 from .models import UserProfile
@@ -39,6 +40,21 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = [IsAdminUser]
         return [permission() for permission in permission_classes]
+
+    def _ensure_superuser_guard(self, target_user):
+        if target_user.is_superuser and not self.request.user.is_superuser:
+            raise PermissionDenied('Only superusers can manage superuser accounts.')
+
+    def perform_update(self, serializer):
+        target_user = self.get_object()
+        self._ensure_superuser_guard(target_user)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self._ensure_superuser_guard(instance)
+        if instance == self.request.user:
+            raise PermissionDenied('You cannot delete your own account.')
+        instance.delete()
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def me(self, request):
