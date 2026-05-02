@@ -1,4 +1,5 @@
 """Views for users app"""
+import csv
 import secrets
 import string
 from rest_framework import viewsets, status
@@ -8,6 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.exceptions import PermissionDenied
 from django.utils import timezone
 from django.db import transaction
+from django.http import HttpResponse
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.models import User
@@ -130,6 +132,37 @@ class UserViewSet(viewsets.ModelViewSet):
         self._ensure_superuser_guard(user)
         entries = PasswordChangeAudit.objects.filter(target_user=user)[:30]
         return Response(PasswordChangeAuditSerializer(entries, many=True).data)
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAdminUser])
+    def password_audit_csv(self, request, pk=None):
+        user = self.get_object()
+        self._ensure_superuser_guard(user)
+        entries = PasswordChangeAudit.objects.filter(target_user=user)
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="password-audit-{user.username}.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            'changed_at',
+            'target_username',
+            'changed_by',
+            'reason',
+            'is_temporary',
+            'force_reset_required',
+        ])
+
+        for entry in entries:
+            writer.writerow([
+                entry.changed_at.isoformat(),
+                user.username,
+                entry.changed_by.username if entry.changed_by else '',
+                entry.reason,
+                '1' if entry.is_temporary else '0',
+                '1' if entry.force_reset_required else '0',
+            ])
+
+        return response
 
     @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
     def generate_temporary_password(self, request, pk=None):

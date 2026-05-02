@@ -539,6 +539,28 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleExportUserAuditCsv = async (user) => {
+    if (!user) return
+    try {
+      const response = await api.get(`/users/${user.id}/password_audit_csv/`, {
+        responseType: 'blob',
+      })
+
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `password-audit-${user.username || 'user'}.csv`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      setUsersMessage(t.adminPanel.usersAuditExported)
+    } catch {
+      setUsersError(t.adminPanel.usersAuditExportError)
+    }
+  }
+
   const handleUserDraftChange = (field, value) => {
     setUserEditDraft((prev) => {
       if (!prev) return prev
@@ -2338,6 +2360,15 @@ export default function AdminDashboard() {
 
                       <div style={{ gridColumn: '1 / -1' }}>
                         <p className="admin-section-caption" style={{ marginBottom: '0.5rem' }}>{t.adminPanel.usersPasswordAuditTitle}</p>
+                        <div className="admin-actions-row" style={{ justifyContent: 'flex-start', marginBottom: '0.45rem' }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => handleExportUserAuditCsv(user)}
+                          >
+                            {t.adminPanel.usersExportAuditCsv}
+                          </button>
+                        </div>
                         {usersAuditLoading ? (
                           <p className="admin-meta">{t.pages.loading}</p>
                         ) : (
