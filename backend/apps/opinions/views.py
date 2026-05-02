@@ -117,7 +117,7 @@ class PressReviewViewSet(viewsets.ModelViewSet):
     queryset = PressReview.objects.select_related('car_model', 'car_model__brand')
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['car_model', 'is_featured', 'is_pinned', 'category']
+    filterset_fields = ['car_model', 'author', 'is_featured', 'is_pinned', 'category']
     search_fields = ['title', 'summary', 'content', 'publication_name', 'author_name', 'tags', 'slug', 'car_model__name']
     ordering_fields = ['is_pinned', 'published_at', 'created_at', 'reading_time_minutes']
     ordering = ['-is_pinned', '-published_at', '-created_at']

@@ -110,7 +110,7 @@ class PressReviewListSerializer(serializers.ModelSerializer):
             'id', 'car_id', 'car_name', 'car_brand_name', 'title', 'summary', 'content',
             'slug', 'category', 'tags', 'reading_time_minutes',
             'publication_name', 'publication_url', 'author_name', 'published_at',
-            'is_featured', 'is_pinned', 'author_id', 'author_username', 'created_at'
+            'is_featured', 'is_pinned', 'is_published', 'author_id', 'author_username', 'created_at'
         ]
 
 

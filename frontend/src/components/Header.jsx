@@ -68,6 +68,7 @@ export default function Header() {
           <Link to="/cars" className="nav-link">{t.nav.cars}</Link>
           <Link to="/opinions" className="nav-link">{t.nav.opinions}</Link>
           <Link to="/reviews" className="nav-link">{t.nav.reviews}</Link>
+          {token && <Link to="/my-content" className="nav-link">{t.nav.myContent}</Link>}
           {token && <Link to="/profile" className="nav-link">{t.nav.profile}</Link>}
           {token && isAdmin && <Link to="/admin" className="nav-link">{t.nav.admin}</Link>}
         </div>
@@ -190,6 +191,7 @@ export default function Header() {
             <Link to="/cars" className="nav-link">{t.nav.cars}</Link>
             <Link to="/opinions" className="nav-link">{t.nav.opinions}</Link>
             <Link to="/reviews" className="nav-link">{t.nav.reviews}</Link>
+            {token && <Link to="/my-content" className="nav-link">{t.nav.myContent}</Link>}
             {token && <Link to="/profile" className="nav-link">{t.nav.profile}</Link>}
             {token && isAdmin && <Link to="/admin" className="nav-link">{t.nav.admin}</Link>}
           </div>
