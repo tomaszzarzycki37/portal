@@ -23,6 +23,12 @@ export default function LoginPage() {
       const currentUser = meResponse.data
       localStorage.setItem('current_user', JSON.stringify(currentUser))
 
+      const mustResetPassword = !!(tokenResponse.data.force_password_reset || currentUser?.profile?.force_password_reset)
+      if (mustResetPassword) {
+        window.location.href = '/force-password-reset'
+        return
+      }
+
       const isAdmin = !!(currentUser?.is_staff || currentUser?.is_superuser)
       window.location.href = isAdmin ? '/' : '/cars'
     } catch {

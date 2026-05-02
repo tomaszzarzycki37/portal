@@ -8,6 +8,7 @@ import CarReviewsPage from './pages/CarReviewsPage'
 import OpinionsPage from './pages/OpinionsPage'
 import ReviewsPage from './pages/ReviewsPage'
 import LoginPage from './pages/LoginPage'
+import ForcePasswordResetPage from './pages/ForcePasswordResetPage'
 import RegisterPage from './pages/RegisterPage'
 import ProfilePage from './pages/ProfilePage'
 import MyContentPage from './pages/MyContentPage'
@@ -30,6 +31,7 @@ function App() {
             <Route path="/opinions" element={<OpinionsPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/force-password-reset" element={<ForcePasswordResetPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/my-content" element={<MyContentPage />} />

@@ -262,6 +262,9 @@ export default function AdminDashboard() {
   const [expandedUserId, setExpandedUserId] = useState(null)
   const [userEditDraft, setUserEditDraft] = useState(null)
   const [savingUserDetails, setSavingUserDetails] = useState(false)
+  const [usersAuditLogs, setUsersAuditLogs] = useState({})
+  const [usersAuditLoading, setUsersAuditLoading] = useState(false)
+  const [generatedTempPassword, setGeneratedTempPassword] = useState('')
 
   const extractVerdictFromContent = (content) => {
     const lines = (content || '').split('\n')
@@ -454,10 +457,12 @@ export default function AdminDashboard() {
     if (expandedUserId === user.id) {
       setExpandedUserId(null)
       setUserEditDraft(null)
+      setGeneratedTempPassword('')
       return
     }
 
     setExpandedUserId(user.id)
+    setGeneratedTempPassword('')
     setUserEditDraft({
       id: user.id,
       username: user.username || '',
@@ -467,9 +472,71 @@ export default function AdminDashboard() {
       profile_phone: user.profile?.phone || '',
       profile_location: user.profile?.location || '',
       profile_bio: user.profile?.bio || '',
+      force_password_reset: !!user.profile?.force_password_reset,
       new_password: '',
       confirm_password: '',
     })
+
+    loadUserPasswordAudit(user.id)
+  }
+
+  const loadUserPasswordAudit = async (userId) => {
+    setUsersAuditLoading(true)
+    try {
+      const response = await api.get(`/users/${userId}/password_audit/`)
+      const entries = response.data || []
+      setUsersAuditLogs((prev) => ({ ...prev, [userId]: entries }))
+    } catch {
+      setUsersAuditLogs((prev) => ({ ...prev, [userId]: [] }))
+    } finally {
+      setUsersAuditLoading(false)
+    }
+  }
+
+  const handleGenerateTemporaryPassword = async (user) => {
+    if (!user) return
+    if (currentUser?.id === user.id) {
+      setUsersError(t.adminPanel.usersSelfPasswordGenerateError)
+      return
+    }
+    if (user.is_superuser) {
+      setUsersError(t.adminPanel.usersSuperuserProtectedError)
+      return
+    }
+
+    setUsersError('')
+    setUsersMessage('')
+    setSavingUserDetails(true)
+    try {
+      const response = await api.post(`/users/${user.id}/generate_temporary_password/`)
+      const temporaryPassword = String(response.data?.temporary_password || '')
+      setGeneratedTempPassword(temporaryPassword)
+      setUserEditDraft((prev) => {
+        if (!prev || prev.id !== user.id) return prev
+        return {
+          ...prev,
+          new_password: temporaryPassword,
+          confirm_password: temporaryPassword,
+          force_password_reset: true,
+        }
+      })
+      setUsersMessage(t.adminPanel.usersTemporaryPasswordGenerated)
+      await Promise.all([loadUsers(), loadUserPasswordAudit(user.id)])
+    } catch (err) {
+      setUsersError(extractApiErrorMessage(err, t.adminPanel.usersTemporaryPasswordError))
+    } finally {
+      setSavingUserDetails(false)
+    }
+  }
+
+  const handleCopyTemporaryPassword = async () => {
+    if (!generatedTempPassword) return
+    try {
+      await navigator.clipboard.writeText(generatedTempPassword)
+      setUsersMessage(t.adminPanel.usersTemporaryPasswordCopied)
+    } catch {
+      setUsersError(t.adminPanel.usersTemporaryPasswordCopyError)
+    }
   }
 
   const handleUserDraftChange = (field, value) => {
@@ -501,6 +568,7 @@ export default function AdminDashboard() {
       profile_phone: userEditDraft.profile_phone.trim(),
       profile_location: userEditDraft.profile_location.trim(),
       profile_bio: userEditDraft.profile_bio,
+      force_password_reset: !!userEditDraft.force_password_reset,
       is_active: !!user.is_active,
       is_staff: !!user.is_staff,
     }
@@ -514,10 +582,11 @@ export default function AdminDashboard() {
     setSavingUserDetails(true)
     try {
       await api.patch(`/users/${user.id}/`, payload)
-      await loadUsers()
+      await Promise.all([loadUsers(), loadUserPasswordAudit(user.id)])
       setUsersMessage(t.adminPanel.usersDetailsSaved)
       setExpandedUserId(null)
       setUserEditDraft(null)
+      setGeneratedTempPassword('')
     } catch (err) {
       setUsersError(extractApiErrorMessage(err, t.adminPanel.usersUpdateError))
     } finally {
@@ -2230,6 +2299,65 @@ export default function AdminDashboard() {
                           disabled={savingUserDetails}
                           placeholder={t.adminPanel.usersPasswordPlaceholder}
                         />
+                      </div>
+
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label className="form-checkbox-row">
+                          <input
+                            type="checkbox"
+                            checked={!!userEditDraft.force_password_reset}
+                            onChange={(e) => handleUserDraftChange('force_password_reset', e.target.checked)}
+                            disabled={savingUserDetails}
+                          />
+                          {t.adminPanel.usersForcePasswordResetToggle}
+                        </label>
+                      </div>
+
+                      <div className="admin-actions-row" style={{ gridColumn: '1 / -1', justifyContent: 'flex-start' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => handleGenerateTemporaryPassword(user)}
+                          disabled={savingUserDetails || currentUser?.id === user.id || user.is_superuser}
+                        >
+                          {t.adminPanel.usersGenerateTemporaryPassword}
+                        </button>
+                        {generatedTempPassword && (
+                          <>
+                            <span className="admin-meta"><strong>{t.adminPanel.usersTemporaryPasswordLabel}:</strong> {generatedTempPassword}</span>
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              onClick={handleCopyTemporaryPassword}
+                            >
+                              {t.adminPanel.usersCopyTemporaryPassword}
+                            </button>
+                          </>
+                        )}
+                      </div>
+
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <p className="admin-section-caption" style={{ marginBottom: '0.5rem' }}>{t.adminPanel.usersPasswordAuditTitle}</p>
+                        {usersAuditLoading ? (
+                          <p className="admin-meta">{t.pages.loading}</p>
+                        ) : (
+                          <div className="admin-review-list">
+                            {(usersAuditLogs[user.id] || []).length === 0 && (
+                              <p className="admin-meta">{t.adminPanel.usersPasswordAuditEmpty}</p>
+                            )}
+                            {(usersAuditLogs[user.id] || []).map((entry) => (
+                              <p key={entry.id} className="admin-meta">
+                                {formatUserDate(entry.changed_at)}
+                                {' • '}
+                                {entry.changed_by_username || t.adminPanel.usersNeverLabel}
+                                {' • '}
+                                {entry.reason || 'password_change'}
+                                {entry.is_temporary ? ` • ${t.adminPanel.usersTemporaryPasswordBadge}` : ''}
+                                {entry.force_reset_required ? ` • ${t.adminPanel.usersForceResetBadge}` : ''}
+                              </p>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       <div className="admin-actions-row" style={{ gridColumn: '1 / -1' }}>
