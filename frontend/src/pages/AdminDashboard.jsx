@@ -265,6 +265,9 @@ export default function AdminDashboard() {
   const [usersAuditLogs, setUsersAuditLogs] = useState({})
   const [usersAuditLoading, setUsersAuditLoading] = useState(false)
   const [generatedTempPassword, setGeneratedTempPassword] = useState('')
+  const [usersAuditFromDate, setUsersAuditFromDate] = useState('')
+  const [usersAuditToDate, setUsersAuditToDate] = useState('')
+  const [usersAuditExporting, setUsersAuditExporting] = useState(false)
 
   const extractVerdictFromContent = (content) => {
     const lines = (content || '').split('\n')
@@ -558,6 +561,35 @@ export default function AdminDashboard() {
       setUsersMessage(t.adminPanel.usersAuditExported)
     } catch {
       setUsersError(t.adminPanel.usersAuditExportError)
+    }
+  }
+
+  const handleExportAllAuditCsv = async () => {
+    setUsersError('')
+    setUsersMessage('')
+    setUsersAuditExporting(true)
+    try {
+      const params = new URLSearchParams()
+      if (usersAuditFromDate) params.set('from_date', usersAuditFromDate)
+      if (usersAuditToDate) params.set('to_date', usersAuditToDate)
+
+      const endpoint = `/users/password_audit_csv_all/${params.toString() ? `?${params.toString()}` : ''}`
+      const response = await api.get(endpoint, { responseType: 'blob' })
+
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'password-audit-all-users.csv'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      setUsersMessage(t.adminPanel.usersAllAuditExported)
+    } catch (err) {
+      setUsersError(extractApiErrorMessage(err, t.adminPanel.usersAllAuditExportError))
+    } finally {
+      setUsersAuditExporting(false)
     }
   }
 
@@ -2165,6 +2197,33 @@ export default function AdminDashboard() {
               <span className="admin-meta"><strong>{t.adminPanel.usersStatAdmins}:</strong> {usersStats.admins}</span>
               <span className="admin-meta"><strong>{t.adminPanel.usersStatActive}:</strong> {usersStats.active}</span>
               <span className="admin-meta"><strong>{t.adminPanel.usersStatBlocked}:</strong> {usersStats.blocked}</span>
+            </div>
+
+            <div className="admin-actions-row" style={{ justifyContent: 'flex-start', marginTop: '0.35rem' }}>
+              <label className="form-label" style={{ margin: 0 }}>{t.adminPanel.usersAuditDateFromLabel}</label>
+              <input
+                type="date"
+                className="form-input"
+                value={usersAuditFromDate}
+                onChange={(e) => setUsersAuditFromDate(e.target.value)}
+                style={{ maxWidth: '180px' }}
+              />
+              <label className="form-label" style={{ margin: 0 }}>{t.adminPanel.usersAuditDateToLabel}</label>
+              <input
+                type="date"
+                className="form-input"
+                value={usersAuditToDate}
+                onChange={(e) => setUsersAuditToDate(e.target.value)}
+                style={{ maxWidth: '180px' }}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleExportAllAuditCsv}
+                disabled={usersAuditExporting}
+              >
+                {usersAuditExporting ? t.pages.loading : t.adminPanel.usersExportAllAuditCsv}
+              </button>
             </div>
 
             {usersMessage && <p className="form-success">{usersMessage}</p>}

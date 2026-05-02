@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.exceptions import PermissionDenied
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.db import transaction
 from django.http import HttpResponse
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -157,6 +158,54 @@ class UserViewSet(viewsets.ModelViewSet):
                 entry.changed_at.isoformat(),
                 user.username,
                 entry.changed_by.username if entry.changed_by else '',
+                entry.reason,
+                '1' if entry.is_temporary else '0',
+                '1' if entry.force_reset_required else '0',
+            ])
+
+        return response
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
+    def password_audit_csv_all(self, request):
+        from_date_raw = request.query_params.get('from_date')
+        to_date_raw = request.query_params.get('to_date')
+
+        from_date = parse_date(from_date_raw) if from_date_raw else None
+        to_date = parse_date(to_date_raw) if to_date_raw else None
+
+        if from_date_raw and from_date is None:
+            return Response({'detail': 'Invalid from_date. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+        if to_date_raw and to_date is None:
+            return Response({'detail': 'Invalid to_date. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        entries = PasswordChangeAudit.objects.select_related('target_user', 'changed_by').all()
+        if from_date:
+            entries = entries.filter(changed_at__date__gte=from_date)
+        if to_date:
+            entries = entries.filter(changed_at__date__lte=to_date)
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="password-audit-all-users.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            'changed_at',
+            'target_username',
+            'target_user_id',
+            'changed_by',
+            'changed_by_id',
+            'reason',
+            'is_temporary',
+            'force_reset_required',
+        ])
+
+        for entry in entries:
+            writer.writerow([
+                entry.changed_at.isoformat(),
+                entry.target_user.username,
+                entry.target_user_id,
+                entry.changed_by.username if entry.changed_by else '',
+                entry.changed_by_id or '',
                 entry.reason,
                 '1' if entry.is_temporary else '0',
                 '1' if entry.force_reset_required else '0',
