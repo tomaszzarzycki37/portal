@@ -55,6 +55,8 @@ const WORD_LIKE_FORMATS = [
 ]
 
 function RichTextEditor({ id, label, value, onChange, compact = false }) {
+  const { t } = useTranslation()
+
   return (
     <div className={`admin-rich-editor ${compact ? 'admin-rich-editor-compact' : ''}`}>
       <label className="form-label" htmlFor={id}>{label}</label>
@@ -65,7 +67,7 @@ function RichTextEditor({ id, label, value, onChange, compact = false }) {
         onChange={onChange}
         modules={WORD_LIKE_MODULES}
         formats={WORD_LIKE_FORMATS}
-        placeholder="Write article content..."
+        placeholder={t.adminPanel.reviewEditorPlaceholder}
       />
     </div>
   )
@@ -727,7 +729,7 @@ export default function AdminDashboard() {
     ;[...filteredCars]
       .sort((a, b) => `${a.brand_name || ''} ${a.name || ''}`.localeCompare(`${b.brand_name || ''} ${b.name || ''}`))
       .forEach((car) => {
-        const brandName = String(car.brand_name || '').trim() || 'Unknown brand'
+        const brandName = String(car.brand_name || '').trim() || t.adminPanel.unknownBrand
         if (!groups.has(brandName)) {
           groups.set(brandName, [])
         }
@@ -735,7 +737,7 @@ export default function AdminDashboard() {
       })
 
     return Array.from(groups.entries()).map(([brandName, items]) => ({ brandName, items }))
-  }, [filteredCars])
+  }, [filteredCars, t.adminPanel.unknownBrand])
 
   const filteredUsers = useMemo(() => {
     const term = usersSearch.trim().toLowerCase()
@@ -2704,7 +2706,7 @@ export default function AdminDashboard() {
                             }))
                           }}
                         >
-                          Auto calculate tools
+                          {t.adminPanel.reviewAutoTools}
                         </button>
                       </div>
 
@@ -2723,7 +2725,7 @@ export default function AdminDashboard() {
                           checked={reviewEditDraft.is_pinned}
                           onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, is_pinned: e.target.checked }))}
                         />
-                        Pin article at top
+                        {t.adminPanel.reviewPinTop}
                       </label>
 
                       <label className="form-checkbox-row">
@@ -2843,7 +2845,7 @@ export default function AdminDashboard() {
                     className="form-input"
                     value={newReviewSlug}
                     onChange={(e) => setNewReviewSlug(e.target.value)}
-                    placeholder="auto-from-title"
+                    placeholder={t.adminPanel.reviewSlugPlaceholder}
                   />
                 </div>
 
@@ -2881,7 +2883,7 @@ export default function AdminDashboard() {
                     className="form-input"
                     value={newReviewTags}
                     onChange={(e) => setNewReviewTags(e.target.value)}
-                    placeholder="battery, range, comfort"
+                    placeholder={t.adminPanel.reviewTagsPlaceholder}
                   />
                 </div>
 
@@ -2935,7 +2937,7 @@ export default function AdminDashboard() {
                     if (!newReviewSlug.trim()) setNewReviewSlug(toSlug(newReviewTitle))
                   }}
                 >
-                  Auto calculate tools
+                  {t.adminPanel.reviewAutoTools}
                 </button>
               </div>
 
@@ -2954,7 +2956,7 @@ export default function AdminDashboard() {
                   checked={newReviewPinned}
                   onChange={(e) => setNewReviewPinned(e.target.checked)}
                 />
-                Pin article at top
+                {t.adminPanel.reviewPinTop}
               </label>
 
               <label className="form-checkbox-row">
@@ -3296,24 +3298,24 @@ export default function AdminDashboard() {
         {isFooterSectionOpen && (
           <div id="admin-footer-settings-content">
             <div className="admin-form-grid-full">
-              <label className="form-label" htmlFor="footer-email">Email Address</label>
+              <label className="form-label" htmlFor="footer-email">{t.adminPanel.footerEmailLabel}</label>
               <input
                 id="footer-email"
                 className="form-input"
                 value={footerEmail}
                 onChange={(e) => setFooterEmail(e.target.value)}
-                placeholder="Email: info@example.com"
+                placeholder={t.adminPanel.footerEmailPlaceholder}
               />
             </div>
 
             <div className="admin-form-grid-full">
-              <label className="form-label" htmlFor="footer-phone">Phone Number</label>
+              <label className="form-label" htmlFor="footer-phone">{t.adminPanel.footerPhoneLabel}</label>
               <input
                 id="footer-phone"
                 className="form-input"
                 value={footerPhone}
                 onChange={(e) => setFooterPhone(e.target.value)}
-                placeholder="Phone: +1 (555) 123-4567"
+                placeholder={t.adminPanel.footerPhonePlaceholder}
               />
             </div>
 
