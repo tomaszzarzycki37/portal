@@ -201,6 +201,7 @@ export default function AdminDashboard() {
   const [isHeaderSectionOpen, setIsHeaderSectionOpen] = useState(false)
   const [isFooterSectionOpen, setIsFooterSectionOpen] = useState(false)
   const [isTextManagerSectionOpen, setIsTextManagerSectionOpen] = useState(false)
+  const [isUserModerationSectionOpen, setIsUserModerationSectionOpen] = useState(false)
   const [newBrandName, setNewBrandName] = useState('')
   const [newBrandSlug, setNewBrandSlug] = useState('')
   const [newBrandYear, setNewBrandYear] = useState('')
@@ -250,6 +251,11 @@ export default function AdminDashboard() {
   const [reviewsMessage, setReviewsMessage] = useState('')
   const [editingReviewId, setEditingReviewId] = useState(null)
   const [reviewEditDraft, setReviewEditDraft] = useState(null)
+  const [usersList, setUsersList] = useState([])
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [usersError, setUsersError] = useState('')
+  const [usersMessage, setUsersMessage] = useState('')
+  const [usersSearch, setUsersSearch] = useState('')
 
   const extractVerdictFromContent = (content) => {
     const lines = (content || '').split('\n')
@@ -341,6 +347,90 @@ export default function AdminDashboard() {
     }
   }
 
+  const loadUsers = async () => {
+    setUsersError('')
+    setUsersMessage('')
+    setUsersLoading(true)
+
+    try {
+      const response = await api.get('/users/?page_size=300')
+      const users = response.data.results || response.data || []
+      setUsersList(users)
+    } catch {
+      setUsersError(t.adminPanel.usersLoadError)
+      setUsersList([])
+    } finally {
+      setUsersLoading(false)
+    }
+  }
+
+  const handleToggleUserRole = async (user) => {
+    if (!user) return
+    if (currentUser?.id === user.id) {
+      setUsersError(t.adminPanel.usersSelfRoleError)
+      return
+    }
+
+    setUsersError('')
+    setUsersMessage('')
+    try {
+      await api.patch(`/users/${user.id}/`, {
+        email: user.email || '',
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        is_active: !!user.is_active,
+        is_staff: !user.is_staff,
+      })
+      await loadUsers()
+      setUsersMessage(t.adminPanel.usersUpdated)
+    } catch {
+      setUsersError(t.adminPanel.usersUpdateError)
+    }
+  }
+
+  const handleToggleUserActive = async (user) => {
+    if (!user) return
+    if (currentUser?.id === user.id) {
+      setUsersError(t.adminPanel.usersSelfDisableError)
+      return
+    }
+
+    setUsersError('')
+    setUsersMessage('')
+    try {
+      await api.patch(`/users/${user.id}/`, {
+        email: user.email || '',
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        is_active: !user.is_active,
+        is_staff: !!user.is_staff,
+      })
+      await loadUsers()
+      setUsersMessage(t.adminPanel.usersUpdated)
+    } catch {
+      setUsersError(t.adminPanel.usersUpdateError)
+    }
+  }
+
+  const handleDeleteUser = async (user) => {
+    if (!user) return
+    if (currentUser?.id === user.id) {
+      setUsersError(t.adminPanel.usersSelfDeleteError)
+      return
+    }
+    if (!window.confirm(t.adminPanel.usersDeleteConfirm)) return
+
+    setUsersError('')
+    setUsersMessage('')
+    try {
+      await api.delete(`/users/${user.id}/`)
+      await loadUsers()
+      setUsersMessage(t.adminPanel.usersDeleted)
+    } catch {
+      setUsersError(t.adminPanel.usersDeleteError)
+    }
+  }
+
   const currentUser = useMemo(() => getCurrentUser(), [])
   const dashboardOwner = useMemo(() => currentUser?.username || 'admin', [currentUser])
   const dashboardOwnerInitial = useMemo(() => dashboardOwner.slice(0, 1).toUpperCase(), [dashboardOwner])
@@ -429,6 +519,19 @@ export default function AdminDashboard() {
 
     return Array.from(groups.entries()).map(([brandName, items]) => ({ brandName, items }))
   }, [filteredCars])
+
+  const filteredUsers = useMemo(() => {
+    const term = usersSearch.trim().toLowerCase()
+    if (!term) return usersList
+    return usersList.filter((user) => {
+      const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim().toLowerCase()
+      return (
+        String(user.username || '').toLowerCase().includes(term)
+        || String(user.email || '').toLowerCase().includes(term)
+        || fullName.includes(term)
+      )
+    })
+  }, [usersList, usersSearch])
 
   const stats = useMemo(() => {
     const totalCars = cars.length
@@ -591,6 +694,12 @@ export default function AdminDashboard() {
 
     openReviewEditor()
   }, [searchParams, setSearchParams])
+
+  useEffect(() => {
+    if (!isUserModerationSectionOpen) return
+    if (usersList.length > 0) return
+    loadUsers()
+  }, [isUserModerationSectionOpen])
 
   useEffect(() => {
     if (!selectedId) return
@@ -1755,6 +1864,97 @@ export default function AdminDashboard() {
               </button>
             </div>
             </form>
+          </div>
+        )}
+      </section>
+
+      <section className="admin-form-card admin-collapsible-card">
+        <button
+          type="button"
+          className="admin-collapsible-toggle"
+          onClick={() => setIsUserModerationSectionOpen((prev) => !prev)}
+          aria-expanded={isUserModerationSectionOpen}
+          aria-controls="admin-user-moderation-content"
+        >
+          <h2 className="admin-section-heading">{t.adminPanel.usersModerationTitle}</h2>
+          <span className={`admin-inline-toggle admin-inline-gear ${isUserModerationSectionOpen ? 'is-open' : ''}`} aria-hidden="true">
+            <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
+            </svg>
+          </span>
+        </button>
+
+        {isUserModerationSectionOpen && (
+          <div id="admin-user-moderation-content">
+            <p className="admin-subtitle">{t.adminPanel.usersModerationSubtitle}</p>
+
+            <div className="admin-actions-row" style={{ justifyContent: 'flex-start', marginTop: '0.85rem' }}>
+              <input
+                className="form-input"
+                style={{ minWidth: '280px' }}
+                placeholder={t.adminPanel.usersSearchPlaceholder}
+                value={usersSearch}
+                onChange={(e) => setUsersSearch(e.target.value)}
+              />
+              <button type="button" className="btn btn-secondary" onClick={loadUsers} disabled={usersLoading}>
+                {usersLoading ? t.pages.loading : t.adminPanel.refreshUsers}
+              </button>
+            </div>
+
+            {usersMessage && <p className="form-success">{usersMessage}</p>}
+            {usersError && <p className="form-error">{usersError}</p>}
+
+            <div className="admin-review-list">
+              {!usersLoading && filteredUsers.length === 0 && (
+                <p className="admin-meta">{t.adminPanel.noUsersToModerate}</p>
+              )}
+
+              {filteredUsers.map((user) => (
+                <article key={user.id} className="admin-review-card">
+                  <div className="admin-review-card-head">
+                    <div>
+                      <h3 className="admin-review-title">{user.username}</h3>
+                      <p className="admin-meta">
+                        {user.email || '—'}
+                        {' • '}
+                        {user.first_name || user.last_name ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : '—'}
+                        {' • '}
+                        {user.is_staff ? t.nav.roleAdmin : t.nav.roleUser}
+                        {' • '}
+                        {user.is_active ? t.adminPanel.userStatusActive : t.adminPanel.userStatusBlocked}
+                        {currentUser?.id === user.id ? ` • ${t.adminPanel.usersYouLabel}` : ''}
+                      </p>
+                    </div>
+                    <div className="admin-actions-row">
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => handleToggleUserRole(user)}
+                        disabled={usersLoading || currentUser?.id === user.id}
+                      >
+                        {user.is_staff ? t.adminPanel.usersSetRoleUser : t.adminPanel.usersSetRoleAdmin}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => handleToggleUserActive(user)}
+                        disabled={usersLoading || currentUser?.id === user.id}
+                      >
+                        {user.is_active ? t.adminPanel.usersBlock : t.adminPanel.usersUnblock}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        onClick={() => handleDeleteUser(user)}
+                        disabled={usersLoading || currentUser?.id === user.id}
+                      >
+                        {t.adminPanel.usersDelete}
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         )}
       </section>

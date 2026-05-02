@@ -2,7 +2,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth.models import User
 from .models import UserProfile
@@ -22,7 +22,7 @@ class PublicTokenRefreshView(TokenRefreshView):
 class UserViewSet(viewsets.ModelViewSet):
     """User API endpoint"""
     queryset = User.objects.all()
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -34,8 +34,10 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action == 'create':
             permission_classes = [AllowAny]
-        else:
+        elif self.action in ['me', 'update_profile', 'opinions']:
             permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAdminUser]
         return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
@@ -60,6 +62,9 @@ class UserViewSet(viewsets.ModelViewSet):
         from apps.opinions.models import Opinion
         from apps.opinions.serializers import OpinionListSerializer
         
+        if not request.user.is_staff and str(request.user.id) != str(pk):
+            return Response({'detail': 'Not authorized.'}, status=status.HTTP_403_FORBIDDEN)
+
         user = self.get_object()
         opinions = Opinion.objects.filter(author=user, is_approved=True)
         serializer = OpinionListSerializer(opinions, many=True)
