@@ -823,6 +823,73 @@ a {
   gap: 0.7rem;
 }
 
+.admin-sections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-sections-list .admin-option-create-brand {
+  order: 10;
+}
+
+.admin-sections-list .admin-option-create-model {
+  order: 20;
+}
+
+.admin-sections-list .admin-option-create-review {
+  order: 30;
+}
+
+.admin-sections-list .admin-option-footer-settings {
+  order: 40;
+}
+
+.admin-sections-list .admin-option-header-settings {
+  order: 50;
+}
+
+.admin-sections-list .admin-option-manage-reviews {
+  order: 60;
+}
+
+.admin-sections-list .admin-option-text-manager {
+  order: 70;
+}
+
+.admin-sections-list .admin-option-user-supervision {
+  order: 80;
+}
+
+.admin-collapsible-main {
+  border-color: rgba(251, 191, 36, 0.58);
+  background: linear-gradient(125deg, rgba(255, 251, 235, 0.86), rgba(239, 246, 255, 0.86));
+}
+
+.admin-collapsible-main .admin-section-heading {
+  color: #92400e;
+}
+
+.admin-collapsible-main .admin-inline-gear {
+  border-color: rgba(251, 191, 36, 0.92);
+  background: linear-gradient(180deg, #f59e0b, #d97706);
+  box-shadow: 0 10px 16px rgba(217, 119, 6, 0.26);
+}
+
+.admin-wrap.admin-theme-dark .admin-collapsible-main {
+  border-color: rgba(251, 191, 36, 0.55);
+  background: linear-gradient(135deg, rgba(83, 54, 10, 0.34), rgba(30, 58, 88, 0.32));
+}
+
+.admin-wrap.admin-theme-dark .admin-collapsible-main .admin-section-heading {
+  color: #fcd34d;
+}
+
+.admin-wrap.admin-theme-dark .admin-collapsible-main .admin-inline-gear {
+  border-color: rgba(251, 191, 36, 0.95);
+  background: linear-gradient(180deg, #d97706, #92400e);
+}
+
 .admin-collapsible-toggle {
   width: 100%;
   border: 0;

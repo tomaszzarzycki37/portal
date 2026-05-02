@@ -2025,7 +2025,8 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <section className="admin-form-card admin-collapsible-card">
+      <div className="admin-sections-list">
+      <section className="admin-form-card admin-collapsible-card admin-option-create-brand">
         <button
           type="button"
           className="admin-collapsible-toggle"
@@ -2128,7 +2129,7 @@ export default function AdminDashboard() {
         )}
       </section>
 
-      <section className="admin-form-card admin-collapsible-card">
+      <section className="admin-form-card admin-collapsible-card admin-option-user-supervision admin-collapsible-main">
         <button
           type="button"
           className="admin-collapsible-toggle"
@@ -2477,7 +2478,7 @@ export default function AdminDashboard() {
         )}
       </section>
 
-      <section className="admin-form-card admin-collapsible-card">
+      <section className="admin-form-card admin-collapsible-card admin-option-manage-reviews">
         <button
           type="button"
           className="admin-collapsible-toggle"
@@ -2742,7 +2743,7 @@ export default function AdminDashboard() {
         )}
       </section>
 
-      <section className="admin-form-card admin-collapsible-card">
+      <section className="admin-form-card admin-collapsible-card admin-option-create-review">
         <button
           type="button"
           className="admin-collapsible-toggle"
@@ -2966,7 +2967,7 @@ export default function AdminDashboard() {
         )}
       </section>
 
-      <section className="admin-form-card admin-collapsible-card">
+      <section className="admin-form-card admin-collapsible-card admin-option-create-model">
         <button
           type="button"
           className="admin-collapsible-toggle"
@@ -3129,7 +3130,7 @@ export default function AdminDashboard() {
         )}
       </section>
 
-      <section className="admin-form-card admin-collapsible-card">
+      <section className="admin-form-card admin-collapsible-card admin-option-header-settings admin-collapsible-main">
         <button
           type="button"
           className="admin-collapsible-toggle"
@@ -3255,7 +3256,7 @@ export default function AdminDashboard() {
         )}
       </section>
 
-      <section className="admin-form-card admin-collapsible-card">
+      <section className="admin-form-card admin-collapsible-card admin-option-footer-settings admin-collapsible-main">
         <button
           type="button"
           className="admin-collapsible-toggle"
@@ -3312,7 +3313,7 @@ export default function AdminDashboard() {
         )}
       </section>
 
-      <section className="admin-form-card admin-collapsible-card">
+      <section className="admin-form-card admin-collapsible-card admin-option-text-manager admin-collapsible-main">
         <button
           type="button"
           className="admin-collapsible-toggle"
@@ -3393,6 +3394,7 @@ export default function AdminDashboard() {
           </div>
         )}
       </section>
+      </div>
     </div>
   )
 }
