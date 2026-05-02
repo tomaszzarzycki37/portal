@@ -150,6 +150,225 @@ body.app-theme-dark .detail-reviews-card {
   border-color: #3b414b;
 }
 
+body.app-theme-dark .brand-lineup-group-header {
+  background: linear-gradient(180deg, #2a3039, #232933);
+  border-color: #3f4754;
+}
+
+.brand-detail-layout.brand-detail-dark .brand-lineup-group-header {
+  background: linear-gradient(180deg, #2a3039, #232933);
+  border-color: #3f4754;
+}
+
+body.app-theme-dark .brand-lineup-group-title,
+body.app-theme-dark .car-name,
+body.app-theme-dark .brand-detail-link {
+  color: #f3f4f6;
+}
+
+.brand-detail-layout.brand-detail-dark .brand-lineup-group-title,
+.brand-detail-layout.brand-detail-dark .car-name,
+.brand-detail-layout.brand-detail-dark .brand-detail-link {
+  color: #f3f4f6;
+}
+
+body.app-theme-dark .brand-lineup-group-count {
+  background: #2f353f;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.brand-detail-layout.brand-detail-dark .brand-lineup-group-count {
+  background: #2f353f;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+body.app-theme-dark .cars-grid {
+  background: transparent !important;
+}
+
+.brand-detail-layout.brand-detail-dark .cars-grid {
+  background: transparent !important;
+}
+
+body.app-theme-dark .car-card-item {
+  background: #262c36 !important;
+  border-color: #3f4754 !important;
+  box-shadow: 0 12px 24px rgba(3, 6, 12, 0.36) !important;
+}
+
+.brand-detail-layout.brand-detail-dark .car-card-item {
+  background: #262c36 !important;
+  border-color: #3f4754 !important;
+  box-shadow: 0 12px 24px rgba(3, 6, 12, 0.36) !important;
+}
+
+body.app-theme-dark .cars-grid .car-card-item,
+body.app-theme-dark .brand-lineup-group .car-card-item {
+  background: #262c36 !important;
+  border-color: #3f4754 !important;
+}
+
+.brand-detail-layout.brand-detail-dark .cars-grid .car-card-item,
+.brand-detail-layout.brand-detail-dark .brand-lineup-group .car-card-item {
+  background: #262c36 !important;
+  border-color: #3f4754 !important;
+}
+
+body.app-theme-dark .car-card-item:hover {
+  box-shadow: 0 16px 30px rgba(2, 6, 23, 0.45) !important;
+}
+
+.brand-detail-layout.brand-detail-dark .car-card-item:hover {
+  box-shadow: 0 16px 30px rgba(2, 6, 23, 0.45) !important;
+}
+
+body.app-theme-dark .car-thumb {
+  border: 1px solid #4b5563 !important;
+}
+
+.brand-detail-layout.brand-detail-dark .car-thumb {
+  border: 1px solid #4b5563 !important;
+}
+
+body.app-theme-dark .car-name {
+  color: #f3f4f6 !important;
+}
+
+.brand-detail-layout.brand-detail-dark .car-name {
+  color: #f3f4f6 !important;
+}
+
+body.app-theme-dark .car-meta {
+  color: #cbd5e1 !important;
+}
+
+.brand-detail-layout.brand-detail-dark .car-meta {
+  color: #cbd5e1 !important;
+}
+
+body.app-theme-dark .car-type {
+  color: #cbd5e1 !important;
+}
+
+.brand-detail-layout.brand-detail-dark .car-type {
+  color: #cbd5e1 !important;
+}
+
+body.app-theme-dark .car-count-badge {
+  background: #2f353f !important;
+  color: #e5e7eb !important;
+  border-color: #4b5563 !important;
+}
+
+.brand-detail-layout.brand-detail-dark .car-count-badge {
+  background: #2f353f !important;
+  color: #e5e7eb !important;
+  border-color: #4b5563 !important;
+}
+
+body.app-theme-dark .admin-inline-card {
+  border-top-color: #4b5563 !important;
+}
+
+.brand-detail-layout.brand-detail-dark .admin-inline-card {
+  border-top-color: #4b5563 !important;
+}
+
+body.app-theme-dark .admin-inline-toggle {
+  border-color: #4b5563 !important;
+  background: #1f232a !important;
+  color: #e5e7eb !important;
+}
+
+.brand-detail-layout.brand-detail-dark .admin-inline-toggle {
+  border-color: #4b5563 !important;
+  background: #1f232a !important;
+  color: #e5e7eb !important;
+}
+
+body.app-theme-dark .admin-inline-toggle:hover {
+  border-color: #fbbf24 !important;
+  background: #252a33 !important;
+  color: #f8fafc !important;
+}
+
+.brand-detail-layout.brand-detail-dark .admin-inline-toggle:hover {
+  border-color: #fbbf24 !important;
+  background: #252a33 !important;
+  color: #f8fafc !important;
+}
+
+body.app-theme-dark .admin-inline-kebab {
+  background: #1f232a !important;
+}
+
+.brand-detail-layout.brand-detail-dark .admin-inline-kebab {
+  background: #1f232a !important;
+}
+
+body.app-theme-dark .admin-inline-title {
+  color: #f3f4f6 !important;
+}
+
+.brand-detail-layout.brand-detail-dark .admin-inline-title {
+  color: #f3f4f6 !important;
+}
+
+body.app-theme-dark .admin-inline-section-title {
+  color: #cbd5e1 !important;
+}
+
+.brand-detail-layout.brand-detail-dark .admin-inline-section-title {
+  color: #cbd5e1 !important;
+}
+
+body.app-theme-dark .admin-inline-wrap .form-input {
+  background: #171b22 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.brand-detail-layout.brand-detail-dark .admin-inline-wrap .form-input {
+  background: #171b22 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+body.app-theme-dark .admin-inline-wrap .form-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+.brand-detail-layout.brand-detail-dark .admin-inline-wrap .form-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Alternative dark theme class variants for admin pages */
+.admin-wrap.admin-theme-dark .car-card-item {
+  background: #262c36 !important;
+  border-color: #3f4754 !important;
+  box-shadow: 0 12px 24px rgba(3, 6, 12, 0.36) !important;
+}
+
+.admin-wrap.admin-theme-dark .car-card-item:hover {
+  box-shadow: 0 16px 30px rgba(2, 6, 23, 0.45) !important;
+}
+
+.admin-wrap.admin-theme-dark .car-name {
+  color: #f3f4f6 !important;
+}
+
+.admin-wrap.admin-theme-dark .car-meta {
+  color: #cbd5e1 !important;
+}
+
+.admin-wrap.admin-theme-dark .car-count-badge {
+  background: #2f353f !important;
+  color: #e5e7eb !important;
+  border-color: #4b5563 !important;
+}
+
 body.app-theme-dark .brand-catalog-list .brand-catalog-card .brand-catalog-card {
   background: #2a2e36 !important;
   border-color: #4b5563 !important;
@@ -788,10 +1007,11 @@ a {
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
 }
 
-.admin-stat-label {
 .catalog-search-card {
   margin-bottom: 1.6rem;
 }
+
+.admin-stat-label {
   margin: 0;
   color: #64748b;
   font-size: 0.8rem;
@@ -950,6 +1170,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
   cursor: pointer;
   text-align: left;
 }

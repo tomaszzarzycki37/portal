@@ -27,8 +27,16 @@ export default function Header() {
   const hasBrandLogo = Boolean(brandLogoSrc)
 
   useEffect(() => {
+    const syncBodyThemeClass = (mode) => {
+      document.body.classList.toggle('app-theme-dark', mode === 'dark')
+    }
+
     const readTheme = () => localStorage.getItem('admin_theme_mode') || 'light'
-    const syncTheme = (nextMode) => setThemeMode(nextMode || readTheme())
+    const syncTheme = (nextMode) => {
+      const resolvedMode = nextMode || readTheme()
+      setThemeMode(resolvedMode)
+      syncBodyThemeClass(resolvedMode)
+    }
 
     const handleStorage = (event) => {
       if (event.key === 'admin_theme_mode') syncTheme(event.newValue)
@@ -48,6 +56,7 @@ export default function Header() {
 
   const applyThemeMode = (nextMode) => {
     setThemeMode(nextMode)
+    document.body.classList.toggle('app-theme-dark', nextMode === 'dark')
     localStorage.setItem('admin_theme_mode', nextMode)
     window.dispatchEvent(new CustomEvent('theme-mode-changed', { detail: nextMode }))
   }

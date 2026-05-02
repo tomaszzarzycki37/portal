@@ -92,6 +92,7 @@ export default function BrandDetailPage() {
   const { slug } = useParams()
   const { t, lang } = useTranslation()
   const isAdmin = isAdminUser()
+  const [themeMode, setThemeMode] = useState(() => localStorage.getItem('admin_theme_mode') || 'light')
 
   const [brand, setBrand] = useState(null)
   const [cars, setCars] = useState([])
@@ -112,6 +113,7 @@ export default function BrandDetailPage() {
   const [brandSaving, setBrandSaving] = useState(false)
   const [brandMessage, setBrandMessage] = useState('')
   const [brandError, setBrandError] = useState('')
+  const isDarkTheme = themeMode === 'dark' || (typeof document !== 'undefined' && document.body.classList.contains('app-theme-dark'))
 
   useEffect(() => {
     const loadBrandPage = async () => {
@@ -162,6 +164,26 @@ export default function BrandDetailPage() {
   useEffect(() => {
     setDescriptionEditorLang(lang === 'pl' ? 'pl' : 'en')
   }, [lang])
+
+  useEffect(() => {
+    const readTheme = () => localStorage.getItem('admin_theme_mode') || 'light'
+    const syncTheme = (nextMode) => setThemeMode(nextMode || readTheme())
+
+    const handleStorage = (event) => {
+      if (event.key === 'admin_theme_mode') syncTheme(event.newValue)
+    }
+
+    const handleThemeChange = (event) => syncTheme(event?.detail)
+
+    syncTheme(readTheme())
+    window.addEventListener('storage', handleStorage)
+    window.addEventListener('theme-mode-changed', handleThemeChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('theme-mode-changed', handleThemeChange)
+    }
+  }, [])
 
   const brandLogo = useMemo(() => getBrandLogoOrPlaceholder(brand?.logo || '', brand?.name), [brand])
   const editableBrandLogo = useMemo(
@@ -340,7 +362,7 @@ export default function BrandDetailPage() {
   }
 
   return (
-    <div className="brand-detail-layout">
+    <div className={`brand-detail-layout ${isDarkTheme ? 'brand-detail-dark' : ''}`}>
       <section className="page-card brand-detail-hero">
         <div className="brand-detail-header">
           <img src={brandLogo} alt={brand.name} className="brand-detail-logo" />
@@ -490,26 +512,44 @@ export default function BrandDetailPage() {
           <div className="brand-lineup-groups">
             {groupedCars.map((group) => (
               <section key={group.key} className="brand-lineup-group">
-                <div className="brand-lineup-group-header">
-                  <h3 className="brand-lineup-group-title">{group.label}</h3>
-                  <span className="brand-lineup-group-count">
+                <div
+                  className="brand-lineup-group-header"
+                  style={isDarkTheme ? { background: 'linear-gradient(180deg, #2a3039, #232933)', borderColor: '#3f4754' } : undefined}
+                >
+                  <h3 className="brand-lineup-group-title" style={isDarkTheme ? { color: '#f3f4f6' } : undefined}>{group.label}</h3>
+                  <span
+                    className="brand-lineup-group-count"
+                    style={isDarkTheme ? { background: '#2f353f', borderColor: '#4b5563', color: '#e5e7eb' } : undefined}
+                  >
                     {group.cars.length} {formatModelLabel(group.cars.length, lang)}
                   </span>
                 </div>
 
                 <div className="cars-grid">
                   {group.cars.map((car) => (
-                    <article key={car.id} className={`car-card-item ${isAdmin ? 'car-card-admin' : ''}`}>
+                    <article
+                      key={car.id}
+                      className={`car-card-item ${isAdmin ? 'car-card-admin' : ''}`}
+                      style={isDarkTheme ? { background: '#262c36', borderColor: '#3f4754', boxShadow: '0 12px 24px rgba(3, 6, 12, 0.36)' } : undefined}
+                    >
                       <Link to={`/cars/${car.id}`} className="car-card-link">
-                        <img src={getCarImage(car)} alt={car.name} className="car-thumb" />
-                        <h3 className="car-name">{car.name}</h3>
-                        <p className="car-meta">
+                        <img
+                          src={getCarImage(car)}
+                          alt={car.name}
+                          className="car-thumb"
+                          style={isDarkTheme ? { border: '1px solid #4b5563' } : undefined}
+                        />
+                        <h3 className="car-name" style={isDarkTheme ? { color: '#f3f4f6' } : undefined}>{car.name}</h3>
+                        <p className="car-meta" style={isDarkTheme ? { color: '#cbd5e1' } : undefined}>
                           {brand.name} &bull; {car.year_introduced}
                         </p>
-                        <p className="car-type">{car.vehicle_type}</p>
+                        <p className="car-type" style={isDarkTheme ? { color: '#cbd5e1' } : undefined}>{car.vehicle_type}</p>
                         <div className="car-rating-row">
                           <span className="rating">★ {car.avg_rating}</span>
-                          <span className="car-count-badge">
+                          <span
+                            className="car-count-badge"
+                            style={isDarkTheme ? { background: '#2f353f', color: '#e5e7eb', borderColor: '#4b5563' } : undefined}
+                          >
                             {car.opinions_count} {t.pages.reviewsLabel}
                           </span>
                         </div>
