@@ -256,6 +256,9 @@ export default function AdminDashboard() {
   const [usersError, setUsersError] = useState('')
   const [usersMessage, setUsersMessage] = useState('')
   const [usersSearch, setUsersSearch] = useState('')
+  const [usersRoleFilter, setUsersRoleFilter] = useState('all')
+  const [usersStatusFilter, setUsersStatusFilter] = useState('all')
+  const [usersSort, setUsersSort] = useState('username_asc')
 
   const extractVerdictFromContent = (content) => {
     const lines = (content || '').split('\n')
@@ -370,6 +373,10 @@ export default function AdminDashboard() {
       setUsersError(t.adminPanel.usersSelfRoleError)
       return
     }
+    if (user.is_superuser) {
+      setUsersError(t.adminPanel.usersSuperuserProtectedError)
+      return
+    }
 
     setUsersError('')
     setUsersMessage('')
@@ -392,6 +399,10 @@ export default function AdminDashboard() {
     if (!user) return
     if (currentUser?.id === user.id) {
       setUsersError(t.adminPanel.usersSelfDisableError)
+      return
+    }
+    if (user.is_superuser) {
+      setUsersError(t.adminPanel.usersSuperuserProtectedError)
       return
     }
 
@@ -418,7 +429,11 @@ export default function AdminDashboard() {
       setUsersError(t.adminPanel.usersSelfDeleteError)
       return
     }
-    if (!window.confirm(t.adminPanel.usersDeleteConfirm)) return
+    if (user.is_superuser) {
+      setUsersError(t.adminPanel.usersSuperuserProtectedError)
+      return
+    }
+    if (!window.confirm(t.adminPanel.usersDeleteConfirm.replace('{username}', user.username || 'user'))) return
 
     setUsersError('')
     setUsersMessage('')
@@ -522,16 +537,59 @@ export default function AdminDashboard() {
 
   const filteredUsers = useMemo(() => {
     const term = usersSearch.trim().toLowerCase()
-    if (!term) return usersList
-    return usersList.filter((user) => {
+    const bySearch = usersList.filter((user) => {
       const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim().toLowerCase()
       return (
-        String(user.username || '').toLowerCase().includes(term)
+        !term
+        || String(user.username || '').toLowerCase().includes(term)
         || String(user.email || '').toLowerCase().includes(term)
         || fullName.includes(term)
       )
     })
-  }, [usersList, usersSearch])
+
+    const byRole = bySearch.filter((user) => {
+      if (usersRoleFilter === 'all') return true
+      if (usersRoleFilter === 'admin') return !!user.is_staff
+      return !user.is_staff
+    })
+
+    const byStatus = byRole.filter((user) => {
+      if (usersStatusFilter === 'all') return true
+      if (usersStatusFilter === 'active') return !!user.is_active
+      return !user.is_active
+    })
+
+    const sorted = [...byStatus]
+    sorted.sort((a, b) => {
+      if (usersSort === 'username_desc') {
+        return String(b.username || '').localeCompare(String(a.username || ''))
+      }
+      if (usersSort === 'newest') {
+        return new Date(b.date_joined || 0).getTime() - new Date(a.date_joined || 0).getTime()
+      }
+      if (usersSort === 'last_login') {
+        return new Date(b.last_login || 0).getTime() - new Date(a.last_login || 0).getTime()
+      }
+      return String(a.username || '').localeCompare(String(b.username || ''))
+    })
+
+    return sorted
+  }, [usersList, usersSearch, usersRoleFilter, usersStatusFilter, usersSort])
+
+  const usersStats = useMemo(() => {
+    const total = usersList.length
+    const admins = usersList.filter((user) => user.is_staff).length
+    const active = usersList.filter((user) => user.is_active).length
+    const blocked = total - active
+    return { total, admins, active, blocked }
+  }, [usersList])
+
+  const formatUserDate = (value) => {
+    if (!value) return t.adminPanel.usersNeverLabel
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return t.adminPanel.usersNeverLabel
+    return parsed.toLocaleString()
+  }
 
   const stats = useMemo(() => {
     const totalCars = cars.length
@@ -1896,9 +1954,47 @@ export default function AdminDashboard() {
                 value={usersSearch}
                 onChange={(e) => setUsersSearch(e.target.value)}
               />
+              <select
+                className="form-select"
+                value={usersRoleFilter}
+                onChange={(e) => setUsersRoleFilter(e.target.value)}
+                aria-label={t.adminPanel.usersRoleFilterLabel}
+              >
+                <option value="all">{t.adminPanel.usersRoleAll}</option>
+                <option value="admin">{t.adminPanel.usersRoleAdminOnly}</option>
+                <option value="user">{t.adminPanel.usersRoleUserOnly}</option>
+              </select>
+              <select
+                className="form-select"
+                value={usersStatusFilter}
+                onChange={(e) => setUsersStatusFilter(e.target.value)}
+                aria-label={t.adminPanel.usersStatusFilterLabel}
+              >
+                <option value="all">{t.adminPanel.usersStatusAll}</option>
+                <option value="active">{t.adminPanel.usersStatusActiveOnly}</option>
+                <option value="blocked">{t.adminPanel.usersStatusBlockedOnly}</option>
+              </select>
+              <select
+                className="form-select"
+                value={usersSort}
+                onChange={(e) => setUsersSort(e.target.value)}
+                aria-label={t.adminPanel.usersSortLabel}
+              >
+                <option value="username_asc">{t.adminPanel.usersSortUsernameAsc}</option>
+                <option value="username_desc">{t.adminPanel.usersSortUsernameDesc}</option>
+                <option value="newest">{t.adminPanel.usersSortNewest}</option>
+                <option value="last_login">{t.adminPanel.usersSortLastLogin}</option>
+              </select>
               <button type="button" className="btn btn-secondary" onClick={loadUsers} disabled={usersLoading}>
                 {usersLoading ? t.pages.loading : t.adminPanel.refreshUsers}
               </button>
+            </div>
+
+            <div className="admin-actions-row" style={{ justifyContent: 'flex-start', gap: '0.65rem', marginTop: '0.35rem' }}>
+              <span className="admin-meta"><strong>{t.adminPanel.usersStatTotal}:</strong> {usersStats.total}</span>
+              <span className="admin-meta"><strong>{t.adminPanel.usersStatAdmins}:</strong> {usersStats.admins}</span>
+              <span className="admin-meta"><strong>{t.adminPanel.usersStatActive}:</strong> {usersStats.active}</span>
+              <span className="admin-meta"><strong>{t.adminPanel.usersStatBlocked}:</strong> {usersStats.blocked}</span>
             </div>
 
             {usersMessage && <p className="form-success">{usersMessage}</p>}
@@ -1922,7 +2018,13 @@ export default function AdminDashboard() {
                         {user.is_staff ? t.nav.roleAdmin : t.nav.roleUser}
                         {' • '}
                         {user.is_active ? t.adminPanel.userStatusActive : t.adminPanel.userStatusBlocked}
+                        {user.is_superuser ? ` • ${t.adminPanel.usersSuperuserLabel}` : ''}
                         {currentUser?.id === user.id ? ` • ${t.adminPanel.usersYouLabel}` : ''}
+                      </p>
+                      <p className="admin-meta">
+                        {t.adminPanel.usersLastLoginLabel}: {formatUserDate(user.last_login)}
+                        {' • '}
+                        {t.adminPanel.usersJoinedLabel}: {formatUserDate(user.date_joined)}
                       </p>
                     </div>
                     <div className="admin-actions-row">
@@ -1930,7 +2032,7 @@ export default function AdminDashboard() {
                         type="button"
                         className="btn btn-secondary"
                         onClick={() => handleToggleUserRole(user)}
-                        disabled={usersLoading || currentUser?.id === user.id}
+                        disabled={usersLoading || currentUser?.id === user.id || user.is_superuser}
                       >
                         {user.is_staff ? t.adminPanel.usersSetRoleUser : t.adminPanel.usersSetRoleAdmin}
                       </button>
@@ -1938,7 +2040,7 @@ export default function AdminDashboard() {
                         type="button"
                         className="btn btn-secondary"
                         onClick={() => handleToggleUserActive(user)}
-                        disabled={usersLoading || currentUser?.id === user.id}
+                        disabled={usersLoading || currentUser?.id === user.id || user.is_superuser}
                       >
                         {user.is_active ? t.adminPanel.usersBlock : t.adminPanel.usersUnblock}
                       </button>
@@ -1946,7 +2048,7 @@ export default function AdminDashboard() {
                         type="button"
                         className="btn btn-danger"
                         onClick={() => handleDeleteUser(user)}
-                        disabled={usersLoading || currentUser?.id === user.id}
+                        disabled={usersLoading || currentUser?.id === user.id || user.is_superuser}
                       >
                         {t.adminPanel.usersDelete}
                       </button>
