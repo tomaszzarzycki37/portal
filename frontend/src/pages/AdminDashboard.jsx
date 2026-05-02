@@ -1891,7 +1891,7 @@ export default function AdminDashboard() {
                         <div className="admin-form-grid-full">
                           <RichTextEditor
                             id={`edit-review-content-${review.id}`}
-                            label="Article content"
+                            label={t.adminPanel.reviewContent}
                             value={reviewEditDraft.content}
                             onChange={(nextValue) => setReviewEditDraft((prev) => ({ ...prev, content: nextValue }))}
                           />
@@ -1900,7 +1900,7 @@ export default function AdminDashboard() {
                         <div className="admin-form-grid-full">
                           <RichTextEditor
                             id={`edit-review-notes-${review.id}`}
-                            label="Internal notes (admin only)"
+                            label={t.adminPanel.reviewInternalNotes}
                             rows={4}
                             value={reviewEditDraft.internal_notes}
                             onChange={(nextValue) => setReviewEditDraft((prev) => ({ ...prev, internal_notes: nextValue }))}
@@ -2111,7 +2111,7 @@ export default function AdminDashboard() {
                 <div className="admin-form-grid-full">
                   <RichTextEditor
                     id="new-review-content"
-                    label="Article content"
+                    label={t.adminPanel.reviewContent}
                     value={newReviewContent}
                     onChange={setNewReviewContent}
                   />
@@ -2120,7 +2120,7 @@ export default function AdminDashboard() {
                 <div className="admin-form-grid-full">
                   <RichTextEditor
                     id="new-review-internal-notes"
-                    label="Internal notes (admin only)"
+                    label={t.adminPanel.reviewInternalNotes}
                     rows={4}
                     value={newReviewInternalNotes}
                     onChange={setNewReviewInternalNotes}
