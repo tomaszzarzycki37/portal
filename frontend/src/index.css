@@ -1066,6 +1066,11 @@ a {
   gap: 0.8rem;
 }
 
+#admin-user-moderation-content .form-success,
+#admin-user-moderation-content .form-error {
+  margin-top: 0.8rem;
+}
+
 .admin-review-card {
   border: 1px solid #e2e8f0;
   border-radius: 0.9rem;
