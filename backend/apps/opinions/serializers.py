@@ -101,6 +101,8 @@ class PressReviewListSerializer(serializers.ModelSerializer):
     car_id = serializers.IntegerField(source='car_model.id', read_only=True)
     car_name = serializers.CharField(source='car_model.name', read_only=True)
     car_brand_name = serializers.CharField(source='car_model.brand.name', read_only=True)
+    author_id = serializers.IntegerField(source='author.id', read_only=True)
+    author_username = serializers.CharField(source='author.username', read_only=True)
 
     class Meta:
         model = PressReview
@@ -108,7 +110,7 @@ class PressReviewListSerializer(serializers.ModelSerializer):
             'id', 'car_id', 'car_name', 'car_brand_name', 'title', 'summary', 'content',
             'slug', 'category', 'tags', 'reading_time_minutes',
             'publication_name', 'publication_url', 'author_name', 'published_at',
-            'is_featured', 'is_pinned', 'created_at'
+            'is_featured', 'is_pinned', 'author_id', 'author_username', 'created_at'
         ]
 
 
@@ -116,6 +118,9 @@ class PressReviewDetailSerializer(serializers.ModelSerializer):
     car_id = serializers.IntegerField(source='car_model.id', read_only=True)
     car_name = serializers.CharField(source='car_model.name', read_only=True)
     car_brand_name = serializers.CharField(source='car_model.brand.name', read_only=True)
+    author_id = serializers.IntegerField(source='author.id', read_only=True)
+    author_username = serializers.CharField(source='author.username', read_only=True)
+    internal_notes = serializers.SerializerMethodField()
 
     class Meta:
         model = PressReview
@@ -123,8 +128,16 @@ class PressReviewDetailSerializer(serializers.ModelSerializer):
             'id', 'car_id', 'car_name', 'car_brand_name', 'title', 'summary', 'content',
             'slug', 'category', 'tags', 'reading_time_minutes', 'internal_notes',
             'publication_name', 'publication_url', 'author_name', 'published_at',
-            'is_featured', 'is_pinned', 'is_published', 'created_at', 'updated_at'
+            'is_featured', 'is_pinned', 'is_published', 'author_id', 'author_username', 'created_at', 'updated_at'
         ]
+
+    def get_internal_notes(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return ''
+        if request.user.is_staff or obj.author_id == request.user.id:
+            return obj.internal_notes
+        return ''
 
 
 class PressReviewWriteSerializer(serializers.ModelSerializer):
@@ -136,3 +149,17 @@ class PressReviewWriteSerializer(serializers.ModelSerializer):
             'publication_name', 'publication_url', 'author_name', 'published_at',
             'is_featured', 'is_pinned', 'is_published'
         ]
+
+    def _sanitize_privileged_flags(self, validated_data):
+        request = self.context.get('request')
+        if request and request.user and request.user.is_authenticated and request.user.is_staff:
+            return validated_data
+        validated_data['is_featured'] = False
+        validated_data['is_pinned'] = False
+        return validated_data
+
+    def create(self, validated_data):
+        return super().create(self._sanitize_privileged_flags(validated_data))
+
+    def update(self, instance, validated_data):
+        return super().update(instance, self._sanitize_privileged_flags(validated_data))

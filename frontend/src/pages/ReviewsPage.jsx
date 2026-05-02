@@ -3,7 +3,7 @@ import DOMPurify from 'dompurify'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
-import { isAdminUser } from '../utils/auth'
+import { canEditByAuthorId, getCurrentUser, isAdminUser, isAuthenticatedUser } from '../utils/auth'
 
 function sanitizeEditorialHtml(value) {
   return DOMPurify.sanitize(String(value || ''))
@@ -67,23 +67,53 @@ function parseReviewContent(content) {
 
 export default function ReviewsPage() {
   const { t, lang } = useTranslation()
+  const currentUser = useMemo(() => getCurrentUser(), [])
+  const isLoggedIn = useMemo(() => isAuthenticatedUser(), [])
   const isAdmin = useMemo(() => isAdminUser(), [])
   const [reviews, setReviews] = useState([])
+  const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState('newest')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [selectedModel, setSelectedModel] = useState('all')
+  const [editingReviewId, setEditingReviewId] = useState(null)
+  const [reviewDraft, setReviewDraft] = useState(null)
+  const [reviewSaving, setReviewSaving] = useState(false)
+  const [reviewMessage, setReviewMessage] = useState('')
+  const [reviewError, setReviewError] = useState('')
+  const [newReviewDraft, setNewReviewDraft] = useState({
+    car_model: '',
+    title: '',
+    summary: '',
+    content: '',
+    category: 'test',
+    tags: '',
+    reading_time_minutes: '',
+    publication_name: '',
+    publication_url: '',
+    author_name: '',
+    published_at: '',
+    is_published: true,
+  })
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const reviewsResponse = await api.get('/reviews/?page_size=200&ordering=-published_at')
-
+        const [reviewsResponse, carsResponse] = await Promise.all([
+          api.get('/reviews/?page_size=200&ordering=-published_at'),
+          api.get('/cars/?page_size=400'),
+        ])
         const reviewsList = reviewsResponse.data.results || reviewsResponse.data || []
+        const carsList = carsResponse.data.results || carsResponse.data || []
 
         setReviews(reviewsList)
+        setCars(carsList)
+        setNewReviewDraft((prev) => ({
+          ...prev,
+          car_model: prev.car_model || String(carsList[0]?.id || ''),
+        }))
       } catch (error) {
         console.error('Error fetching reviews:', error)
       } finally {
@@ -93,6 +123,11 @@ export default function ReviewsPage() {
 
     fetchData()
   }, [])
+
+  const reloadReviews = async () => {
+    const response = await api.get('/reviews/?page_size=200&ordering=-published_at')
+    setReviews(response.data.results || response.data || [])
+  }
 
   const normalizedReviews = useMemo(
     () => reviews.map((review) => ({ ...review, _brandName: String(review.car_brand_name || '').trim() })),
@@ -153,6 +188,138 @@ export default function ReviewsPage() {
     })
   }
 
+  const handleStartEditReview = async (reviewId) => {
+    setReviewError('')
+    setReviewMessage('')
+    try {
+      const response = await api.get(`/reviews/${reviewId}/`)
+      const detail = response.data
+      setEditingReviewId(reviewId)
+      setReviewDraft({
+        car_model: String(detail.car_id || ''),
+        title: detail.title || '',
+        summary: detail.summary || '',
+        content: detail.content || '',
+        category: detail.category || 'test',
+        tags: detail.tags || '',
+        reading_time_minutes: String(detail.reading_time_minutes || ''),
+        internal_notes: detail.internal_notes || '',
+        publication_name: detail.publication_name || '',
+        publication_url: detail.publication_url || '',
+        author_name: detail.author_name || '',
+        published_at: String(detail.published_at || '').slice(0, 10),
+        is_published: !!detail.is_published,
+      })
+    } catch {
+      setReviewError(t.adminPanel.reviewLoadError)
+    }
+  }
+
+  const handleSaveReview = async (reviewId) => {
+    if (!reviewDraft) return
+    if (!reviewDraft.car_model || !reviewDraft.title.trim() || !reviewDraft.content.trim() || !reviewDraft.publication_name.trim() || !reviewDraft.published_at) {
+      setReviewError(t.adminPanel.createReviewValidation)
+      return
+    }
+
+    setReviewSaving(true)
+    setReviewError('')
+    setReviewMessage('')
+    try {
+      await api.patch(`/reviews/${reviewId}/`, {
+        car_model: Number.parseInt(reviewDraft.car_model, 10),
+        title: reviewDraft.title.trim(),
+        summary: reviewDraft.summary.trim(),
+        content: reviewDraft.content.trim(),
+        category: reviewDraft.category,
+        tags: reviewDraft.tags.trim(),
+        reading_time_minutes: Number.parseInt(String(reviewDraft.reading_time_minutes || '0'), 10) || 0,
+        internal_notes: reviewDraft.internal_notes.trim(),
+        publication_name: reviewDraft.publication_name.trim(),
+        publication_url: reviewDraft.publication_url.trim(),
+        author_name: reviewDraft.author_name.trim(),
+        published_at: reviewDraft.published_at,
+        is_published: !!reviewDraft.is_published,
+      })
+      await reloadReviews()
+      setEditingReviewId(null)
+      setReviewDraft(null)
+      setReviewMessage(t.pages.reviewUpdatedUser)
+    } catch {
+      setReviewError(t.adminPanel.reviewUpdateError)
+    } finally {
+      setReviewSaving(false)
+    }
+  }
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm(t.pages.reviewDeleteConfirmUser)) return
+    setReviewSaving(true)
+    setReviewError('')
+    setReviewMessage('')
+    try {
+      await api.delete(`/reviews/${reviewId}/`)
+      await reloadReviews()
+      if (editingReviewId === reviewId) {
+        setEditingReviewId(null)
+        setReviewDraft(null)
+      }
+      setReviewMessage(t.pages.reviewDeletedUser)
+    } catch {
+      setReviewError(t.adminPanel.reviewDeleteError)
+    } finally {
+      setReviewSaving(false)
+    }
+  }
+
+  const handleCreateReview = async (e) => {
+    e.preventDefault()
+    setReviewError('')
+    setReviewMessage('')
+
+    if (!newReviewDraft.car_model || !newReviewDraft.title.trim() || !newReviewDraft.content.trim() || !newReviewDraft.publication_name.trim() || !newReviewDraft.published_at) {
+      setReviewError(t.adminPanel.createReviewValidation)
+      return
+    }
+
+    setReviewSaving(true)
+    try {
+      await api.post('/reviews/', {
+        car_model: Number.parseInt(newReviewDraft.car_model, 10),
+        title: newReviewDraft.title.trim(),
+        summary: newReviewDraft.summary.trim(),
+        content: newReviewDraft.content.trim(),
+        category: newReviewDraft.category,
+        tags: newReviewDraft.tags.trim(),
+        reading_time_minutes: Number.parseInt(String(newReviewDraft.reading_time_minutes || '0'), 10) || 0,
+        publication_name: newReviewDraft.publication_name.trim(),
+        publication_url: newReviewDraft.publication_url.trim(),
+        author_name: newReviewDraft.author_name.trim(),
+        published_at: newReviewDraft.published_at,
+        is_published: !!newReviewDraft.is_published,
+      })
+      await reloadReviews()
+      setNewReviewDraft((prev) => ({
+        ...prev,
+        title: '',
+        summary: '',
+        content: '',
+        tags: '',
+        reading_time_minutes: '',
+        publication_name: '',
+        publication_url: '',
+        author_name: '',
+        published_at: '',
+        is_published: true,
+      }))
+      setReviewMessage(t.adminPanel.reviewCreated)
+    } catch {
+      setReviewError(t.adminPanel.reviewCreateError)
+    } finally {
+      setReviewSaving(false)
+    }
+  }
+
   return (
     <div className="opinions-page-wrap">
       <h1 className="page-title">{t.nav.reviews}</h1>
@@ -208,6 +375,136 @@ export default function ReviewsPage() {
         </div>
       </div>
 
+      {isLoggedIn ? (
+        <section className="admin-form-card" style={{ marginBottom: '1rem' }}>
+          <h2 className="admin-section-heading" style={{ marginBottom: '0.5rem' }}>{t.pages.createReviewTitle}</h2>
+          <p className="admin-subtitle" style={{ marginBottom: '0.75rem' }}>{t.pages.createReviewHint}</p>
+          <form onSubmit={handleCreateReview} className="admin-form-grid">
+            <div>
+              <label className="form-label" htmlFor="user-review-car">{t.adminPanel.chooseModel}</label>
+              <select
+                id="user-review-car"
+                className="form-input"
+                value={newReviewDraft.car_model}
+                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, car_model: e.target.value }))}
+              >
+                {cars.map((car) => (
+                  <option key={car.id} value={car.id}>{car.brand_name} {car.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="form-label" htmlFor="user-review-title">{t.pages.opinionTitle}</label>
+              <input
+                id="user-review-title"
+                className="form-input"
+                value={newReviewDraft.title}
+                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, title: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="form-label" htmlFor="user-review-publication">{t.adminPanel.reviewPublication}</label>
+              <input
+                id="user-review-publication"
+                className="form-input"
+                value={newReviewDraft.publication_name}
+                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, publication_name: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="form-label" htmlFor="user-review-author">{t.adminPanel.reviewAuthor}</label>
+              <input
+                id="user-review-author"
+                className="form-input"
+                value={newReviewDraft.author_name}
+                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, author_name: e.target.value }))}
+                placeholder={currentUser?.username || ''}
+              />
+            </div>
+            <div>
+              <label className="form-label" htmlFor="user-review-date">{t.adminPanel.reviewDate}</label>
+              <input
+                id="user-review-date"
+                type="date"
+                className="form-input"
+                value={newReviewDraft.published_at}
+                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, published_at: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="form-label" htmlFor="user-review-category">{t.adminPanel.reviewCategory}</label>
+              <select
+                id="user-review-category"
+                className="form-input"
+                value={newReviewDraft.category}
+                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, category: e.target.value }))}
+              >
+                <option value="test">Test</option>
+                <option value="news">News</option>
+                <option value="guide">Guide</option>
+                <option value="opinion">Opinion</option>
+              </select>
+            </div>
+            <div>
+              <label className="form-label" htmlFor="user-review-reading-time">{t.adminPanel.reviewReadingTime}</label>
+              <input
+                id="user-review-reading-time"
+                className="form-input"
+                type="number"
+                min="0"
+                value={newReviewDraft.reading_time_minutes}
+                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, reading_time_minutes: e.target.value }))}
+              />
+            </div>
+            <div className="admin-form-grid-full">
+              <label className="form-label" htmlFor="user-review-tags">{t.adminPanel.reviewTags}</label>
+              <input
+                id="user-review-tags"
+                className="form-input"
+                value={newReviewDraft.tags}
+                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, tags: e.target.value }))}
+              />
+            </div>
+            <div className="admin-form-grid-full">
+              <label className="form-label" htmlFor="user-review-summary">{t.adminPanel.reviewSummary}</label>
+              <textarea
+                id="user-review-summary"
+                className="form-input form-textarea"
+                rows={3}
+                value={newReviewDraft.summary}
+                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, summary: e.target.value }))}
+              />
+            </div>
+            <div className="admin-form-grid-full">
+              <label className="form-label" htmlFor="user-review-content">{t.adminPanel.reviewContent}</label>
+              <textarea
+                id="user-review-content"
+                className="form-input form-textarea"
+                rows={6}
+                value={newReviewDraft.content}
+                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, content: e.target.value }))}
+              />
+            </div>
+            <label className="form-checkbox-row admin-form-grid-full">
+              <input
+                type="checkbox"
+                checked={newReviewDraft.is_published}
+                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, is_published: e.target.checked }))}
+              />
+              {t.adminPanel.reviewPublished}
+            </label>
+            <div className="admin-actions-row admin-form-grid-full">
+              <button type="submit" className="btn btn-primary" disabled={reviewSaving}>{reviewSaving ? t.pages.loading : t.adminPanel.createReview}</button>
+            </div>
+          </form>
+        </section>
+      ) : (
+        <p className="admin-subtitle" style={{ marginBottom: '1rem' }}>{t.pages.loginToContribute}</p>
+      )}
+
+      {reviewMessage && <p className="form-success">{reviewMessage}</p>}
+      {reviewError && <p className="form-error">{reviewError}</p>}
+
       {loading ? (
         <div className="page-loading">{t.pages.loading}</div>
       ) : filteredAndSortedReviews.length === 0 ? (
@@ -223,6 +520,7 @@ export default function ReviewsPage() {
               const content = String(review.content || '')
               const isHtmlContent = /<\/?[a-z][\s\S]*>/i.test(content)
               const parsed = isHtmlContent ? null : parseReviewContent(content)
+              const canManageReview = canEditByAuthorId(review.author_id)
               return (
                 <article key={review.id} className="review-card-rich">
                   {isAdmin && (
@@ -334,7 +632,83 @@ export default function ReviewsPage() {
                         {t.pages.viewCar}
                       </Link>
                     )}
+                    {canManageReview && (
+                      <>
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleStartEditReview(review.id)}>
+                          {t.pages.editLabel}
+                        </button>
+                        <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteReview(review.id)}>
+                          {t.pages.deleteLabel}
+                        </button>
+                      </>
+                    )}
                   </div>
+
+                  {editingReviewId === review.id && reviewDraft && (
+                    <div className="admin-form-card" style={{ margin: '0.8rem' }}>
+                      <div className="admin-form-grid">
+                        <div>
+                          <label className="form-label">{t.adminPanel.chooseModel}</label>
+                          <select className="form-input" value={reviewDraft.car_model} onChange={(e) => setReviewDraft((prev) => ({ ...prev, car_model: e.target.value }))}>
+                            {cars.map((car) => <option key={car.id} value={car.id}>{car.brand_name} {car.name}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="form-label">{t.pages.opinionTitle}</label>
+                          <input className="form-input" value={reviewDraft.title} onChange={(e) => setReviewDraft((prev) => ({ ...prev, title: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="form-label">{t.adminPanel.reviewPublication}</label>
+                          <input className="form-input" value={reviewDraft.publication_name} onChange={(e) => setReviewDraft((prev) => ({ ...prev, publication_name: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="form-label">{t.adminPanel.reviewAuthor}</label>
+                          <input className="form-input" value={reviewDraft.author_name} onChange={(e) => setReviewDraft((prev) => ({ ...prev, author_name: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="form-label">{t.adminPanel.reviewDate}</label>
+                          <input type="date" className="form-input" value={reviewDraft.published_at} onChange={(e) => setReviewDraft((prev) => ({ ...prev, published_at: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="form-label">{t.adminPanel.reviewCategory}</label>
+                          <select className="form-input" value={reviewDraft.category} onChange={(e) => setReviewDraft((prev) => ({ ...prev, category: e.target.value }))}>
+                            <option value="test">Test</option>
+                            <option value="news">News</option>
+                            <option value="guide">Guide</option>
+                            <option value="opinion">Opinion</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="form-label">{t.adminPanel.reviewReadingTime}</label>
+                          <input type="number" min="0" className="form-input" value={reviewDraft.reading_time_minutes} onChange={(e) => setReviewDraft((prev) => ({ ...prev, reading_time_minutes: e.target.value }))} />
+                        </div>
+                        <div className="admin-form-grid-full">
+                          <label className="form-label">{t.adminPanel.reviewTags}</label>
+                          <input className="form-input" value={reviewDraft.tags} onChange={(e) => setReviewDraft((prev) => ({ ...prev, tags: e.target.value }))} />
+                        </div>
+                        <div className="admin-form-grid-full">
+                          <label className="form-label">{t.adminPanel.reviewSummary}</label>
+                          <textarea className="form-input form-textarea" rows={3} value={reviewDraft.summary} onChange={(e) => setReviewDraft((prev) => ({ ...prev, summary: e.target.value }))} />
+                        </div>
+                        <div className="admin-form-grid-full">
+                          <label className="form-label">{t.adminPanel.reviewContent}</label>
+                          <textarea className="form-input form-textarea" rows={6} value={reviewDraft.content} onChange={(e) => setReviewDraft((prev) => ({ ...prev, content: e.target.value }))} />
+                        </div>
+                        <div className="admin-form-grid-full">
+                          <label className="form-label">{t.adminPanel.reviewInternalNotes}</label>
+                          <textarea className="form-input form-textarea" rows={3} value={reviewDraft.internal_notes} onChange={(e) => setReviewDraft((prev) => ({ ...prev, internal_notes: e.target.value }))} />
+                        </div>
+                        <label className="form-checkbox-row admin-form-grid-full">
+                          <input type="checkbox" checked={reviewDraft.is_published} onChange={(e) => setReviewDraft((prev) => ({ ...prev, is_published: e.target.checked }))} />
+                          {t.adminPanel.reviewPublished}
+                        </label>
+                      </div>
+                      <div className="admin-actions-row">
+                        <button type="button" className="btn btn-secondary" onClick={() => { setEditingReviewId(null); setReviewDraft(null) }}>{t.pages.cancelLabel}</button>
+                        <button type="button" className="btn btn-primary" disabled={reviewSaving} onClick={() => handleSaveReview(review.id)}>{reviewSaving ? t.pages.loading : t.pages.saveLabel}</button>
+                      </div>
+                    </div>
+                  )}
                 </article>
               )
             })}

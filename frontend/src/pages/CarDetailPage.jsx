@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCarImage } from '../utils/carImages'
-import { isAdminUser } from '../utils/auth'
+import { canEditByAuthorId, isAdminUser, isAuthenticatedUser } from '../utils/auth'
 
 function extractApiErrorMessage(error, fallbackMessage) {
   const payload = error?.response?.data
@@ -67,6 +67,9 @@ export default function CarDetailPage() {
   const [adminOpinionSaving, setAdminOpinionSaving] = useState(false)
   const [adminOpinionMessage, setAdminOpinionMessage] = useState('')
   const [adminOpinionError, setAdminOpinionError] = useState('')
+  const [editingOpinionId, setEditingOpinionId] = useState(null)
+  const [editingOpinionDraft, setEditingOpinionDraft] = useState(null)
+  const [opinionActionLoading, setOpinionActionLoading] = useState(false)
   const [expandedOpinions, setExpandedOpinions] = useState(new Set())
   const [opinionComments, setOpinionComments] = useState({})
   const [commentTexts, setCommentTexts] = useState({})
@@ -75,6 +78,7 @@ export default function CarDetailPage() {
   const [adminMessage, setAdminMessage] = useState('')
   const [adminError, setAdminError] = useState('')
   const isAdmin = isAdminUser()
+  const isLoggedIn = isAuthenticatedUser()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -205,7 +209,7 @@ export default function CarDetailPage() {
 
   const handleAdminOpinionCreate = async (e) => {
     e.preventDefault()
-    if (!isAdmin || !car) return
+    if (!isLoggedIn || !car) return
 
     const trimmedTitle = String(adminOpinionTitle || '').trim()
     const trimmedContent = String(adminOpinionContent || '').trim()
@@ -244,6 +248,72 @@ export default function CarDetailPage() {
       setAdminOpinionError(t.pages.opinionCreateError)
     } finally {
       setAdminOpinionSaving(false)
+    }
+  }
+
+  const handleStartOpinionEdit = (opinion) => {
+    setEditingOpinionId(opinion.id)
+    setEditingOpinionDraft({
+      title: opinion.title || '',
+      content: opinion.content || '',
+      rating: String(opinion.rating || 5),
+    })
+    setAdminOpinionMessage('')
+    setAdminOpinionError('')
+  }
+
+  const handleSaveOpinionEdit = async (opinionId) => {
+    if (!editingOpinionDraft || !car) return
+    const trimmedTitle = String(editingOpinionDraft.title || '').trim()
+    const trimmedContent = String(editingOpinionDraft.content || '').trim()
+    const ratingValue = Number.parseInt(String(editingOpinionDraft.rating || '').trim(), 10)
+
+    if (!trimmedTitle || !trimmedContent || Number.isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+      setAdminOpinionError(t.pages.opinionCreateValidation)
+      return
+    }
+
+    try {
+      setOpinionActionLoading(true)
+      setAdminOpinionMessage('')
+      setAdminOpinionError('')
+      await api.patch(`/opinions/${opinionId}/`, {
+        car_model: car.id,
+        title: trimmedTitle,
+        content: trimmedContent,
+        rating: ratingValue,
+      })
+
+      const opinionsResponse = await api.get(`/opinions/?car_model=${id}&ordering=-created_at`)
+      setOpinions(opinionsResponse.data.results || opinionsResponse.data)
+      setEditingOpinionId(null)
+      setEditingOpinionDraft(null)
+      setAdminOpinionMessage(t.pages.opinionUpdated)
+    } catch {
+      setAdminOpinionError(t.pages.opinionUpdateError)
+    } finally {
+      setOpinionActionLoading(false)
+    }
+  }
+
+  const handleDeleteOpinion = async (opinionId) => {
+    if (!window.confirm(t.pages.opinionDeleteConfirm)) return
+    try {
+      setOpinionActionLoading(true)
+      setAdminOpinionMessage('')
+      setAdminOpinionError('')
+      await api.delete(`/opinions/${opinionId}/`)
+      const opinionsResponse = await api.get(`/opinions/?car_model=${id}&ordering=-created_at`)
+      setOpinions(opinionsResponse.data.results || opinionsResponse.data)
+      if (editingOpinionId === opinionId) {
+        setEditingOpinionId(null)
+        setEditingOpinionDraft(null)
+      }
+      setAdminOpinionMessage(t.pages.opinionDeleted)
+    } catch {
+      setAdminOpinionError(t.pages.opinionDeleteError)
+    } finally {
+      setOpinionActionLoading(false)
     }
   }
 
@@ -417,7 +487,7 @@ export default function CarDetailPage() {
       <section className="detail-opinions">
         <h2 className="detail-section-title">{t.pages.carOpinions}</h2>
 
-        {isAdmin && (
+        {isLoggedIn && (
           <form className="admin-form-card" onSubmit={handleAdminOpinionCreate}>
             <h3 className="detail-section-title">{t.pages.addOpinionTitle}</h3>
 
@@ -461,26 +531,78 @@ export default function CarDetailPage() {
           </form>
         )}
 
+        {!isLoggedIn && <p className="admin-subtitle">{t.pages.loginToContribute}</p>}
+
         {opinions.length === 0 ? (
           <div className="page-card">{t.pages.noOpinions}</div>
         ) : (
           <div className="opinions-grid">
             {opinions.map((opinion) => (
               <article key={opinion.id} className="opinion-card-item">
-                <h3 className="opinion-title">{opinion.title}</h3>
-                <p className="opinion-meta">{opinion.author?.username || 'user'}</p>
-                <p className="opinion-text">{opinion.content}</p>
-                <div className="opinion-rating-row">
-                  <span className="rating">★ {opinion.rating}</span>
-                  <span className="opinion-counts">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
-                  <button
-                    type="button"
-                    className="btn-comment-toggle"
-                    onClick={() => handleToggleComments(opinion.id)}
-                  >
-                    {expandedOpinions.has(opinion.id) ? '−' : '+'} {opinion.comments_count || 0} {t.pages.showComments}
-                  </button>
-                </div>
+                {editingOpinionId === opinion.id && editingOpinionDraft ? (
+                  <div className="admin-form-card" style={{ marginBottom: '0.5rem' }}>
+                    <label className="form-label">{t.pages.opinionTitle}</label>
+                    <input
+                      className="form-input"
+                      value={editingOpinionDraft.title}
+                      onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, title: e.target.value }))}
+                    />
+                    <label className="form-label">{t.adminPanel.description}</label>
+                    <textarea
+                      className="form-input form-textarea"
+                      rows={4}
+                      value={editingOpinionDraft.content}
+                      onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, content: e.target.value }))}
+                    />
+                    <label className="form-label">{t.pages.averageRating}</label>
+                    <select
+                      className="form-input"
+                      value={editingOpinionDraft.rating}
+                      onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating: e.target.value }))}
+                    >
+                      <option value={5}>5</option>
+                      <option value={4}>4</option>
+                      <option value={3}>3</option>
+                      <option value={2}>2</option>
+                      <option value={1}>1</option>
+                    </select>
+                    <div className="admin-actions-row">
+                      <button type="button" className="btn btn-secondary" onClick={() => { setEditingOpinionId(null); setEditingOpinionDraft(null) }}>
+                        {t.pages.cancelLabel}
+                      </button>
+                      <button type="button" className="btn btn-primary" disabled={opinionActionLoading} onClick={() => handleSaveOpinionEdit(opinion.id)}>
+                        {opinionActionLoading ? t.pages.loading : t.pages.saveLabel}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="opinion-title">{opinion.title}</h3>
+                    <p className="opinion-meta">{opinion.author?.username || 'user'}</p>
+                    <p className="opinion-text">{opinion.content}</p>
+                    <div className="opinion-rating-row">
+                      <span className="rating">★ {opinion.rating}</span>
+                      <span className="opinion-counts">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
+                      <button
+                        type="button"
+                        className="btn-comment-toggle"
+                        onClick={() => handleToggleComments(opinion.id)}
+                      >
+                        {expandedOpinions.has(opinion.id) ? '−' : '+'} {opinion.comments_count || 0} {t.pages.showComments}
+                      </button>
+                    </div>
+                  </>
+                )}
+                {canEditByAuthorId(opinion.author?.id) && editingOpinionId !== opinion.id && (
+                  <div className="admin-actions-row" style={{ marginTop: '0.4rem' }}>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleStartOpinionEdit(opinion)}>
+                      {t.pages.editLabel}
+                    </button>
+                    <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteOpinion(opinion.id)}>
+                      {t.pages.deleteLabel}
+                    </button>
+                  </div>
+                )}
                 {expandedOpinions.has(opinion.id) && (
                   <div className="opinion-comments">
                     {(opinionComments[opinion.id] || []).length === 0 ? (
@@ -494,25 +616,31 @@ export default function CarDetailPage() {
                       ))
                     )}
                     <div className="comment-add-row">
-                      <input
-                        className="form-input comment-input"
-                        placeholder={t.pages.commentPlaceholder}
-                        value={commentTexts[opinion.id] || ''}
-                        onChange={(e) =>
-                          setCommentTexts((prev) => ({ ...prev, [opinion.id]: e.target.value }))
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleAddComment(opinion.id)
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        disabled={commentSaving[opinion.id]}
-                        onClick={() => handleAddComment(opinion.id)}
-                      >
-                        {t.pages.commentSubmit}
-                      </button>
+                      {isLoggedIn ? (
+                        <>
+                          <input
+                            className="form-input comment-input"
+                            placeholder={t.pages.commentPlaceholder}
+                            value={commentTexts[opinion.id] || ''}
+                            onChange={(e) =>
+                              setCommentTexts((prev) => ({ ...prev, [opinion.id]: e.target.value }))
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleAddComment(opinion.id)
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            disabled={commentSaving[opinion.id]}
+                            onClick={() => handleAddComment(opinion.id)}
+                          >
+                            {t.pages.commentSubmit}
+                          </button>
+                        </>
+                      ) : (
+                        <p className="admin-meta">{t.pages.loginToContribute}</p>
+                      )}
                     </div>
                   </div>
                 )}

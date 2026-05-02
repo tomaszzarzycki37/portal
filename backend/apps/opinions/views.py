@@ -4,7 +4,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
-from apps.common.helpers import IsOwnerOrAdminOrReadOnly, IsAdminOrReadOnly
+from django.db.models import Q
+from apps.common.helpers import IsOwnerOrAdminOrReadOnly
 from .models import Opinion, Comment, Vote, PressReview
 from .serializers import (
     OpinionListSerializer, OpinionDetailSerializer, OpinionCreateUpdateSerializer,
@@ -114,17 +115,28 @@ class CommentViewSet(viewsets.ModelViewSet):
 class PressReviewViewSet(viewsets.ModelViewSet):
     """Press/editorial review articles API endpoint."""
     queryset = PressReview.objects.select_related('car_model', 'car_model__brand')
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['car_model', 'is_featured', 'is_pinned', 'category']
     search_fields = ['title', 'summary', 'content', 'publication_name', 'author_name', 'tags', 'slug', 'car_model__name']
     ordering_fields = ['is_pinned', 'published_at', 'created_at', 'reading_time_minutes']
     ordering = ['-is_pinned', '-published_at', '-created_at']
 
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            permission_classes = [IsOwnerOrAdminOrReadOnly]
+        elif self.action in ['create']:
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticatedOrReadOnly]
+        return [permission() for permission in permission_classes]
+
     def get_queryset(self):
-        queryset = PressReview.objects.select_related('car_model', 'car_model__brand')
+        queryset = PressReview.objects.select_related('car_model', 'car_model__brand', 'author')
         if self.request.user and self.request.user.is_authenticated and self.request.user.is_staff:
             return queryset
+        if self.request.user and self.request.user.is_authenticated:
+            return queryset.filter(Q(is_published=True) | Q(author=self.request.user))
         return queryset.filter(is_published=True)
 
     def get_serializer_class(self):
@@ -146,3 +158,6 @@ class PressReviewViewSet(viewsets.ModelViewSet):
         featured_qs = self.get_queryset().filter(is_featured=True).order_by('-is_pinned', '-published_at', '-created_at')
         serializer = PressReviewListSerializer(featured_qs[:parsed_limit], many=True, context={'request': request})
         return Response(serializer.data)
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)

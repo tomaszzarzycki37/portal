@@ -80,6 +80,7 @@ class PressReview(models.Model):
     ]
 
     car_model = models.ForeignKey(CarModel, on_delete=models.CASCADE, related_name='press_reviews')
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='press_reviews_authored')
     title = models.CharField(max_length=220)
     slug = models.SlugField(max_length=240, blank=True, db_index=True)
     summary = models.TextField(blank=True)

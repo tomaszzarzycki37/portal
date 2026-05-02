@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
+import { canEditByAuthorId } from '../utils/auth'
 
 export default function OpinionsPage() {
   const { t, lang } = useTranslation()
@@ -12,6 +13,11 @@ export default function OpinionsPage() {
   const [loading, setLoading] = useState(true)
   const [expandedBrands, setExpandedBrands] = useState(new Set())
   const [expandedModels, setExpandedModels] = useState(new Set())
+  const [editingOpinionId, setEditingOpinionId] = useState(null)
+  const [editingOpinionDraft, setEditingOpinionDraft] = useState(null)
+  const [opinionActionSaving, setOpinionActionSaving] = useState(false)
+  const [opinionMessage, setOpinionMessage] = useState('')
+  const [opinionError, setOpinionError] = useState('')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -144,10 +150,79 @@ export default function OpinionsPage() {
     })
   }
 
+  const reloadOpinions = async () => {
+    const opinionsResponse = await api.get('/opinions/?page_size=200&ordering=-created_at')
+    const opinionsList = opinionsResponse.data.results || opinionsResponse.data || []
+    setOpinions(opinionsList)
+  }
+
+  const handleStartEditOpinion = (opinion) => {
+    setEditingOpinionId(opinion.id)
+    setEditingOpinionDraft({
+      title: opinion.title || '',
+      content: opinion.content || '',
+      rating: String(opinion.rating || 5),
+      car_model: String(opinion.car_id || ''),
+    })
+    setOpinionMessage('')
+    setOpinionError('')
+  }
+
+  const handleSaveOpinion = async (opinionId) => {
+    if (!editingOpinionDraft) return
+    const ratingValue = Number.parseInt(String(editingOpinionDraft.rating || '').trim(), 10)
+    if (!editingOpinionDraft.title.trim() || !editingOpinionDraft.content.trim() || !editingOpinionDraft.car_model || Number.isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+      setOpinionError(t.pages.opinionCreateValidation)
+      return
+    }
+
+    try {
+      setOpinionActionSaving(true)
+      setOpinionError('')
+      setOpinionMessage('')
+      await api.patch(`/opinions/${opinionId}/`, {
+        car_model: Number.parseInt(editingOpinionDraft.car_model, 10),
+        title: editingOpinionDraft.title.trim(),
+        content: editingOpinionDraft.content.trim(),
+        rating: ratingValue,
+      })
+      await reloadOpinions()
+      setEditingOpinionId(null)
+      setEditingOpinionDraft(null)
+      setOpinionMessage(t.pages.opinionUpdated)
+    } catch {
+      setOpinionError(t.pages.opinionUpdateError)
+    } finally {
+      setOpinionActionSaving(false)
+    }
+  }
+
+  const handleDeleteOpinion = async (opinionId) => {
+    if (!window.confirm(t.pages.opinionDeleteConfirm)) return
+    try {
+      setOpinionActionSaving(true)
+      setOpinionError('')
+      setOpinionMessage('')
+      await api.delete(`/opinions/${opinionId}/`)
+      await reloadOpinions()
+      if (editingOpinionId === opinionId) {
+        setEditingOpinionId(null)
+        setEditingOpinionDraft(null)
+      }
+      setOpinionMessage(t.pages.opinionDeleted)
+    } catch {
+      setOpinionError(t.pages.opinionDeleteError)
+    } finally {
+      setOpinionActionSaving(false)
+    }
+  }
+
   return (
     <div className="opinions-page-wrap">
       <h1 className="page-title">{t.nav.opinions}</h1>
       <p className="admin-subtitle">{t.pages.opinionsCatalogIntro}</p>
+      {opinionMessage && <p className="form-success">{opinionMessage}</p>}
+      {opinionError && <p className="form-error">{opinionError}</p>}
 
       {loading ? (
         <div className="page-loading">{t.pages.loading}</div>
@@ -207,23 +282,73 @@ export default function OpinionsPage() {
                               <div className="opinions-list">
                                 {modelGroup.opinions.map((opinion) => (
                                   <article key={opinion.id} className="opinion-list-item">
-                                    <div className="opinion-list-header">
-                                      <h4 className="opinion-title">{opinion.title}</h4>
-                                      <span className="opinion-rating">★ {opinion.rating}/5</span>
-                                    </div>
-                                    <div className="opinion-list-meta">
-                                      <span className="opinion-author">{opinion.author?.username || t.pages.unknownAuthor}</span>
-                                      <span className="opinion-date">{formatDate(opinion.created_at)}</span>
-                                    </div>
-                                    <p className="opinion-content">{opinion.content}</p>
-                                    <div className="opinion-list-footer">
-                                      <span className="opinion-votes">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
-                                      {opinion.car_id && (
-                                        <Link to={`/cars/${opinion.car_id}`} className="opinion-view-car">
-                                          {t.pages.viewCar}
-                                        </Link>
-                                      )}
-                                    </div>
+                                    {editingOpinionId === opinion.id && editingOpinionDraft ? (
+                                      <div className="admin-form-card" style={{ marginBottom: '0.5rem' }}>
+                                        <label className="form-label">{t.pages.opinionTitle}</label>
+                                        <input
+                                          className="form-input"
+                                          value={editingOpinionDraft.title}
+                                          onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, title: e.target.value }))}
+                                        />
+                                        <label className="form-label">{t.adminPanel.description}</label>
+                                        <textarea
+                                          className="form-input form-textarea"
+                                          rows={4}
+                                          value={editingOpinionDraft.content}
+                                          onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, content: e.target.value }))}
+                                        />
+                                        <label className="form-label">{t.pages.averageRating}</label>
+                                        <select
+                                          className="form-input"
+                                          value={editingOpinionDraft.rating}
+                                          onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating: e.target.value }))}
+                                        >
+                                          <option value={5}>5</option>
+                                          <option value={4}>4</option>
+                                          <option value={3}>3</option>
+                                          <option value={2}>2</option>
+                                          <option value={1}>1</option>
+                                        </select>
+                                        <div className="admin-actions-row">
+                                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setEditingOpinionId(null); setEditingOpinionDraft(null) }}>
+                                            {t.pages.cancelLabel}
+                                          </button>
+                                          <button type="button" className="btn btn-primary btn-sm" disabled={opinionActionSaving} onClick={() => handleSaveOpinion(opinion.id)}>
+                                            {opinionActionSaving ? t.pages.loading : t.pages.saveLabel}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <div className="opinion-list-header">
+                                          <h4 className="opinion-title">{opinion.title}</h4>
+                                          <span className="opinion-rating">★ {opinion.rating}/5</span>
+                                        </div>
+                                        <div className="opinion-list-meta">
+                                          <span className="opinion-author">{opinion.author?.username || t.pages.unknownAuthor}</span>
+                                          <span className="opinion-date">{formatDate(opinion.created_at)}</span>
+                                        </div>
+                                        <p className="opinion-content">{opinion.content}</p>
+                                        <div className="opinion-list-footer">
+                                          <span className="opinion-votes">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
+                                          {opinion.car_id && (
+                                            <Link to={`/cars/${opinion.car_id}`} className="opinion-view-car">
+                                              {t.pages.viewCar}
+                                            </Link>
+                                          )}
+                                        </div>
+                                      </>
+                                    )}
+                                    {canEditByAuthorId(opinion.author?.id) && editingOpinionId !== opinion.id && (
+                                      <div className="admin-actions-row" style={{ marginTop: '0.35rem' }}>
+                                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleStartEditOpinion(opinion)}>
+                                          {t.pages.editLabel}
+                                        </button>
+                                        <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteOpinion(opinion.id)}>
+                                          {t.pages.deleteLabel}
+                                        </button>
+                                      </div>
+                                    )}
                                   </article>
                                 ))}
                               </div>
