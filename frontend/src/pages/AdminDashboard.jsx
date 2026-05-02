@@ -234,6 +234,7 @@ export default function AdminDashboard() {
   const [newReviewTags, setNewReviewTags] = useState('')
   const [newReviewReadingTime, setNewReviewReadingTime] = useState('')
   const [newReviewInternalNotes, setNewReviewInternalNotes] = useState('')
+  const [newReviewVerdict, setNewReviewVerdict] = useState('')
   const [newReviewAuthor, setNewReviewAuthor] = useState('')
   const [newReviewPublishedAt, setNewReviewPublishedAt] = useState('')
   const [newReviewFeatured, setNewReviewFeatured] = useState(false)
@@ -249,6 +250,44 @@ export default function AdminDashboard() {
   const [reviewsMessage, setReviewsMessage] = useState('')
   const [editingReviewId, setEditingReviewId] = useState(null)
   const [reviewEditDraft, setReviewEditDraft] = useState(null)
+
+  const extractVerdictFromContent = (content) => {
+    const lines = (content || '').split('\n')
+    const verdictLines = []
+    let inVerdictSection = false
+    for (const line of lines) {
+      if (line.trim() === 'Verdict') {
+        inVerdictSection = true
+        continue
+      }
+      if (inVerdictSection && line.trim()) {
+        verdictLines.push(line.trim())
+      }
+    }
+    return verdictLines.join(' ')
+  }
+
+  const removeVerdictFromContent = (content) => {
+    const lines = (content || '').split('\n')
+    const result = []
+    let skipVerdictSection = false
+    for (const line of lines) {
+      if (line.trim() === 'Verdict') {
+        skipVerdictSection = true
+        continue
+      }
+      if (!skipVerdictSection) {
+        result.push(line)
+      }
+    }
+    return result.join('\n').trim()
+  }
+
+  const appendVerdictToContent = (content, verdict) => {
+    if (!verdict || !verdict.trim()) return content
+    const cleanContent = removeVerdictFromContent(content)
+    return `${cleanContent}\n\nVerdict\n${verdict.trim()}`
+  }
 
   const toSlug = (value) => String(value || '')
     .toLowerCase()
@@ -689,12 +728,13 @@ export default function AdminDashboard() {
 
     try {
       setCreatingReview(true)
+      const contentWithVerdict = appendVerdictToContent(normalizedContent, newReviewVerdict)
       await api.post('/reviews/', {
         car_model: parsedCarId,
         title: newReviewTitle.trim(),
         slug: newReviewSlug.trim(),
         summary: newReviewSummary.trim(),
-        content: normalizedContent,
+        content: contentWithVerdict,
         category: newReviewCategory,
         tags: newReviewTags.trim(),
         reading_time_minutes: Number.isNaN(parsedReadingTime) ? estimateReadingTimeMinutes(`${newReviewSummary} ${normalizedContent}`) : parsedReadingTime,
@@ -716,6 +756,7 @@ export default function AdminDashboard() {
       setNewReviewTags('')
       setNewReviewReadingTime('')
       setNewReviewInternalNotes('')
+      setNewReviewVerdict('')
       setNewReviewAuthor('')
       setNewReviewPublishedAt('')
       setNewReviewFeatured(false)
@@ -737,13 +778,16 @@ export default function AdminDashboard() {
       const response = await api.get(`/reviews/${reviewId}/`)
       const detail = response.data
       const publishedDate = String(detail.published_at || '').slice(0, 10)
+      const contentWithoutVerdict = removeVerdictFromContent(detail.content)
+      const extractedVerdict = extractVerdictFromContent(detail.content)
       setEditingReviewId(reviewId)
       setReviewEditDraft({
         car_model: String(detail.car_id || ''),
         title: detail.title || '',
         slug: detail.slug || '',
         summary: detail.summary || '',
-        content: detail.content || '',
+        content: contentWithoutVerdict,
+        verdict: extractedVerdict,
         category: detail.category || 'test',
         tags: detail.tags || '',
         reading_time_minutes: String(detail.reading_time_minutes ?? ''),
@@ -782,12 +826,13 @@ export default function AdminDashboard() {
     setReviewsMessage('')
     setReviewsError('')
     try {
+      const contentWithVerdict = appendVerdictToContent(String(reviewEditDraft.content || '').trim(), reviewEditDraft.verdict)
       await api.patch(`/reviews/${reviewId}/`, {
         car_model: Number.parseInt(reviewEditDraft.car_model, 10),
         title: reviewEditDraft.title.trim(),
         slug: reviewEditDraft.slug.trim(),
         summary: reviewEditDraft.summary.trim(),
-        content: String(reviewEditDraft.content || '').trim(),
+        content: contentWithVerdict,
         category: reviewEditDraft.category,
         tags: reviewEditDraft.tags.trim(),
         reading_time_minutes: Number.isNaN(parsedReadingTime)
@@ -1906,6 +1951,17 @@ export default function AdminDashboard() {
                             onChange={(nextValue) => setReviewEditDraft((prev) => ({ ...prev, internal_notes: nextValue }))}
                           />
                         </div>
+
+                        <div className="admin-form-grid-full">
+                          <RichTextEditor
+                            id={`edit-review-verdict-${review.id}`}
+                            label={t.adminPanel.reviewVerdict}
+                            rows={4}
+                            value={reviewEditDraft.verdict}
+                            onChange={(nextValue) => setReviewEditDraft((prev) => ({ ...prev, verdict: nextValue }))}
+                            compact
+                          />
+                        </div>
                       </div>
 
                       <div className="admin-actions-row admin-auto-tools-row" style={{ justifyContent: 'flex-start' }}>
@@ -2124,6 +2180,17 @@ export default function AdminDashboard() {
                     rows={4}
                     value={newReviewInternalNotes}
                     onChange={setNewReviewInternalNotes}
+                  />
+                </div>
+
+                <div className="admin-form-grid-full">
+                  <RichTextEditor
+                    id="new-review-verdict"
+                    label={t.adminPanel.reviewVerdict}
+                    rows={4}
+                    value={newReviewVerdict}
+                    onChange={setNewReviewVerdict}
+                    compact
                   />
                 </div>
               </div>
