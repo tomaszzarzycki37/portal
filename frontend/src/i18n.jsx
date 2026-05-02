@@ -841,7 +841,7 @@ const baseTranslations = {
       reviewDeleteConfirm: 'Usunąć tę recenzję prasową?',
       usersModerationTitle: 'Nadzór użytkowników',
       mainSectionBadge: 'Główne',
-      siteSectionBadge: 'Site',
+      siteSectionBadge: 'STRONA',
       usersModerationSubtitle: 'Przeglądaj konta, role i statusy użytkowników.',
       usersSearchPlaceholder: 'Szukaj po loginie, e-mailu lub imieniu i nazwisku...',
       usersRoleFilterLabel: 'Filtr roli',
