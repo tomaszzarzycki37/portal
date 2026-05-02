@@ -1832,7 +1832,7 @@ export default function AdminDashboard() {
                         </div>
 
                         <div>
-                          <label className="form-label" htmlFor={`edit-review-slug-${review.id}`}>Slug</label>
+                          <label className="form-label" htmlFor={`edit-review-slug-${review.id}`}>{t.adminPanel.reviewSlug}</label>
                           <input
                             id={`edit-review-slug-${review.id}`}
                             className="form-input"
@@ -1842,7 +1842,7 @@ export default function AdminDashboard() {
                         </div>
 
                         <div>
-                          <label className="form-label" htmlFor={`edit-review-category-${review.id}`}>Category</label>
+                          <label className="form-label" htmlFor={`edit-review-category-${review.id}`}>{t.adminPanel.reviewCategory}</label>
                           <select
                             id={`edit-review-category-${review.id}`}
                             className="form-input"
@@ -1857,7 +1857,7 @@ export default function AdminDashboard() {
                         </div>
 
                         <div>
-                          <label className="form-label" htmlFor={`edit-review-reading-time-${review.id}`}>Reading time (min)</label>
+                          <label className="form-label" htmlFor={`edit-review-reading-time-${review.id}`}>{t.adminPanel.reviewReadingTime}</label>
                           <input
                             id={`edit-review-reading-time-${review.id}`}
                             type="number"
@@ -1869,7 +1869,7 @@ export default function AdminDashboard() {
                         </div>
 
                         <div className="admin-form-grid-full">
-                          <label className="form-label" htmlFor={`edit-review-tags-${review.id}`}>Tags (comma separated)</label>
+                          <label className="form-label" htmlFor={`edit-review-tags-${review.id}`}>{t.adminPanel.reviewTags}</label>
                           <input
                             id={`edit-review-tags-${review.id}`}
                             className="form-input"
@@ -2050,7 +2050,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="form-label" htmlFor="new-review-slug">Slug</label>
+                  <label className="form-label" htmlFor="new-review-slug">{t.adminPanel.reviewSlug}</label>
                   <input
                     id="new-review-slug"
                     className="form-input"
@@ -2061,7 +2061,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="form-label" htmlFor="new-review-category">Category</label>
+                  <label className="form-label" htmlFor="new-review-category">{t.adminPanel.reviewCategory}</label>
                   <select
                     id="new-review-category"
                     className="form-input"
@@ -2076,7 +2076,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="form-label" htmlFor="new-review-reading-time">Reading time (min)</label>
+                  <label className="form-label" htmlFor="new-review-reading-time">{t.adminPanel.reviewReadingTime}</label>
                   <input
                     id="new-review-reading-time"
                     type="number"
@@ -2088,7 +2088,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="admin-form-grid-full">
-                  <label className="form-label" htmlFor="new-review-tags">Tags (comma separated)</label>
+                  <label className="form-label" htmlFor="new-review-tags">{t.adminPanel.reviewTags}</label>
                   <input
                     id="new-review-tags"
                     className="form-input"
