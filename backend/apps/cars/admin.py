@@ -6,19 +6,29 @@ from .models import Brand, CarModel, CarImage
 
 @admin.register(Brand)
 class BrandAdmin(admin.ModelAdmin):
-    list_display = ['name', 'has_en_description', 'founded_year', 'is_active', 'created_at']
+    list_display = ['name', 'has_logo', 'has_en_description', 'founded_year', 'is_active', 'created_at']
     list_filter = ['is_active', 'country', 'created_at']
     search_fields = ['name', 'description', 'description_en', 'description_pl']
     prepopulated_fields = {'slug': ('name',)}
     fieldsets = (
-        ('Basic Information', {'fields': ('name', 'slug', 'logo')}),
+        ('Basic Information', {
+            'fields': ('name', 'slug', 'logo'),
+            'description': 'Brand name must be unique. Logo should be PNG/JPG image (recommended: 200x200px). If no logo is uploaded, a placeholder will be generated automatically.'
+        }),
         ('Descriptions', {
             'fields': ('description', 'description_en', 'description_pl'),
-            'description': '⚠️ IMPORTANT: Always fill description_en (English). description_pl is optional but recommended.'
+            'description': '⚠️ REQUIRED: Always fill description_en (English). This prevents language field mismatches. description_pl (Polish) is optional but recommended for international support.'
         }),
         ('Details', {'fields': ('founded_year', 'country', 'website')}),
         ('Status', {'fields': ('is_active',)}),
     )
+    
+    def has_logo(self, obj):
+        """Show check mark if logo exists"""
+        if obj.logo:
+            return '✅ Has Logo'
+        return '⚠️  No Logo'
+    has_logo.short_description = 'Logo'
     
     def has_en_description(self, obj):
         """Show check mark if English description exists"""
