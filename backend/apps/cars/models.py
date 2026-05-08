@@ -1,6 +1,7 @@
 """Models for cars app"""
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 
 class Brand(models.Model):
@@ -8,8 +9,8 @@ class Brand(models.Model):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
-    description_en = models.TextField(blank=True)
-    description_pl = models.TextField(blank=True)
+    description_en = models.TextField(blank=True, help_text="English description (required)")
+    description_pl = models.TextField(blank=True, help_text="Polish description (optional but recommended)")
     logo = models.ImageField(upload_to='brands/', blank=True, null=True)
     founded_year = models.IntegerField(null=True, blank=True)
     country = models.CharField(max_length=100, default='China')
@@ -24,6 +25,19 @@ class Brand(models.Model):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        """Validate that English description is populated"""
+        errors = {}
+        
+        if not self.description_en or self.description_en.strip() == '':
+            errors['description_en'] = (
+                'English description is required. This prevents language field mismatches '
+                'where Polish text might appear in the English view.'
+            )
+        
+        if errors:
+            raise ValidationError(errors)
 
 
 class CarModel(models.Model):

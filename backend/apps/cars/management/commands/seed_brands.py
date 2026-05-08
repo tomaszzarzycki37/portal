@@ -643,6 +643,12 @@ class Command(BaseCommand):
         for brand_data in BRANDS:
             models_data = brand_data.pop("models")
             color = brand_data.pop("color")
+            
+            # Ensure description_en is populated (prevent language field mismatches)
+            if 'description_en' not in brand_data or not brand_data['description_en']:
+                brand_data['description_en'] = brand_data.get('description', '')
+            if 'description_pl' not in brand_data or not brand_data['description_pl']:
+                brand_data['description_pl'] = brand_data.get('description', '')
 
             brand, brand_created = Brand.objects.get_or_create(
                 slug=brand_data["slug"],

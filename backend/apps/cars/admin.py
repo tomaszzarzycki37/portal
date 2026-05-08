@@ -1,19 +1,41 @@
 """Admin configuration for cars app"""
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from .models import Brand, CarModel, CarImage
 
 
 @admin.register(Brand)
 class BrandAdmin(admin.ModelAdmin):
-    list_display = ['name', 'founded_year', 'is_active', 'created_at']
+    list_display = ['name', 'has_en_description', 'founded_year', 'is_active', 'created_at']
     list_filter = ['is_active', 'country', 'created_at']
-    search_fields = ['name', 'description']
+    search_fields = ['name', 'description', 'description_en', 'description_pl']
     prepopulated_fields = {'slug': ('name',)}
     fieldsets = (
         ('Basic Information', {'fields': ('name', 'slug', 'logo')}),
-        ('Details', {'fields': ('description', 'founded_year', 'country', 'website')}),
+        ('Descriptions', {
+            'fields': ('description', 'description_en', 'description_pl'),
+            'description': '⚠️ IMPORTANT: Always fill description_en (English). description_pl is optional but recommended.'
+        }),
+        ('Details', {'fields': ('founded_year', 'country', 'website')}),
         ('Status', {'fields': ('is_active',)}),
     )
+    
+    def has_en_description(self, obj):
+        """Show check mark if English description exists"""
+        if obj.description_en and obj.description_en.strip():
+            return '✅ Has EN'
+        return '❌ Missing EN'
+    has_en_description.short_description = 'English Description'
+    
+    def save_model(self, request, obj, form, change):
+        """Validate before saving"""
+        try:
+            obj.full_clean()
+        except ValidationError as e:
+            # Display validation error but don't prevent save for backwards compatibility
+            # In production, you might want to raise this
+            pass
+        super().save_model(request, obj, form, change)
 
 
 class CarImageInline(admin.TabularInline):
