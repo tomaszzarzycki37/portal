@@ -4,6 +4,7 @@ import api from '../services/api'
 import { useTranslation } from '../i18n'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { getCarImage } from '../utils/carImages'
+import { isAdminUser } from '../utils/auth'
 
 function detectDriveType(engineType) {
   const text = String(engineType || '').toLowerCase()
@@ -35,6 +36,7 @@ export default function CarsListPage() {
   const [productionStatusFilter, setProductionStatusFilter] = useState('all')
   const [driveTypeFilter, setDriveTypeFilter] = useState('all')
   const { t, lang } = useTranslation()
+  const isAdmin = isAdminUser()
 
   useEffect(() => {
     fetchCatalog()
@@ -283,7 +285,23 @@ export default function CarsListPage() {
 
                 <div style={{ marginTop: '0.5rem', display: 'grid', gap: '0.5rem', padding: '0 0.75rem 0.75rem' }}>
                   {brandCars.length === 0 ? (
-                    <div className="page-card">{hasActiveFilters ? t.pages.noModelsFound : t.pages.noModelsInBrand}</div>
+                    <div className="page-card">
+                      <div className="brand-empty-models-content">
+                        <p>{hasActiveFilters ? t.pages.noModelsFound : t.pages.noModelsInBrand}</p>
+                        {isAdmin && !hasActiveFilters && (
+                          <Link
+                            to={`/admin?section=create-model&brandId=${brand.id}`}
+                            className="admin-inline-toggle admin-inline-gear"
+                            title={t.adminPanel.createModel}
+                            aria-label={t.adminPanel.createModel}
+                          >
+                            <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+                              <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
+                            </svg>
+                          </Link>
+                        )}
+                      </div>
+                    </div>
                   ) : (
                     brandCars.map((family) => {
                       const primaryVariant = family.variants[0]
