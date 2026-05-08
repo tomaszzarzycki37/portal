@@ -49,7 +49,8 @@ body.app-theme-dark .auth-card,
 body.app-theme-dark .admin-form-card,
 body.app-theme-dark .admin-stat-card,
 body.app-theme-dark .admin-review-card,
-body.app-theme-dark .brand-catalog-card {
+body.app-theme-dark .brand-catalog-card,
+body.app-theme-dark .brand-empty-models-card {
   background: #22262d;
   border-color: #3b414b;
   box-shadow: 0 12px 24px rgba(3, 6, 12, 0.35);
@@ -110,6 +111,7 @@ body.app-theme-dark .detail-extra-title {
 
 body.app-theme-dark .brand-catalog-description,
 body.app-theme-dark .brand-catalog-empty,
+body.app-theme-dark .brand-empty-models-content p,
 body.app-theme-dark .car-meta,
 body.app-theme-dark .car-type,
 body.app-theme-dark .car-count,
@@ -1707,6 +1709,43 @@ a {
   color: #475569;
   line-height: 1.6;
   max-width: 70ch;
+}
+
+.brand-empty-models-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  position: relative;
+}
+
+.brand-empty-models-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.brand-empty-models-content p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.brand-empty-models-content .admin-inline-gear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.brand-empty-models-content .admin-inline-gear:hover {
+  border-color: rgba(251, 191, 36, 0.85);
+  background: rgba(30, 41, 59, 0.96);
 }
 
 .breadcrumbs {
