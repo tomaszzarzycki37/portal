@@ -12,10 +12,18 @@ class Command(BaseCommand):
     help = "Fix Jetour brand English description (was in Polish)"
 
     def handle(self, *args, **options):
+        # Try to find Jetour by name first, then by slug
+        jetour = None
         try:
             jetour = Brand.objects.get(name="Jetour")
-            
-            # Update description_en to English
+        except Brand.DoesNotExist:
+            try:
+                jetour = Brand.objects.get(slug="jetour")
+            except Brand.DoesNotExist:
+                pass
+        
+        if jetour:
+            # Update existing brand
             jetour.description_en = (
                 "Jetour (捷途) is a sub-brand of Chery Automobile focused on affordable "
                 "family SUVs and crossovers. Launched in 2018, Jetour targets value-conscious "
@@ -23,7 +31,7 @@ class Command(BaseCommand):
                 "The brand has expanded rapidly across Chinese domestic and export markets."
             )
             
-            # Set description_pl to Polish if empty
+            # Set description_pl if empty
             if not jetour.description_pl:
                 jetour.description_pl = (
                     "Marka Jetour została wprowadzona na rynek 22 stycznia 2018 r."
@@ -32,12 +40,12 @@ class Command(BaseCommand):
             jetour.save()
             
             self.stdout.write(
-                self.style.SUCCESS(f"✓ Fixed Jetour brand descriptions:")
+                self.style.SUCCESS(f"✓ Updated Jetour brand descriptions:")
             )
             self.stdout.write(f"  EN: {jetour.description_en[:80]}...")
             self.stdout.write(f"  PL: {jetour.description_pl[:80]}...")
-            
-        except Brand.DoesNotExist:
+        else:
+            # Create new brand
             self.stdout.write(
                 self.style.WARNING("Jetour brand not found. Creating new brand...")
             )
