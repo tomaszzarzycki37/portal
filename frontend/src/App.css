@@ -279,6 +279,68 @@
 	color: #cbd5e1;
 }
 
+/* Custom file input wrapper */
+.custom-file-input-wrapper {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.custom-file-input {
+	display: none;
+}
+
+.custom-file-input-label {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	padding: 0.7rem 0.9rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 0.6rem;
+	font-size: 0.95rem;
+	color: #1e293b;
+	background: #ffffff;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	user-select: none;
+}
+
+.custom-file-input-label:hover {
+	border-color: #f59e0b;
+	background: #fffbf0;
+}
+
+.custom-file-input:focus + .custom-file-input-label {
+	outline: none;
+	border-color: #f59e0b;
+	box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+	background: #fffbf0;
+}
+
+.custom-file-input-label span {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Dark theme for custom file input */
+body.app-theme-dark .custom-file-input-label {
+	background: #1e293b;
+	border-color: #334155;
+	color: #e2e8f0;
+}
+
+body.app-theme-dark .custom-file-input-label:hover {
+	background: #293548;
+	border-color: #f59e0b;
+}
+
+body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
+	background: #293548;
+	border-color: #f59e0b;
+}
+
 .home-filter-section {
 	margin-bottom: 1rem;
 }

@@ -457,13 +457,18 @@ export default function BrandDetailPage() {
 
               <div>
                 <label className="form-label" htmlFor="brand-logo-file">{t.pages.brandLogoUpload}</label>
-                <input
-                  id="brand-logo-file"
-                  type="file"
-                  accept="image/*"
-                  className="form-input"
-                  onChange={handleBrandLogoFileChange}
-                />
+                <div className="custom-file-input-wrapper">
+                  <input
+                    id="brand-logo-file"
+                    type="file"
+                    accept="image/*"
+                    className="custom-file-input"
+                    onChange={handleBrandLogoFileChange}
+                  />
+                  <label htmlFor="brand-logo-file" className="custom-file-input-label">
+                    <span>{brandLogoFile?.name || t.pages.chooseFile}</span>
+                  </label>
+                </div>
               </div>
 
               <div>
