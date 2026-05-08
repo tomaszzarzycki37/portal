@@ -958,6 +958,21 @@ export default function AdminDashboard() {
   }, [searchParams, setSearchParams])
 
   useEffect(() => {
+    const sectionParam = searchParams.get('section')
+    if (sectionParam !== 'create-model') return
+
+    setIsCreateModelSectionOpen(true)
+
+    const brandIdParam = searchParams.get('brandId')
+    if (!brandIdParam) return
+
+    const hasMatchingBrand = brands.some((brandOption) => String(brandOption.id) === brandIdParam)
+    if (hasMatchingBrand || brands.length === 0) {
+      setNewModelBrandId(brandIdParam)
+    }
+  }, [searchParams, brands])
+
+  useEffect(() => {
     if (!isUserModerationSectionOpen) return
     if (usersList.length > 0) return
     loadUsers()

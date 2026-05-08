@@ -508,7 +508,14 @@ export default function BrandDetailPage() {
       <section>
         <div className="brand-detail-top">
           <h2 className="page-title brand-section-title">{t.pages.brandLineup}</h2>
-          {isAdmin && <p className="admin-meta">{t.adminPanel.ownerLabel}: admin</p>}
+          {isAdmin && (
+            <div className="brand-detail-actions">
+              <Link to={`/admin?section=create-model&brandId=${brand.id}`} className="catalog-action-btn">
+                {t.adminPanel.createModel}
+              </Link>
+              <p className="admin-meta">{t.adminPanel.ownerLabel}: admin</p>
+            </div>
+          )}
         </div>
 
         {cars.length === 0 ? (

@@ -1615,6 +1615,13 @@ a {
   align-items: center;
 }
 
+.brand-detail-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
 .brand-catalog-actions {
   flex-shrink: 0;
   align-self: center;
