@@ -1199,6 +1199,7 @@ body.app-theme-dark .home-hero-search-card,
 body.app-theme-dark .home-featured-review-card,
 body.app-theme-dark .review-card-rich,
 body.app-theme-dark .opinion-list-item,
+body.app-theme-dark .opinion-card-item,
 body.app-theme-dark .opinions-filters,
 body.app-theme-dark .car-card {
 	background: #22262d;
@@ -1217,6 +1218,7 @@ body.app-theme-dark .opinion-title {
 body.app-theme-dark .hero-text,
 body.app-theme-dark .home-featured-review-card p,
 body.app-theme-dark .review-card-summary,
+body.app-theme-dark .opinion-text,
 body.app-theme-dark .opinion-list-meta {
 	color: #cbd5e1;
 }
