@@ -508,13 +508,8 @@ export default function BrandDetailPage() {
       <section>
         <div className="brand-detail-top">
           <h2 className="page-title brand-section-title">{t.pages.brandLineup}</h2>
-          {isAdmin && (
-            <div className="brand-detail-actions">
-              <Link to={`/admin?section=create-model&brandId=${brand.id}`} className="catalog-action-btn">
-                {t.adminPanel.createModel}
-              </Link>
-              <p className="admin-meta">{t.adminPanel.ownerLabel}: admin</p>
-            </div>
+          {isAdmin && cars.length === 0 && (
+            <p className="admin-meta">{t.adminPanel.ownerLabel}: admin</p>
           )}
         </div>
 
@@ -539,13 +534,20 @@ export default function BrandDetailPage() {
                   className="brand-lineup-group-header"
                   style={isDarkTheme ? { background: 'linear-gradient(180deg, #2a3039, #232933)', borderColor: '#3f4754' } : undefined}
                 >
-                  <h3 className="brand-lineup-group-title" style={isDarkTheme ? { color: '#f3f4f6' } : undefined}>{group.label}</h3>
-                  <span
-                    className="brand-lineup-group-count"
-                    style={isDarkTheme ? { background: '#2f353f', borderColor: '#4b5563', color: '#e5e7eb' } : undefined}
+                  <div className="brand-lineup-group-header-left">
+                    <h3 className="brand-lineup-group-title" style={isDarkTheme ? { color: '#f3f4f6' } : undefined}>{group.label}</h3>
+                    <span
+                      className="brand-lineup-group-count"
+                      style={isDarkTheme ? { background: '#2f353f', borderColor: '#4b5563', color: '#e5e7eb' } : undefined}
                   >
                     {group.cars.length} {formatModelLabel(group.cars.length, lang)}
-                  </span>
+                    </span>
+                  </div>
+                  {isAdmin && (
+                    <Link to={`/admin?section=create-model&brandId=${brand.id}`} className="brand-lineup-add-btn" title={t.adminPanel.createModel}>
+                      {t.pages.addNew || 'Add new'}
+                    </Link>
+                  )}
                 </div>
 
                 <div className="cars-grid">

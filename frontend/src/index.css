@@ -1487,6 +1487,46 @@ a {
   background: #f8fafc;
 }
 
+.brand-lineup-group-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.brand-lineup-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.brand-lineup-add-btn:hover {
+  border-color: #f59e0b;
+  background: #fffbf0;
+  color: #d97706;
+}
+
+body.app-theme-dark .brand-lineup-add-btn {
+  border-color: #4b5563;
+  background: #1f232a;
+  color: #e5e7eb;
+}
+
+body.app-theme-dark .brand-lineup-add-btn:hover {
+  border-color: #fbbf24;
+  background: #252a33;
+  color: #fbbf24;
+}
+
 .brand-catalog-list {
   margin-top: 1.35rem;
   display: grid;
