@@ -89,6 +89,11 @@ class Command(BaseCommand):
             color = colors[i % len(colors)]
             
             try:
+                # If logo field is set but file doesn't exist, clear it first
+                if brand.logo and not brand.logo.storage.exists(brand.logo.name):
+                    brand.logo.delete()
+                    brand.save(update_fields=['logo'])
+                
                 png_bytes = make_placeholder_png(brand.name, color)
                 filename = f"{brand.slug}_placeholder.png"
                 brand.logo.save(filename, ContentFile(png_bytes), save=True)
