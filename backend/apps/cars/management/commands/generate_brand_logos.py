@@ -96,6 +96,11 @@ class Command(BaseCommand):
                 
                 png_bytes = make_placeholder_png(brand.name, color)
                 filename = f"{brand.slug}_placeholder.png"
+                
+                # Delete existing file if it exists (before save)
+                if brand.logo.storage.exists(filename):
+                    brand.logo.storage.delete(filename)
+                
                 brand.logo.save(filename, ContentFile(png_bytes), save=True)
                 generated_count += 1
                 self.stdout.write(
