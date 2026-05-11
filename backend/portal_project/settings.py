@@ -147,6 +147,11 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
+# Session configuration (30 days timeout)
+SESSION_COOKIE_AGE = 30 * 24 * 60 * 60  # 30 days in seconds (2592000)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_SAVE_EVERY_REQUEST = False
+
 # Security settings for production
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
