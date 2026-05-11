@@ -466,6 +466,9 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	background: #ffffff;
 	text-decoration: none;
 	color: #0f172a;
+	text-align: left;
+	font: inherit;
+	cursor: pointer;
 }
 
 .home-search-result-item:hover {
@@ -1291,6 +1294,23 @@ body.app-theme-dark .review-card-summary,
 body.app-theme-dark .opinion-text,
 body.app-theme-dark .opinion-list-meta {
 	color: #cbd5e1;
+}
+
+body.app-theme-dark .home-search-result-item {
+	background: #171b22;
+	border-color: #3b414b;
+	color: #f3f4f6;
+}
+
+body.app-theme-dark .home-search-result-item span {
+	color: #cbd5e1;
+}
+
+body.app-theme-dark select.form-input,
+body.app-theme-dark select.form-input option,
+body.app-theme-dark select.form-input optgroup {
+	background: #171b22;
+	color: #f3f4f6;
 }
 
 body.app-theme-dark .feature-tile {

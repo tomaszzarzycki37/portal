@@ -86,6 +86,45 @@ export default function HomePage() {
     })
   }, [cars, searchTerm, selectedBrand, engineSearch, vehicleTypeFilter, statusFilter])
 
+  const searchSuggestions = useMemo(() => {
+    const normalizedSearch = String(searchTerm || '').trim().toLowerCase()
+    if (normalizedSearch.length < 2) {
+      return []
+    }
+
+    const seen = new Set()
+    const suggestions = []
+
+    cars.forEach((car) => {
+      const brand = String(car.brand_name || '').trim()
+      const model = String(car.name || '').trim()
+      if (!brand && !model) {
+        return
+      }
+
+      const brandModel = `${brand} ${model}`.trim()
+      const haystack = `${brand} ${model}`.toLowerCase()
+      if (!haystack.includes(normalizedSearch)) {
+        return
+      }
+
+      const dedupeKey = `${brandModel.toLowerCase()}`
+      if (seen.has(dedupeKey)) {
+        return
+      }
+
+      seen.add(dedupeKey)
+      suggestions.push({
+        id: String(car.id ?? dedupeKey),
+        brand,
+        model,
+        label: brandModel,
+      })
+    })
+
+    return suggestions.slice(0, 8)
+  }, [cars, searchTerm])
+
   const carById = useMemo(() => {
     const byId = new Map()
     cars.forEach((car) => {
@@ -117,14 +156,27 @@ export default function HomePage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder={t.pages.searchInputPlaceholder}
-                    list="searchModels"
                   />
-                  <datalist id="searchModels">
-                    {brands.map((brand) => (
-                      <option key={brand} value={brand} />
-                    ))}
-                  </datalist>
                 </label>
+
+                {searchSuggestions.length > 0 && (
+                  <div className="home-search-results" role="listbox" aria-label={t.pages.searchModels}>
+                    {searchSuggestions.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className="home-search-result-item"
+                        onClick={() => {
+                          setSearchTerm(item.label)
+                          if (item.brand) setSelectedBrand(item.brand)
+                        }}
+                      >
+                        <strong>{item.model || item.label}</strong>
+                        <span>{item.brand || t.pages.unknownBrand}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="home-filter-section">
