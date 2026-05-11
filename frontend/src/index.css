@@ -475,8 +475,9 @@ body.app-theme-dark .brand-tagline {
 
 .nav-link {
   font-family: 'Space Grotesk', 'Trebuchet MS', sans-serif;
-  opacity: 0.9;
+  opacity: 0.8;
   font-weight: 600;
+  color: #0f172a;
 }
 
 .nav-link:hover {
@@ -491,8 +492,8 @@ body.app-theme-dark .brand-tagline {
 }
 
 .lang-btn {
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  background: rgba(248, 250, 252, 0.6);
+  border: 1px solid rgba(30, 41, 59, 0.4);
+  background: rgba(30, 41, 59, 0.15);
   color: #0f172a;
   border-radius: 0.45rem;
   padding: 0.25rem 0.45rem;
