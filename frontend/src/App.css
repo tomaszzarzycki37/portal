@@ -1399,6 +1399,10 @@ body.app-theme-dark .review-admin-quick-edit:focus-visible {
 }
 
 /* Dark theme styles for review content, results and verdict */
+body.app-theme-dark .review-overview-text {
+	color: #e5e7eb;
+}
+
 body.app-theme-dark .review-html-content {
 	color: #e5e7eb;
 }
