@@ -682,7 +682,7 @@ body.app-theme-dark .header-tagline-section {
   font-weight: 700;
   color: #334155;
   line-height: 1.25;
-  margin-bottom: var(--admin-space-label, 0.38rem);
+  margin-bottom: var(--admin-space-label, 0.65rem);
 }
 
 .form-label-help {
@@ -783,7 +783,7 @@ body.app-theme-dark .header-tagline-section {
 }
 
 .density-compact {
-  --admin-space-label: 0.22rem;
+  --admin-space-label: 0.42rem;
   --admin-space-caption-top: 0.32rem;
   --admin-space-caption-bottom: 0.06rem;
   --admin-space-grid-gap: 0.45rem;
@@ -791,7 +791,7 @@ body.app-theme-dark .header-tagline-section {
 }
 
 .density-comfortable {
-  --admin-space-label: 0.38rem;
+  --admin-space-label: 0.65rem;
   --admin-space-caption-top: 0.55rem;
   --admin-space-caption-bottom: 0.12rem;
   --admin-space-grid-gap: 0.65rem;
