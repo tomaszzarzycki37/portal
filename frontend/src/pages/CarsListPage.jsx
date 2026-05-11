@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
 import { useTranslation } from '../i18n'
-import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
+import { createBrandPlaceholderUrl, getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { getCarImage } from '../utils/carImages'
 import { isAdminUser } from '../utils/auth'
 
@@ -160,12 +160,6 @@ export default function CarsListPage() {
   }, [filteredCars])
 
   const visibleBrands = useMemo(() => {
-    const hasModelsInCatalog = (brand) => {
-      const modelCount = Number(brand.model_count)
-      if (Number.isFinite(modelCount) && modelCount > 0) return true
-      return (groupedModelFamiliesByBrand.get(brand.id) || []).length > 0
-    }
-
     if (
       !searchTerm.trim() &&
       !engineSearch.trim() &&
@@ -173,10 +167,10 @@ export default function CarsListPage() {
       productionStatusFilter === 'all' &&
       driveTypeFilter === 'all'
     ) {
-      return brands.filter(hasModelsInCatalog)
+      return brands
     }
     return brands.filter((brand) => (matchedCountByBrand.get(brand.id) || 0) > 0)
-  }, [brands, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter, matchedCountByBrand, groupedModelFamiliesByBrand])
+  }, [brands, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter, matchedCountByBrand])
 
   const hasActiveFilters =
     Boolean(searchTerm.trim()) ||
@@ -280,7 +274,15 @@ export default function CarsListPage() {
               <section key={brand.slug || brand.name} className="brand-catalog-card">
                 <div className="brand-catalog-header brand-catalog-header-static">
                   <div className="brand-catalog-identity">
-                    <img src={brandLogo} alt={brand.name} className="brand-catalog-logo" />
+                    <img
+                      src={brandLogo}
+                      alt={brand.name}
+                      className="brand-catalog-logo"
+                      onError={(event) => {
+                        event.currentTarget.onerror = null
+                        event.currentTarget.src = createBrandPlaceholderUrl(brand.name)
+                      }}
+                    />
 
                     <div>
                       <div className="brand-catalog-title-row">
