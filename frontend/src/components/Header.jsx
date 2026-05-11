@@ -94,9 +94,6 @@ export default function Header() {
             )}
             <span>{t.nav.brandTitle}</span>
           </Link>
-          {brandTagline && (
-            <p className="brand-tagline">{brandTagline}</p>
-          )}
         </div>
         
         <div className="main-nav desktop-only">
@@ -182,6 +179,14 @@ export default function Header() {
           </svg>
         </button>
       </nav>
+
+      {brandTagline && (
+        <div className="header-tagline-section">
+          <div className="container">
+            <p className="brand-tagline">{brandTagline}</p>
+          </div>
+        </div>
+      )}
 
       {isMenuOpen && (
         <div className="mobile-nav-wrap mobile-only">

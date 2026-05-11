@@ -416,6 +416,7 @@ a {
   justify-content: space-between;
   gap: 1rem;
   padding: 0;
+  flex-wrap: nowrap;
 }
 
 .brand-link {
@@ -439,15 +440,31 @@ a {
   font-size: 0.9rem;
   opacity: 0.9;
   margin: 0;
-  padding: 0;
+  padding: 0.75rem 1rem;
   font-weight: 600;
-  color: #94a3b8;
-  max-width: 200px;
-  line-height: 1.2;
+  color: #f8fafc;
+  line-height: 1.5;
+  background: rgba(30, 41, 59, 0.6);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  max-width: fit-content;
 }
 
 body.app-theme-dark .brand-tagline {
-  color: #cbd5e1;
+  color: #e5e7eb;
+  background: rgba(17, 24, 39, 0.5);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+.header-tagline-section {
+  background: rgba(15, 23, 42, 0.5);
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 0.75rem 0;
+}
+
+body.app-theme-dark .header-tagline-section {
+  background: rgba(10, 15, 23, 0.4);
+  border-top-color: rgba(120, 128, 140, 0.2);
 }
 
 .brand-logo-mark {
