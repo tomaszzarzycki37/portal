@@ -755,6 +755,16 @@ body.app-theme-dark .header-tagline-section {
   font-size: 0.9rem;
 }
 
+.form-checkbox-row input {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.form-checkbox-row.admin-form-grid-full {
+  display: inline-flex;
+  justify-self: start;
+}
+
 .form-error {
   margin: 0;
   color: #b91c1c;
