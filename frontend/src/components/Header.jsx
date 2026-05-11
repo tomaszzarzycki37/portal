@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useTranslation } from '../i18n'
 import { isAdminUser } from '../utils/auth'
+import api from '../services/api'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 const API_ORIGIN = import.meta.env.VITE_API_URL
@@ -20,11 +21,31 @@ function resolveBrandLogoSrc(url) {
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [themeMode, setThemeMode] = useState(() => localStorage.getItem('admin_theme_mode') || 'light')
+  const [brandTagline, setBrandTagline] = useState('')
   const token = localStorage.getItem('access_token')
   const isAdmin = isAdminUser()
   const { t, lang, setLang } = useTranslation()
   const brandLogoSrc = resolveBrandLogoSrc(t.nav.brandLogoUrl)
   const hasBrandLogo = Boolean(brandLogoSrc)
+
+  useEffect(() => {
+    const fetchBrandTagline = async () => {
+      try {
+        const response = await api.get(`/common/content/?lang=${lang}&key=nav.brandTagline`)
+        const list = response.data.results || response.data || []
+        const taglineRecord = list.find((item) => item.key === 'nav.brandTagline')
+        if (taglineRecord && taglineRecord.value) {
+          setBrandTagline(taglineRecord.value)
+        } else {
+          setBrandTagline(t.nav.brandTagline || '')
+        }
+      } catch {
+        setBrandTagline(t.nav.brandTagline || '')
+      }
+    }
+
+    fetchBrandTagline()
+  }, [lang, t.nav.brandTagline])
 
   useEffect(() => {
     const syncBodyThemeClass = (mode) => {
@@ -64,14 +85,19 @@ export default function Header() {
   return (
     <header className="site-header">
       <nav className="container header-nav">
-        <Link to="/" className="brand-link">
-          {hasBrandLogo ? (
-            <img src={brandLogoSrc} alt={t.nav.brandTitle} className="brand-logo-image" />
-          ) : (
-            <span className="brand-logo-mark" aria-hidden="true">{t.nav.brandIcon}</span>
+        <div className="brand-section">
+          <Link to="/" className="brand-link">
+            {hasBrandLogo ? (
+              <img src={brandLogoSrc} alt={t.nav.brandTitle} className="brand-logo-image" />
+            ) : (
+              <span className="brand-logo-mark" aria-hidden="true">{t.nav.brandIcon}</span>
+            )}
+            <span>{t.nav.brandTitle}</span>
+          </Link>
+          {brandTagline && (
+            <p className="brand-tagline">{brandTagline}</p>
           )}
-          <span>{t.nav.brandTitle}</span>
-        </Link>
+        </div>
         
         <div className="main-nav desktop-only">
           <Link to="/cars" className="nav-link">{t.nav.cars}</Link>

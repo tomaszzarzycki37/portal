@@ -11,6 +11,8 @@ class Brand(models.Model):
     description = models.TextField(blank=True)
     description_en = models.TextField(blank=True, help_text="English description (required)")
     description_pl = models.TextField(blank=True, help_text="Polish description (optional but recommended)")
+    brand_anecdote_en = models.TextField(blank=True, default='', help_text="Brand story/anecdote in English")
+    brand_anecdote_pl = models.TextField(blank=True, default='', help_text="Brand story/anecdote in Polish")
     logo = models.ImageField(upload_to='brands/', blank=True, null=True)
     founded_year = models.IntegerField(null=True, blank=True)
     country = models.CharField(max_length=100, default='China')

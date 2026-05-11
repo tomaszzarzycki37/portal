@@ -425,6 +425,28 @@ a {
   letter-spacing: 0.015em;
 }
 
+.brand-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
+.brand-tagline {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin: 0;
+  padding: 0;
+  font-weight: 500;
+  color: #475569;
+  max-width: 200px;
+  line-height: 1.2;
+}
+
+body.app-theme-dark .brand-tagline {
+  color: #cbd5e1;
+}
+
 .brand-logo-mark {
   display: inline-flex;
   align-items: center;
@@ -1749,6 +1771,41 @@ body.app-theme-dark .brand-lineup-add-btn:hover {
   color: #475569;
   line-height: 1.6;
   max-width: 70ch;
+}
+
+.brand-anecdote-section {
+  margin: 1.5rem 0 0;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.6rem;
+  display: block;
+}
+
+.brand-anecdote-text {
+  margin: 0;
+  color: #475569;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+body.app-theme-dark .brand-anecdote-section {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.app-theme-dark .brand-anecdote-text {
+  color: #cbd5e1;
+}
+
+.brand-detail-layout.brand-detail-dark .brand-anecdote-section {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.brand-detail-layout.brand-detail-dark .brand-anecdote-text {
+  color: #cbd5e1;
 }
 
 .brand-empty-models-card {

@@ -180,12 +180,15 @@ export default function AdminDashboard() {
     title: null,
     icon: null,
     logoUrl: null,
+    tagline: null,
   })
   const [headerOriginalValues, setHeaderOriginalValues] = useState({
     title: '',
     icon: '',
     logoUrl: '',
+    tagline: '',
   })
+  const [headerTagline, setHeaderTagline] = useState('')
   const [headerSaving, setHeaderSaving] = useState(false)
   const [headerMessage, setHeaderMessage] = useState('')
   const [headerError, setHeaderError] = useState('')
@@ -1408,32 +1411,38 @@ export default function AdminDashboard() {
         const titleRecord = list.find((item) => item.key === 'nav.brandTitle') || null
         const iconRecord = list.find((item) => item.key === 'nav.brandIcon') || null
         const logoRecord = list.find((item) => item.key === 'nav.brandLogoUrl') || null
+        const taglineRecord = list.find((item) => item.key === 'nav.brandTagline') || null
         const nextValues = {
           title: String(titleRecord?.value ?? getBaseTranslationValue(headerLang, 'nav.brandTitle') ?? ''),
           icon: String(iconRecord?.value ?? getBaseTranslationValue(headerLang, 'nav.brandIcon') ?? ''),
           logoUrl: String(logoRecord?.value ?? getBaseTranslationValue(headerLang, 'nav.brandLogoUrl') ?? ''),
+          tagline: String(taglineRecord?.value ?? getBaseTranslationValue(headerLang, 'nav.brandTagline') ?? ''),
         }
 
         setHeaderTitle(nextValues.title)
         setHeaderIcon(nextValues.icon)
         setHeaderLogoUrl(nextValues.logoUrl)
+        setHeaderTagline(nextValues.tagline)
         setHeaderOriginalValues(nextValues)
         setHeaderRecordIds({
           title: titleRecord?.id ?? null,
           icon: iconRecord?.id ?? null,
           logoUrl: logoRecord?.id ?? null,
+          tagline: taglineRecord?.id ?? null,
         })
       } catch {
         const fallbackValues = {
           title: String(getBaseTranslationValue(headerLang, 'nav.brandTitle') ?? ''),
           icon: String(getBaseTranslationValue(headerLang, 'nav.brandIcon') ?? ''),
           logoUrl: String(getBaseTranslationValue(headerLang, 'nav.brandLogoUrl') ?? ''),
+          tagline: String(getBaseTranslationValue(headerLang, 'nav.brandTagline') ?? ''),
         }
         setHeaderTitle(fallbackValues.title)
         setHeaderIcon(fallbackValues.icon)
         setHeaderLogoUrl(fallbackValues.logoUrl)
+        setHeaderTagline(fallbackValues.tagline)
         setHeaderOriginalValues(fallbackValues)
-        setHeaderRecordIds({ title: null, icon: null, logoUrl: null })
+        setHeaderRecordIds({ title: null, icon: null, logoUrl: null, tagline: null })
       }
     }
 
@@ -1505,6 +1514,7 @@ export default function AdminDashboard() {
     setHeaderTitle(headerOriginalValues.title)
     setHeaderIcon(headerOriginalValues.icon)
     setHeaderLogoUrl(headerOriginalValues.logoUrl)
+    setHeaderTagline(headerOriginalValues.tagline)
     setHeaderLogoFile(null)
     setHeaderLogoFilePreview('')
     setHeaderMessage('')
@@ -1537,7 +1547,7 @@ export default function AdminDashboard() {
         }
       }
 
-      const [titleId, iconId, logoId] = await Promise.all([
+      const [titleId, iconId, logoId, taglineId] = await Promise.all([
         saveContentOverride({
           recordId: headerRecordIds.title,
           key: 'nav.brandTitle',
@@ -1556,15 +1566,22 @@ export default function AdminDashboard() {
           value: finalLogoUrl,
           language: headerLang,
         }),
+        saveContentOverride({
+          recordId: headerRecordIds.tagline,
+          key: 'nav.brandTagline',
+          value: headerTagline,
+          language: headerLang,
+        }),
       ])
 
       const nextValues = {
         title: headerTitle,
         icon: headerIcon,
         logoUrl: finalLogoUrl,
+        tagline: headerTagline,
       }
       setHeaderLogoUrl(finalLogoUrl)
-      setHeaderRecordIds({ title: titleId, icon: iconId, logoUrl: logoId })
+      setHeaderRecordIds({ title: titleId, icon: iconId, logoUrl: logoId, tagline: taglineId })
       setHeaderOriginalValues(nextValues)
       setHeaderMessage(t.adminPanel.headerSaved)
     } catch (err) {
@@ -3218,6 +3235,19 @@ export default function AdminDashboard() {
               onChange={(e) => setHeaderIcon(e.target.value)}
               placeholder="🚗"
             />
+          </div>
+
+          <div className="admin-form-grid-full">
+            <label className="form-label" htmlFor="header-tagline">{t.adminPanel.headerTagline}</label>
+            <textarea
+              id="header-tagline"
+              className="form-input form-textarea"
+              rows={3}
+              value={headerTagline}
+              onChange={(e) => setHeaderTagline(e.target.value)}
+              placeholder={t.adminPanel.headerTaglinePlaceholder}
+            />
+            <p className="admin-field-note">{t.adminPanel.headerTaglineHint}</p>
           </div>
 
           <div className="admin-form-grid-full">

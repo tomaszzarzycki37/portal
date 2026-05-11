@@ -105,6 +105,9 @@ export default function BrandDetailPage() {
   const [brandDescriptionEn, setBrandDescriptionEn] = useState('')
   const [brandDescriptionPl, setBrandDescriptionPl] = useState('')
   const [descriptionEditorLang, setDescriptionEditorLang] = useState(lang === 'pl' ? 'pl' : 'en')
+  const [brandAnecdoteEn, setBrandAnecdoteEn] = useState('')
+  const [brandAnecdotePl, setBrandAnecdotePl] = useState('')
+  const [anecdoteEditorLang, setAnecdoteEditorLang] = useState(lang === 'pl' ? 'pl' : 'en')
   const [brandFoundedYear, setBrandFoundedYear] = useState('')
   const [brandWebsite, setBrandWebsite] = useState('')
   const [brandLogoUrl, setBrandLogoUrl] = useState('')
@@ -124,6 +127,8 @@ export default function BrandDetailPage() {
         setBrand(brandData)
         setBrandDescriptionEn(brandData.description_en || brandData.description || '')
         setBrandDescriptionPl(brandData.description_pl || '')
+        setBrandAnecdoteEn(brandData.brand_anecdote_en || '')
+        setBrandAnecdotePl(brandData.brand_anecdote_pl || '')
         setBrandFoundedYear(brandData.founded_year ? String(brandData.founded_year) : '')
         setBrandWebsite(brandData.website || '')
         setBrandLogoUrl(brandData.logo || '')
@@ -253,6 +258,8 @@ export default function BrandDetailPage() {
       const formData = new FormData()
       formData.append('description_en', brandDescriptionEn)
       formData.append('description_pl', brandDescriptionPl)
+      formData.append('brand_anecdote_en', brandAnecdoteEn)
+      formData.append('brand_anecdote_pl', brandAnecdotePl)
       formData.append('founded_year', parsedYear === null ? '' : String(parsedYear))
       formData.append('website', brandWebsite)
       if (brandLogoFile) {
@@ -267,6 +274,8 @@ export default function BrandDetailPage() {
       setBrand(response.data)
       setBrandDescriptionEn(response.data.description_en || '')
       setBrandDescriptionPl(response.data.description_pl || '')
+      setBrandAnecdoteEn(response.data.brand_anecdote_en || '')
+      setBrandAnecdotePl(response.data.brand_anecdote_pl || '')
       setBrandFoundedYear(response.data.founded_year ? String(response.data.founded_year) : '')
       setBrandWebsite(response.data.website || '')
       setBrandLogoUrl(response.data.logo || '')
@@ -388,6 +397,16 @@ export default function BrandDetailPage() {
               : (brand.description_en || brand.description)}
           </p>
         )}
+
+        {(brand.brand_anecdote_pl || brand.brand_anecdote_en) && (
+          <div className="brand-anecdote-section">
+            <p className="brand-anecdote-text">
+              {lang === 'pl'
+                ? (brand.brand_anecdote_pl || brand.brand_anecdote_en)
+                : (brand.brand_anecdote_en || brand.brand_anecdote_pl)}
+            </p>
+          </div>
+        )}
       </section>
 
       {isAdmin && (
@@ -490,6 +509,46 @@ export default function BrandDetailPage() {
 
               <div className="admin-form-grid-full">
                 <img src={editableBrandLogo} alt={brand.name} className="admin-brand-logo-preview" />
+              </div>
+
+              <div className="admin-form-grid-full">
+                <div className="brand-description-switch-row">
+                  <label className="form-label">{t.adminPanel.textLanguage}</label>
+                  <div className="brand-description-switch" role="tablist" aria-label={t.adminPanel.textLanguage}>
+                    <button
+                      type="button"
+                      className={`brand-description-switch-btn ${anecdoteEditorLang === 'en' ? 'is-active' : ''}`}
+                      onClick={() => setAnecdoteEditorLang('en')}
+                    >
+                      EN
+                    </button>
+                    <button
+                      type="button"
+                      className={`brand-description-switch-btn ${anecdoteEditorLang === 'pl' ? 'is-active' : ''}`}
+                      onClick={() => setAnecdoteEditorLang('pl')}
+                    >
+                      PL
+                    </button>
+                  </div>
+                </div>
+
+                <label className="form-label" htmlFor="brand-anecdote-language">
+                  {anecdoteEditorLang === 'pl' ? t.adminPanel.brandAnecdoteEditLabel : t.adminPanel.brandAnecdoteEditLabel}
+                </label>
+                <textarea
+                  id="brand-anecdote-language"
+                  className="form-input form-textarea"
+                  rows={3}
+                  placeholder={t.pages.brandAnecdotePlaceholder}
+                  value={anecdoteEditorLang === 'pl' ? brandAnecdotePl : brandAnecdoteEn}
+                  onChange={(e) => {
+                    if (anecdoteEditorLang === 'pl') {
+                      setBrandAnecdotePl(e.target.value)
+                    } else {
+                      setBrandAnecdoteEn(e.target.value)
+                    }
+                  }}
+                />
               </div>
             </div>
 
