@@ -403,9 +403,9 @@ a {
   top: 0;
   z-index: 50;
   backdrop-filter: blur(8px);
-  background: linear-gradient(90deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.98));
-  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-  color: #0f172a;
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9));
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+  color: #f8fafc;
   box-shadow: 0 8px 32px rgba(15, 23, 42, 0.12);
 }
 
@@ -475,9 +475,9 @@ body.app-theme-dark .brand-tagline {
 
 .nav-link {
   font-family: 'Space Grotesk', 'Trebuchet MS', sans-serif;
-  opacity: 0.8;
+  opacity: 0.95;
   font-weight: 600;
-  color: #0f172a;
+  color: #f8fafc;
 }
 
 .nav-link:hover {
@@ -492,9 +492,9 @@ body.app-theme-dark .brand-tagline {
 }
 
 .lang-btn {
-  border: 1px solid rgba(30, 41, 59, 0.4);
-  background: rgba(30, 41, 59, 0.15);
-  color: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  background: rgba(15, 23, 42, 0.5);
+  color: #f8fafc;
   border-radius: 0.45rem;
   padding: 0.25rem 0.45rem;
   font-size: 0.75rem;
