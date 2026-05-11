@@ -239,6 +239,21 @@ export default function BrandDetailPage() {
     }
   }
 
+  const handleDeleteBrand = async () => {
+    if (!isAdmin || !brand) return
+    if (!window.confirm(`${t.pages.brandDeleteConfirm} "${brand.name}"?`)) return
+    try {
+      setBrandSaving(true)
+      setBrandMessage('')
+      setBrandError('')
+      await api.delete(`/cars/brands/${brand.slug}/`)
+      window.location.href = '/cars'
+    } catch {
+      setBrandError(t.pages.brandDeleteError)
+      setBrandSaving(false)
+    }
+  }
+
   const handleBrandSave = async (e) => {
     e.preventDefault()
     if (!isAdmin || !brand) return
@@ -558,6 +573,9 @@ export default function BrandDetailPage() {
             <div className="admin-actions-row">
               <button type="submit" className="btn btn-primary" disabled={brandSaving}>
                 {brandSaving ? t.pages.loading : t.pages.brandSave}
+              </button>
+              <button type="button" className="btn btn-danger" disabled={brandSaving} onClick={handleDeleteBrand}>
+                {t.pages.brandDelete}
               </button>
             </div>
           </form>

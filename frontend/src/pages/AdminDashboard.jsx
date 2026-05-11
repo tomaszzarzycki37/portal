@@ -1244,6 +1244,20 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleDeleteCar = async () => {
+    if (!selectedCar) return
+    if (!window.confirm(`${t.adminPanel.deleteModelConfirm} "${selectedCar.brand_name} ${selectedCar.name}"?`)) return
+    setMessage('')
+    setError('')
+    try {
+      await api.delete(`/cars/${selectedCar.id}/`)
+      setMessage(t.adminPanel.modelDeleted)
+      await loadInventoryData('')
+    } catch {
+      setError(t.adminPanel.modelDeleteError)
+    }
+  }
+
   const handleDeleteReview = async (reviewId) => {
     if (!window.confirm(t.adminPanel.reviewDeleteConfirm)) return
     setReviewsMessage('')
@@ -2054,6 +2068,11 @@ export default function AdminDashboard() {
               <button type="submit" className="btn btn-primary" disabled={saving}>
                 {saving ? t.pages.loading : t.adminPanel.save}
               </button>
+              {selectedCar && (
+                <button type="button" className="btn btn-danger" onClick={handleDeleteCar}>
+                  {t.adminPanel.deleteModel}
+                </button>
+              )}
             </div>
           </form>
         </div>
