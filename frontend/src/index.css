@@ -1430,6 +1430,22 @@ body.app-theme-dark .header-tagline-section {
   justify-content: flex-end;
 }
 
+/* Keep a comfortable gap between form fields and action buttons across admin/edit views. */
+.admin-form-grid + .admin-actions-row,
+.admin-form-grid + .admin-form-actions,
+.form-checkbox-row + .admin-actions-row,
+.form-checkbox-row + .admin-form-actions,
+.form-input + .admin-actions-row,
+.form-input + .admin-form-actions,
+.form-textarea + .admin-actions-row,
+.form-textarea + .admin-form-actions,
+.form-error + .admin-actions-row,
+.form-error + .admin-form-actions,
+.form-success + .admin-actions-row,
+.form-success + .admin-form-actions {
+  margin-top: 0.85rem;
+}
+
 .admin-actions-row .btn {
   min-width: 150px;
 }
