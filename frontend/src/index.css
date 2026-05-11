@@ -436,12 +436,12 @@ a {
 }
 
 .brand-tagline {
-  font-size: 0.75rem;
-  opacity: 0.7;
+  font-size: 0.9rem;
+  opacity: 0.9;
   margin: 0;
   padding: 0;
-  font-weight: 500;
-  color: #475569;
+  font-weight: 600;
+  color: #94a3b8;
   max-width: 200px;
   line-height: 1.2;
 }
