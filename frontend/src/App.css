@@ -1398,6 +1398,50 @@ body.app-theme-dark .review-admin-quick-edit:focus-visible {
 	color: #fbbf24;
 }
 
+/* Dark theme styles for review content, results and verdict */
+body.app-theme-dark .review-html-content {
+	color: #e5e7eb;
+}
+
+body.app-theme-dark .review-html-content a {
+	color: #60a5fa;
+}
+
+body.app-theme-dark .review-results {
+	background: #2d3748;
+	border-color: #4b5563;
+}
+
+body.app-theme-dark .review-results-title {
+	color: #cbd5e1;
+}
+
+body.app-theme-dark .review-result-item {
+	background: #1a1f2e;
+	border-color: #4b5563;
+}
+
+body.app-theme-dark .review-result-value {
+	color: #f3f4f6;
+}
+
+body.app-theme-dark .review-result-key {
+	color: #cbd5e1;
+}
+
+body.app-theme-dark .review-verdict {
+	background: #2d3a33;
+	border-left-color: #10b981;
+}
+
+body.app-theme-dark .review-verdict-label {
+	color: #a7f3d0;
+}
+
+body.app-theme-dark .review-verdict-text {
+	color: #d1fae5;
+}
+
 .admin-rich-editor-compact .ql-container.ql-snow {
 	min-height: 110px;
 }

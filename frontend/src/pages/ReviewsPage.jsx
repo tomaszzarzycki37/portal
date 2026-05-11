@@ -605,7 +605,7 @@ export default function ReviewsPage() {
                   {/* Test results (legacy content only) */}
                   {parsed && parsed.testResults.length > 0 && (
                     <div className="review-results">
-                      <h4 className="review-results-title">Test Results</h4>
+                      <h4 className="review-results-title">{t.pages.testResults}</h4>
                       <div className="review-results-grid">
                         {parsed.testResults.map((result, i) => (
                           <div key={i} className="review-result-item">
@@ -620,7 +620,7 @@ export default function ReviewsPage() {
                   {/* Verdict (legacy content only) */}
                   {parsed && parsed.verdict && (
                     <div className="review-verdict">
-                      <span className="review-verdict-label">Verdict</span>
+                      <span className="review-verdict-label">{t.pages.verdict}</span>
                       <p className="review-verdict-text" dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.verdict) }} />
                     </div>
                   )}

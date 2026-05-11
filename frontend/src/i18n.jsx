@@ -214,6 +214,8 @@ const baseTranslations = {
       register: 'Register page',
       profile: 'Profile page',
       admin: 'Admin dashboard',
+      testResults: 'Test Results',
+      verdict: 'Verdict',
     },
     auth: {
       loginTitle: 'Login',
@@ -707,6 +709,8 @@ const baseTranslations = {
       register: 'Strona rejestracji',
       profile: 'Strona profilu',
       admin: 'Panel administratora',
+      testResults: 'Wyniki testów',
+      verdict: 'Werdykt',
     },
     auth: {
       loginTitle: 'Logowanie',
