@@ -1408,25 +1408,25 @@ body.app-theme-dark .review-html-content a {
 }
 
 body.app-theme-dark .review-results {
-	background: #2d3748;
-	border-color: #4b5563;
+	background: #3a4457;
+	border-color: #6b7280;
 }
 
 body.app-theme-dark .review-results-title {
-	color: #cbd5e1;
+	color: #f1f5f9;
 }
 
 body.app-theme-dark .review-result-item {
-	background: #1a1f2e;
-	border-color: #4b5563;
+	background: #2d3748;
+	border-color: #6b7280;
 }
 
 body.app-theme-dark .review-result-value {
-	color: #f3f4f6;
+	color: #ffffff;
 }
 
 body.app-theme-dark .review-result-key {
-	color: #cbd5e1;
+	color: #e2e8f0;
 }
 
 body.app-theme-dark .review-verdict {
