@@ -1037,10 +1037,36 @@ export function getBaseTranslationValue(lang, keyPath) {
   return keyPath.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), baseTranslations[lang])
 }
 
+function detectDefaultLanguage() {
+  if (typeof window === 'undefined') {
+    return 'en'
+  }
+
+  const savedLanguage = window.localStorage.getItem('portal_lang')
+  if (savedLanguage === 'pl' || savedLanguage === 'en') {
+    return savedLanguage
+  }
+
+  const browserLocales = [
+    ...(Array.isArray(window.navigator.languages) ? window.navigator.languages : []),
+    window.navigator.language,
+  ].filter(Boolean)
+
+  const isPolishLocale = browserLocales.some((locale) => {
+    const normalizedLocale = String(locale).toLowerCase()
+    return normalizedLocale === 'pl' || normalizedLocale.startsWith('pl-') || normalizedLocale.endsWith('-pl')
+  })
+
+  const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+  const isPolandTimeZone = browserTimeZone === 'Europe/Warsaw'
+
+  return isPolishLocale || isPolandTimeZone ? 'pl' : 'en'
+}
+
 const LanguageContext = createContext(null)
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState(() => localStorage.getItem('portal_lang') || 'en')
+  const [lang, setLang] = useState(detectDefaultLanguage)
   const [overrides, setOverrides] = useState([])
 
   useEffect(() => {
