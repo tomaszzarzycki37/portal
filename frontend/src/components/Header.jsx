@@ -127,15 +127,19 @@ export default function Header() {
             type="button"
             className={`lang-btn ${themeMode === 'light' ? 'active' : ''}`}
             onClick={() => applyThemeMode('light')}
+            aria-label={t.nav.themeLight}
+            title={t.nav.themeLight}
           >
-            {t.nav.themeLight}
+            <span aria-hidden="true">☀️</span>
           </button>
           <button
             type="button"
             className={`lang-btn ${themeMode === 'dark' ? 'active' : ''}`}
             onClick={() => applyThemeMode('dark')}
+            aria-label={t.nav.themeDark}
+            title={t.nav.themeDark}
           >
-            {t.nav.themeDark}
+            <span aria-hidden="true">🌙</span>
           </button>
         </div>
 
@@ -212,15 +216,19 @@ export default function Header() {
                 type="button"
                 className={`lang-btn ${themeMode === 'light' ? 'active' : ''}`}
                 onClick={() => applyThemeMode('light')}
+                aria-label={t.nav.themeLight}
+                title={t.nav.themeLight}
               >
-                {t.nav.themeLight}
+                <span aria-hidden="true">☀️</span>
               </button>
               <button
                 type="button"
                 className={`lang-btn ${themeMode === 'dark' ? 'active' : ''}`}
                 onClick={() => applyThemeMode('dark')}
+                aria-label={t.nav.themeDark}
+                title={t.nav.themeDark}
               >
-                {t.nav.themeDark}
+                <span aria-hidden="true">🌙</span>
               </button>
             </div>
             {token && (
