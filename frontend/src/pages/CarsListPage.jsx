@@ -102,6 +102,22 @@ export default function CarsListPage() {
     })
   }, [sortedCars, brands, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter])
 
+  const brandIdsMatchingSearch = useMemo(() => {
+    const normalizedSearch = String(searchTerm || '').trim().toLowerCase()
+    if (!normalizedSearch) {
+      return new Set()
+    }
+
+    return new Set(
+      brands
+        .filter((brand) => {
+          const brandHaystack = `${brand.name || ''} ${brand.description || ''} ${brand.description_en || ''} ${brand.description_pl || ''}`.toLowerCase()
+          return brandHaystack.includes(normalizedSearch)
+        })
+        .map((brand) => brand.id),
+    )
+  }, [brands, searchTerm])
+
   const groupedCarsByBrand = useMemo(() => {
     const groups = new Map()
 
@@ -169,8 +185,10 @@ export default function CarsListPage() {
     ) {
       return brands
     }
-    return brands.filter((brand) => (matchedCountByBrand.get(brand.id) || 0) > 0)
-  }, [brands, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter, matchedCountByBrand])
+    return brands.filter(
+      (brand) => (matchedCountByBrand.get(brand.id) || 0) > 0 || brandIdsMatchingSearch.has(brand.id),
+    )
+  }, [brands, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter, matchedCountByBrand, brandIdsMatchingSearch])
 
   const hasActiveFilters =
     Boolean(searchTerm.trim()) ||
