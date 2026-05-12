@@ -1703,19 +1703,38 @@ body.app-theme-dark .brand-lineup-add-btn:hover {
 }
 
 .brand-description-toggle {
-  margin-top: 0.25rem;
-  border: none;
-  background: transparent;
-  padding: 0;
+  margin-top: 0.38rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0.22rem 0.58rem;
+  border-radius: 0.6rem;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
   color: #1d4ed8;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
+  line-height: 1;
   cursor: pointer;
 }
 
 .brand-description-toggle:hover {
-  color: #1e40af;
-  text-decoration: underline;
+  color: #1e3a8a;
+  border-color: #93c5fd;
+  background: #dbeafe;
+}
+
+body.app-theme-dark .brand-description-toggle {
+  border-color: #4b5563;
+  background: #2f353f;
+  color: #e5e7eb;
+}
+
+body.app-theme-dark .brand-description-toggle:hover {
+  border-color: #6b7280;
+  background: #3b4352;
+  color: #f3f4f6;
 }
 
 .brand-catalog-meta-row {
