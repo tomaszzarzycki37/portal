@@ -2414,7 +2414,7 @@ export default function AdminDashboard() {
                         type="button"
                         className="btn btn-danger"
                         onClick={() => handleDeleteUser(user)}
-                        disabled={usersLoading || currentUser?.id === user.id || user.is_superuser}
+                        disabled={usersLoading}
                       >
                         {t.adminPanel.usersDelete}
                       </button>
