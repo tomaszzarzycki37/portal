@@ -1423,9 +1423,15 @@ body.app-theme-dark .header-tagline-section {
   border-radius: 0.7rem;
   padding: 0.5rem 0.6rem;
   margin-top: 0.1rem;
+  min-height: 44px;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.6rem;
+}
+
+.admin-currency-grid-label {
+  margin: 0 0 var(--admin-space-label, 0.65rem);
 }
 
 .admin-actions-row {

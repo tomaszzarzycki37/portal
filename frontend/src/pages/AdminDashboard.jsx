@@ -2004,7 +2004,7 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <p className="form-label form-label-help">
+                <p className="form-label form-label-help admin-currency-grid-label">
                   <span>{t.adminPanel.targetCurrencies}</span>
                   <span
                     className="admin-help-tip"
