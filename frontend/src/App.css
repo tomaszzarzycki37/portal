@@ -383,7 +383,7 @@
 
 .home-search-advanced-grid {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: 1fr;
 	gap: 0.75rem;
 	margin-bottom: 1rem;
 }
@@ -531,10 +531,10 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 }
 
 .home-search-advanced-panel.is-open {
-	width: min(320px, calc(100vw - 3rem));
+	width: min(430px, calc(100vw - 3rem));
 	height: 593px;
 	max-height: 593px;
-	padding: 1rem;
+	padding: 1rem 1.1rem;
 	border-width: 1px;
 	border-color: rgba(226, 232, 240, 0.9);
 	opacity: 1;
@@ -655,6 +655,7 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	}
 
 	.home-search-advanced-panel.is-open {
+		width: min(450px, calc(100vw - 8rem));
 		margin-top: 0.2rem;
 	}
 }
