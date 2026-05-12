@@ -1899,38 +1899,48 @@ export default function AdminDashboard() {
                 <p className="admin-section-caption">{t.adminPanel.imageEditorTitle}</p>
 
                 <label className="form-label" htmlFor="image">{t.adminPanel.image}</label>
-                <input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  className="form-input"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] || null
-                    setImageFile(file)
-                    if (file) {
-                      setImagePreview(URL.createObjectURL(file))
-                    } else if (selectedCar) {
-                      setImagePreview(getCarImage(selectedCar))
-                    }
-                  }}
-                />
+                <div className="custom-file-input-wrapper">
+                  <input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    className="custom-file-input"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      setImageFile(file)
+                      if (file) {
+                        setImagePreview(URL.createObjectURL(file))
+                      } else if (selectedCar) {
+                        setImagePreview(getCarImage(selectedCar))
+                      }
+                    }}
+                  />
+                  <label className="custom-file-input-label" htmlFor="image">
+                    <span>{`${t.adminPanel.chooseFile}: ${imageFile?.name || t.adminPanel.noFileSelected}`}</span>
+                  </label>
+                </div>
 
                 <label className="form-label" htmlFor="brand-logo">{t.adminPanel.brandLogo}</label>
-                <input
-                  id="brand-logo"
-                  type="file"
-                  accept="image/*"
-                  className="form-input"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] || null
-                    setBrandLogoFile(file)
-                    if (file) {
-                      setBrandLogoPreview(URL.createObjectURL(file))
-                    } else if (selectedCar) {
-                      setBrandLogoPreview(resolveMediaUrl(selectedCar.brand?.logo || ''))
-                    }
-                  }}
-                />
+                <div className="custom-file-input-wrapper">
+                  <input
+                    id="brand-logo"
+                    type="file"
+                    accept="image/*"
+                    className="custom-file-input"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      setBrandLogoFile(file)
+                      if (file) {
+                        setBrandLogoPreview(URL.createObjectURL(file))
+                      } else if (selectedCar) {
+                        setBrandLogoPreview(resolveMediaUrl(selectedCar.brand?.logo || ''))
+                      }
+                    }}
+                  />
+                  <label className="custom-file-input-label" htmlFor="brand-logo">
+                    <span>{`${t.adminPanel.chooseFile}: ${brandLogoFile?.name || t.adminPanel.noFileSelected}`}</span>
+                  </label>
+                </div>
                 {brandLogoPreview && (
                   <img
                     src={brandLogoPreview}
