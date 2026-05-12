@@ -434,6 +434,42 @@
 	color: #cbd5e1;
 }
 
+.form-label {
+	display: block;
+	margin-bottom: 0.65rem;
+	font-weight: 600;
+	font-size: 0.95rem;
+	color: #334155;
+	letter-spacing: 0.01em;
+}
+
+.form-textarea {
+	min-height: 120px;
+	resize: vertical;
+	font-family: inherit;
+}
+
+/* Checkbox and radio styling */
+input[type="checkbox"],
+input[type="radio"] {
+	width: 18px;
+	height: 18px;
+	margin-right: 0.75rem;
+	cursor: pointer;
+	accent-color: #f59e0b;
+	flex-shrink: 0;
+}
+
+label:has(> input[type="checkbox"]),
+label:has(> input[type="radio"]) {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.8rem;
+	cursor: pointer;
+	user-select: none;
+}
+
 /* Custom file input wrapper */
 .custom-file-input-wrapper {
 	position: relative;
