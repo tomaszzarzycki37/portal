@@ -1306,6 +1306,18 @@ body.app-theme-dark .home-search-result-item span {
 	color: #cbd5e1;
 }
 
+body.app-theme-dark .home-filter-label {
+	color: #cbd5e1;
+}
+
+body.app-theme-dark .home-filter-group {
+	border-bottom-color: #4b5563;
+}
+
+body.app-theme-dark .home-hero-search-card .form-input::placeholder {
+	color: #94a3b8;
+}
+
 body.app-theme-dark select.form-input,
 body.app-theme-dark select.form-input option,
 body.app-theme-dark select.form-input optgroup {
