@@ -266,20 +266,21 @@
 
 .home-search-advanced-tab {
 	position: absolute;
-	right: -0.95rem;
+	right: -0.7rem;
 	top: 50%;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 1.7rem;
-	height: 4.8rem;
+	width: 1.3rem;
+	height: 5.6rem;
 	padding: 0;
-	border-radius: 9999px 0.8rem 0.8rem 9999px;
+	border-radius: 0 9999px 9999px 0;
+	border-left: 0;
 	border: 1px solid #cbd5e1;
 	background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
 	color: #0f172a;
 	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-	font-size: 0.82rem;
+	font-size: 0.72rem;
 	font-weight: 800;
 	cursor: pointer;
 	transform: translateY(-50%);
@@ -288,7 +289,7 @@
 }
 
 .home-search-advanced-tab:hover {
-	transform: translateY(-50%) translateX(0.15rem);
+	transform: translateY(-50%) translateX(0.05rem);
 	border-color: #93c5fd;
 	box-shadow: 0 12px 26px rgba(15, 23, 42, 0.16);
 }
@@ -300,8 +301,8 @@
 }
 
 .home-search-advanced-tab svg {
-	width: 0.95rem;
-	height: 0.95rem;
+	width: 0.78rem;
+	height: 0.78rem;
 	flex: 0 0 auto;
 	fill: none;
 	stroke: currentColor;
@@ -581,8 +582,8 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	.home-search-advanced-tab {
 		right: -0.55rem;
 		top: 1.2rem;
-		width: 1.55rem;
-		height: 4.4rem;
+		width: 1.15rem;
+		height: 5rem;
 	}
 
 	.home-hero-search-card {
