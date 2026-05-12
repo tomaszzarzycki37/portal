@@ -302,7 +302,14 @@ export default function CarDetailPage() {
     setEditingOpinionDraft({
       title: opinion.title || '',
       content: opinion.content || '',
-      rating: String(opinion.rating || 5),
+      rating_quality: opinion.rating_quality || 5,
+      rating_workmanship: opinion.rating_workmanship || 5,
+      rating_economy: opinion.rating_economy || 5,
+      rating_safety: opinion.rating_safety || 5,
+      rating_comfort: opinion.rating_comfort || 5,
+      rating_performance: opinion.rating_performance || 5,
+      rating_design: opinion.rating_design || 5,
+      rating_reliability: opinion.rating_reliability || 5,
     })
     setAdminOpinionMessage('')
     setAdminOpinionError('')
@@ -312,9 +319,8 @@ export default function CarDetailPage() {
     if (!editingOpinionDraft || !car) return
     const trimmedTitle = String(editingOpinionDraft.title || '').trim()
     const trimmedContent = String(editingOpinionDraft.content || '').trim()
-    const ratingValue = Number.parseInt(String(editingOpinionDraft.rating || '').trim(), 10)
 
-    if (!trimmedTitle || !trimmedContent || Number.isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+    if (!trimmedTitle || !trimmedContent) {
       setAdminOpinionError(t.pages.opinionCreateValidation)
       return
     }
@@ -327,7 +333,14 @@ export default function CarDetailPage() {
         car_model: car.id,
         title: trimmedTitle,
         content: trimmedContent,
-        rating: ratingValue,
+        rating_quality: editingOpinionDraft.rating_quality || 5,
+        rating_workmanship: editingOpinionDraft.rating_workmanship || 5,
+        rating_economy: editingOpinionDraft.rating_economy || 5,
+        rating_safety: editingOpinionDraft.rating_safety || 5,
+        rating_comfort: editingOpinionDraft.rating_comfort || 5,
+        rating_performance: editingOpinionDraft.rating_performance || 5,
+        rating_design: editingOpinionDraft.rating_design || 5,
+        rating_reliability: editingOpinionDraft.rating_reliability || 5,
       })
 
       const opinionsResponse = await api.get(`/opinions/?car_model=${id}&ordering=-created_at`)
@@ -715,17 +728,88 @@ export default function CarDetailPage() {
                       onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, content: e.target.value }))}
                     />
                     <label className="form-label">{t.pages.averageRating}</label>
-                    <select
-                      className="form-input"
-                      value={editingOpinionDraft.rating}
-                      onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating: e.target.value }))}
-                    >
-                      <option value={5}>5</option>
-                      <option value={4}>4</option>
-                      <option value={3}>3</option>
-                      <option value={2}>2</option>
-                      <option value={1}>1</option>
-                    </select>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                      <div>
+                        <label className="form-label">{t.pages.ratingQuality}</label>
+                        <select className="form-input" value={editingOpinionDraft.rating_quality} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_quality: Number(e.target.value) }))}>
+                          <option value={5}>5</option>
+                          <option value={4}>4</option>
+                          <option value={3}>3</option>
+                          <option value={2}>2</option>
+                          <option value={1}>1</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="form-label">{t.pages.ratingWorkmanship}</label>
+                        <select className="form-input" value={editingOpinionDraft.rating_workmanship} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_workmanship: Number(e.target.value) }))}>
+                          <option value={5}>5</option>
+                          <option value={4}>4</option>
+                          <option value={3}>3</option>
+                          <option value={2}>2</option>
+                          <option value={1}>1</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="form-label">{t.pages.ratingEconomy}</label>
+                        <select className="form-input" value={editingOpinionDraft.rating_economy} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_economy: Number(e.target.value) }))}>
+                          <option value={5}>5</option>
+                          <option value={4}>4</option>
+                          <option value={3}>3</option>
+                          <option value={2}>2</option>
+                          <option value={1}>1</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="form-label">{t.pages.ratingSafety}</label>
+                        <select className="form-input" value={editingOpinionDraft.rating_safety} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_safety: Number(e.target.value) }))}>
+                          <option value={5}>5</option>
+                          <option value={4}>4</option>
+                          <option value={3}>3</option>
+                          <option value={2}>2</option>
+                          <option value={1}>1</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="form-label">{t.pages.ratingComfort}</label>
+                        <select className="form-input" value={editingOpinionDraft.rating_comfort} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_comfort: Number(e.target.value) }))}>
+                          <option value={5}>5</option>
+                          <option value={4}>4</option>
+                          <option value={3}>3</option>
+                          <option value={2}>2</option>
+                          <option value={1}>1</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="form-label">{t.pages.ratingPerformance}</label>
+                        <select className="form-input" value={editingOpinionDraft.rating_performance} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_performance: Number(e.target.value) }))}>
+                          <option value={5}>5</option>
+                          <option value={4}>4</option>
+                          <option value={3}>3</option>
+                          <option value={2}>2</option>
+                          <option value={1}>1</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="form-label">{t.pages.ratingDesign}</label>
+                        <select className="form-input" value={editingOpinionDraft.rating_design} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_design: Number(e.target.value) }))}>
+                          <option value={5}>5</option>
+                          <option value={4}>4</option>
+                          <option value={3}>3</option>
+                          <option value={2}>2</option>
+                          <option value={1}>1</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="form-label">{t.pages.ratingReliability}</label>
+                        <select className="form-input" value={editingOpinionDraft.rating_reliability} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_reliability: Number(e.target.value) }))}>
+                          <option value={5}>5</option>
+                          <option value={4}>4</option>
+                          <option value={3}>3</option>
+                          <option value={2}>2</option>
+                          <option value={1}>1</option>
+                        </select>
+                      </div>
+                    </div>
                     <div className="admin-actions-row">
                       <button type="button" className="btn btn-secondary" onClick={() => { setEditingOpinionId(null); setEditingOpinionDraft(null) }}>
                         {t.pages.cancelLabel}
@@ -740,8 +824,41 @@ export default function CarDetailPage() {
                     <h3 className="opinion-title">{opinion.title}</h3>
                     <p className="opinion-meta">{opinion.author?.username || 'user'}</p>
                     <p className="opinion-text">{opinion.content}</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                      <div className="opinion-category-rating">
+                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingQuality}</span>
+                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_quality || 5}</span>
+                      </div>
+                      <div className="opinion-category-rating">
+                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingWorkmanship}</span>
+                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_workmanship || 5}</span>
+                      </div>
+                      <div className="opinion-category-rating">
+                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingEconomy}</span>
+                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_economy || 5}</span>
+                      </div>
+                      <div className="opinion-category-rating">
+                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingSafety}</span>
+                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_safety || 5}</span>
+                      </div>
+                      <div className="opinion-category-rating">
+                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingComfort}</span>
+                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_comfort || 5}</span>
+                      </div>
+                      <div className="opinion-category-rating">
+                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingPerformance}</span>
+                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_performance || 5}</span>
+                      </div>
+                      <div className="opinion-category-rating">
+                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingDesign}</span>
+                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_design || 5}</span>
+                      </div>
+                      <div className="opinion-category-rating">
+                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingReliability}</span>
+                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_reliability || 5}</span>
+                      </div>
+                    </div>
                     <div className="opinion-rating-row">
-                      <span className="rating">★ {opinion.rating}</span>
                       <span className="opinion-counts">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
                       <button
                         type="button"
