@@ -324,7 +324,13 @@
 	border-bottom: 1px solid #e2e8f0;
 }
 
-.home-search-basic-grid,
+.home-search-basic-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
 .home-search-advanced-grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
