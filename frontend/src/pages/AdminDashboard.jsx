@@ -208,7 +208,6 @@ export default function AdminDashboard() {
   const [isTextManagerSectionOpen, setIsTextManagerSectionOpen] = useState(false)
   const [isUserModerationSectionOpen, setIsUserModerationSectionOpen] = useState(false)
   const [newBrandName, setNewBrandName] = useState('')
-  const [newBrandSlug, setNewBrandSlug] = useState('')
   const [newBrandYear, setNewBrandYear] = useState('')
   const [newBrandWebsite, setNewBrandWebsite] = useState('')
   const [newBrandDescriptionEn, setNewBrandDescriptionEn] = useState('')
@@ -220,7 +219,6 @@ export default function AdminDashboard() {
   const [deletingBrand, setDeletingBrand] = useState(false)
   const [newModelBrandId, setNewModelBrandId] = useState('')
   const [newModelName, setNewModelName] = useState('')
-  const [newModelSlug, setNewModelSlug] = useState('')
   const [newModelYear, setNewModelYear] = useState('')
   const [newModelType, setNewModelType] = useState('sedan')
   const [newModelEngine, setNewModelEngine] = useState('')
@@ -1010,8 +1008,7 @@ export default function AdminDashboard() {
     setCreateBrandError('')
 
     const name = newBrandName.trim()
-    const slug = (newBrandSlug.trim() || toSlug(name))
-    if (!name || !slug) {
+    if (!name) {
       setCreateBrandError(t.adminPanel.createBrandValidation)
       return
     }
@@ -1027,7 +1024,6 @@ export default function AdminDashboard() {
       setCreatingBrand(true)
       await api.post('/cars/brands/', {
         name,
-        slug,
         founded_year: parsedYear,
         website: newBrandWebsite.trim(),
         description_en: newBrandDescriptionEn,
@@ -1035,7 +1031,6 @@ export default function AdminDashboard() {
       })
 
       setNewBrandName('')
-      setNewBrandSlug('')
       setNewBrandYear('')
       setNewBrandWebsite('')
       setNewBrandDescriptionEn('')
@@ -1055,10 +1050,9 @@ export default function AdminDashboard() {
     setCreateModelError('')
 
     const name = newModelName.trim()
-    const slug = (newModelSlug.trim() || toSlug(name))
     const parsedYear = Number.parseInt(newModelYear.trim(), 10)
     const brandId = Number.parseInt(newModelBrandId, 10)
-    if (!name || !slug || Number.isNaN(parsedYear) || Number.isNaN(brandId)) {
+    if (!name || Number.isNaN(parsedYear) || Number.isNaN(brandId)) {
       setCreateModelError(t.adminPanel.createModelValidation)
       return
     }
@@ -1073,7 +1067,6 @@ export default function AdminDashboard() {
       const response = await api.post('/cars/', {
         brand_id: brandId,
         name,
-        slug,
         year_introduced: parsedYear,
         vehicle_type: newModelType,
         description: newModelDescription,
@@ -1085,7 +1078,6 @@ export default function AdminDashboard() {
 
       const createdCarId = String(response.data.id || '')
       setNewModelName('')
-      setNewModelSlug('')
       setNewModelYear('')
       setNewModelType('sedan')
       setNewModelEngine('')
@@ -2182,21 +2174,7 @@ export default function AdminDashboard() {
                 id="new-brand-name"
                 className="form-input"
                 value={newBrandName}
-                onChange={(e) => {
-                  const value = e.target.value
-                  setNewBrandName(value)
-                  setNewBrandSlug((prev) => (prev.trim() ? prev : toSlug(value)))
-                }}
-              />
-            </div>
-
-            <div>
-              <label className="form-label" htmlFor="new-brand-slug">{t.adminPanel.brandSlug}</label>
-              <input
-                id="new-brand-slug"
-                className="form-input"
-                value={newBrandSlug}
-                onChange={(e) => setNewBrandSlug(e.target.value)}
+                onChange={(e) => setNewBrandName(e.target.value)}
               />
             </div>
 
@@ -3191,21 +3169,7 @@ export default function AdminDashboard() {
                 id="new-model-name"
                 className="form-input"
                 value={newModelName}
-                onChange={(e) => {
-                  const value = e.target.value
-                  setNewModelName(value)
-                  setNewModelSlug((prev) => (prev.trim() ? prev : toSlug(value)))
-                }}
-              />
-            </div>
-
-            <div>
-              <label className="form-label" htmlFor="new-model-slug">{t.adminPanel.modelSlug}</label>
-              <input
-                id="new-model-slug"
-                className="form-input"
-                value={newModelSlug}
-                onChange={(e) => setNewModelSlug(e.target.value)}
+                onChange={(e) => setNewModelName(e.target.value)}
               />
             </div>
 

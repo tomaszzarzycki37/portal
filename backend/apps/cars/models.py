@@ -2,6 +2,25 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.utils.text import slugify
+from uuid import uuid4
+
+
+def _build_unique_slug(model_cls, base_value, instance_id=None):
+    base_slug = slugify(base_value or '')
+    if not base_slug:
+        base_slug = f"item-{uuid4().hex[:8]}"
+
+    candidate = base_slug
+    suffix = 2
+    while True:
+        qs = model_cls.objects.filter(slug=candidate)
+        if instance_id is not None:
+            qs = qs.exclude(pk=instance_id)
+        if not qs.exists():
+            return candidate
+        candidate = f"{base_slug}-{suffix}"
+        suffix += 1
 
 
 class Brand(models.Model):
@@ -40,6 +59,11 @@ class Brand(models.Model):
         
         if errors:
             raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = _build_unique_slug(Brand, self.name, self.pk)
+        super().save(*args, **kwargs)
 
 
 class CarModel(models.Model):
@@ -102,6 +126,12 @@ class CarModel(models.Model):
         """Get total opinions count"""
         from apps.opinions.models import Opinion
         return Opinion.objects.filter(car_model=self).count()
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            source_name = f"{self.brand.name} {self.name}" if self.brand_id else self.name
+            self.slug = _build_unique_slug(CarModel, source_name, self.pk)
+        super().save(*args, **kwargs)
 
 
 class CarImage(models.Model):

@@ -9,6 +9,7 @@ class BrandSerializer(serializers.ModelSerializer):
     class Meta:
         model = Brand
         fields = ['id', 'name', 'slug', 'description', 'description_en', 'description_pl', 'brand_anecdote_en', 'brand_anecdote_pl', 'logo', 'founded_year', 'website', 'model_count', 'created_at']
+        read_only_fields = ['slug']
 
 
 class CarImageSerializer(serializers.ModelSerializer):
@@ -50,6 +51,7 @@ class CarModelDetailSerializer(serializers.ModelSerializer):
                   'acceleration', 'top_speed', 'fuel_consumption', 'price_range',
                   'production_status', 'is_featured', 'avg_rating', 'opinions_count',
                   'created_at', 'updated_at']
+        read_only_fields = ['slug']
 
     def get_avg_rating(self, obj):
         return round(obj.avg_rating, 1) if obj.avg_rating else 0
