@@ -216,6 +216,8 @@ export default function AdminDashboard() {
   const [creatingBrand, setCreatingBrand] = useState(false)
   const [createBrandMessage, setCreateBrandMessage] = useState('')
   const [createBrandError, setCreateBrandError] = useState('')
+  const [deleteBrandSlug, setDeleteBrandSlug] = useState('')
+  const [deletingBrand, setDeletingBrand] = useState(false)
   const [newModelBrandId, setNewModelBrandId] = useState('')
   const [newModelName, setNewModelName] = useState('')
   const [newModelSlug, setNewModelSlug] = useState('')
@@ -229,6 +231,8 @@ export default function AdminDashboard() {
   const [creatingModel, setCreatingModel] = useState(false)
   const [createModelMessage, setCreateModelMessage] = useState('')
   const [createModelError, setCreateModelError] = useState('')
+  const [deleteModelId, setDeleteModelId] = useState('')
+  const [deletingModel, setDeletingModel] = useState(false)
   const [isCreateReviewSectionOpen, setIsCreateReviewSectionOpen] = useState(false)
   const [newReviewCarId, setNewReviewCarId] = useState('')
   const [newReviewTitle, setNewReviewTitle] = useState('')
@@ -249,6 +253,8 @@ export default function AdminDashboard() {
   const [creatingReview, setCreatingReview] = useState(false)
   const [createReviewMessage, setCreateReviewMessage] = useState('')
   const [createReviewError, setCreateReviewError] = useState('')
+  const [deleteReviewId, setDeleteReviewId] = useState('')
+  const [deletingReview, setDeletingReview] = useState(false)
   const [isManageReviewsSectionOpen, setIsManageReviewsSectionOpen] = useState(false)
   const [pressReviews, setPressReviews] = useState([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
@@ -1258,6 +1264,72 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleDeleteBrandQuick = async () => {
+    if (!deleteBrandSlug) return
+    const brandToDelete = brands.find((brand) => String(brand.slug) === String(deleteBrandSlug))
+    if (!brandToDelete) return
+    if (!window.confirm(`${t.pages.brandDeleteConfirm} "${brandToDelete.name}"?`)) return
+
+    setCreateBrandMessage('')
+    setCreateBrandError('')
+    try {
+      setDeletingBrand(true)
+      await api.delete(`/cars/brands/${brandToDelete.slug}/`)
+      setCreateBrandMessage(t.pages.brandDeleted)
+      setDeleteBrandSlug('')
+      await loadInventoryData('')
+    } catch {
+      setCreateBrandError(t.pages.brandDeleteError)
+    } finally {
+      setDeletingBrand(false)
+    }
+  }
+
+  const handleDeleteModelQuick = async () => {
+    if (!deleteModelId) return
+    const modelToDelete = cars.find((car) => String(car.id) === String(deleteModelId))
+    if (!modelToDelete) return
+    if (!window.confirm(`${t.adminPanel.deleteModelConfirm} "${modelToDelete.brand_name} ${modelToDelete.name}"?`)) return
+
+    setCreateModelMessage('')
+    setCreateModelError('')
+    try {
+      setDeletingModel(true)
+      await api.delete(`/cars/${modelToDelete.id}/`)
+      setCreateModelMessage(t.adminPanel.modelDeleted)
+      setDeleteModelId('')
+      if (selectedId === modelToDelete.id) {
+        setSelectedId(null)
+      }
+      await loadInventoryData('')
+    } catch {
+      setCreateModelError(t.adminPanel.modelDeleteError)
+    } finally {
+      setDeletingModel(false)
+    }
+  }
+
+  const handleDeleteReviewQuick = async () => {
+    if (!deleteReviewId) return
+    const reviewToDelete = pressReviews.find((review) => String(review.id) === String(deleteReviewId))
+    if (!reviewToDelete) return
+    if (!window.confirm(`${t.adminPanel.reviewDeleteConfirm} "${reviewToDelete.title}"?`)) return
+
+    setCreateReviewMessage('')
+    setCreateReviewError('')
+    try {
+      setDeletingReview(true)
+      await api.delete(`/reviews/${reviewToDelete.id}/`)
+      setCreateReviewMessage(t.adminPanel.reviewDeleted)
+      setDeleteReviewId('')
+      await loadPressReviews()
+    } catch {
+      setCreateReviewError(t.adminPanel.reviewDeleteError)
+    } finally {
+      setDeletingReview(false)
+    }
+  }
+
   const handleDeleteReview = async (reviewId) => {
     if (!window.confirm(t.adminPanel.reviewDeleteConfirm)) return
     setReviewsMessage('')
@@ -2179,6 +2251,25 @@ export default function AdminDashboard() {
               <button type="submit" className="btn btn-primary" disabled={creatingBrand}>
                 {creatingBrand ? t.pages.loading : t.adminPanel.createBrand}
               </button>
+              <select
+                className="form-input"
+                style={{ minWidth: '260px' }}
+                value={deleteBrandSlug}
+                onChange={(e) => setDeleteBrandSlug(e.target.value)}
+              >
+                <option value="">{t.adminPanel.chooseBrand}</option>
+                {brands.map((brand) => (
+                  <option key={brand.slug || brand.id} value={brand.slug}>{brand.name}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleDeleteBrandQuick}
+                disabled={!deleteBrandSlug || deletingBrand}
+              >
+                {deletingBrand ? t.pages.loading : t.pages.deleteBrand}
+              </button>
             </div>
             </form>
           </div>
@@ -3026,6 +3117,25 @@ export default function AdminDashboard() {
                 <button type="submit" className="btn btn-primary" disabled={creatingReview}>
                   {creatingReview ? t.pages.loading : t.adminPanel.createReview}
                 </button>
+                <select
+                  className="form-input"
+                  style={{ minWidth: '260px' }}
+                  value={deleteReviewId}
+                  onChange={(e) => setDeleteReviewId(e.target.value)}
+                >
+                  <option value="">{t.adminPanel.deleteReview}</option>
+                  {pressReviews.map((review) => (
+                    <option key={review.id} value={review.id}>{review.title}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDeleteReviewQuick}
+                  disabled={!deleteReviewId || deletingReview}
+                >
+                  {deletingReview ? t.pages.loading : t.adminPanel.deleteReview}
+                </button>
               </div>
             </form>
           </div>
@@ -3191,6 +3301,25 @@ export default function AdminDashboard() {
             <div className="admin-actions-row">
               <button type="submit" className="btn btn-primary" disabled={creatingModel}>
                 {creatingModel ? t.pages.loading : t.adminPanel.createModel}
+              </button>
+              <select
+                className="form-input"
+                style={{ minWidth: '260px' }}
+                value={deleteModelId}
+                onChange={(e) => setDeleteModelId(e.target.value)}
+              >
+                <option value="">{t.adminPanel.deleteModel}</option>
+                {cars.map((car) => (
+                  <option key={car.id} value={car.id}>{car.brand_name} {car.name}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleDeleteModelQuick}
+                disabled={!deleteModelId || deletingModel}
+              >
+                {deletingModel ? t.pages.loading : t.adminPanel.deleteModel}
               </button>
             </div>
             </form>

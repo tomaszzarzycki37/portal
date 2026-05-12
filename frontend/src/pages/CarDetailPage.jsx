@@ -488,7 +488,7 @@ export default function CarDetailPage() {
         <h2 className="detail-section-title">{t.pages.carOpinions}</h2>
 
         {isLoggedIn && (
-          <form className="admin-form-card" onSubmit={handleAdminOpinionCreate}>
+          <form className="admin-form-card" style={{ marginBottom: '1.5rem' }} onSubmit={handleAdminOpinionCreate}>
             <h3 className="detail-section-title">{t.pages.addOpinionTitle}</h3>
 
             <label className="form-label" htmlFor="admin-opinion-title">{t.pages.opinionTitle}</label>
