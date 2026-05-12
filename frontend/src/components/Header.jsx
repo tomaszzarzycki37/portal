@@ -125,19 +125,21 @@ export default function Header() {
         <div className="lang-switch desktop-only" aria-label="Theme switcher">
           <button
             type="button"
-            className={`lang-btn ${themeMode === 'light' ? 'active' : ''}`}
+            className={`lang-btn theme-toggle-btn ${themeMode === 'light' ? 'active' : ''}`}
             onClick={() => applyThemeMode('light')}
             aria-label={t.nav.themeLight}
             title={t.nav.themeLight}
+            aria-pressed={themeMode === 'light'}
           >
             <span aria-hidden="true">☀️</span>
           </button>
           <button
             type="button"
-            className={`lang-btn ${themeMode === 'dark' ? 'active' : ''}`}
+            className={`lang-btn theme-toggle-btn ${themeMode === 'dark' ? 'active' : ''}`}
             onClick={() => applyThemeMode('dark')}
             aria-label={t.nav.themeDark}
             title={t.nav.themeDark}
+            aria-pressed={themeMode === 'dark'}
           >
             <span aria-hidden="true">🌙</span>
           </button>
