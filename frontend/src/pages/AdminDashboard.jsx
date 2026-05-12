@@ -2246,7 +2246,7 @@ export default function AdminDashboard() {
                 onClick={handleDeleteBrandQuick}
                 disabled={!deleteBrandSlug || deletingBrand}
               >
-                {deletingBrand ? t.pages.loading : t.pages.deleteBrand}
+                {deletingBrand ? t.pages.loading : t.pages.brandDelete}
               </button>
             </div>
             </form>
