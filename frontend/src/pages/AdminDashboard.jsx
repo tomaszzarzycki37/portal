@@ -2394,14 +2394,16 @@ export default function AdminDashboard() {
                       >
                         {expandedUserId === user.id ? t.adminPanel.usersHideDetails : t.adminPanel.usersEditDetails}
                       </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => handleToggleUserRole(user)}
-                        disabled={usersLoading || currentUser?.id === user.id || user.is_superuser}
-                      >
-                        {user.is_staff ? t.adminPanel.usersSetRoleUser : t.adminPanel.usersSetRoleAdmin}
-                      </button>
+                      {!user.is_superuser && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => handleToggleUserRole(user)}
+                          disabled={usersLoading || currentUser?.id === user.id}
+                        >
+                          {user.is_staff ? t.adminPanel.usersSetRoleUser : t.adminPanel.usersSetRoleAdmin}
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="btn btn-secondary"
