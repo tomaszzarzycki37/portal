@@ -35,8 +35,21 @@ export default function CarsListPage() {
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState('all')
   const [productionStatusFilter, setProductionStatusFilter] = useState('all')
   const [driveTypeFilter, setDriveTypeFilter] = useState('all')
+  const [expandedBrandDescriptions, setExpandedBrandDescriptions] = useState(() => new Set())
   const { t, lang } = useTranslation()
   const isAdmin = isAdminUser()
+
+  const toggleBrandDescription = (brandId) => {
+    setExpandedBrandDescriptions((prev) => {
+      const next = new Set(prev)
+      if (next.has(brandId)) {
+        next.delete(brandId)
+      } else {
+        next.add(brandId)
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     fetchCatalog()
@@ -287,6 +300,8 @@ export default function CarsListPage() {
             const brandDescription = lang === 'pl'
               ? (brand.description_pl || brand.description_en || brand.description)
               : (brand.description_en || brand.description)
+            const isDescriptionExpanded = expandedBrandDescriptions.has(brand.id)
+            const shouldShowDescriptionToggle = String(brandDescription || '').trim().length > 420
 
             return (
               <section key={brand.slug || brand.name} className="brand-catalog-card">
@@ -308,7 +323,20 @@ export default function CarsListPage() {
                         <span className="brand-catalog-badge">{matchedCount} {modelLabel}</span>
                       </div>
                       {brandDescription && (
-                        <p className="brand-catalog-description">{brandDescription}</p>
+                        <>
+                          <p className={`brand-catalog-description${isDescriptionExpanded ? '' : ' brand-catalog-description-collapsed'}`}>
+                            {brandDescription}
+                          </p>
+                          {shouldShowDescriptionToggle && (
+                            <button
+                              type="button"
+                              className="brand-description-toggle"
+                              onClick={() => toggleBrandDescription(brand.id)}
+                            >
+                              {isDescriptionExpanded ? t.pages.showLess : t.pages.readMore}
+                            </button>
+                          )}
+                        </>
                       )}
                       <div className="brand-catalog-meta-row">
                         {brand.founded_year && (

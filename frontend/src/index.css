@@ -1695,6 +1695,29 @@ body.app-theme-dark .brand-lineup-add-btn:hover {
   color: #475569;
 }
 
+.brand-catalog-description-collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 8;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.brand-description-toggle {
+  margin-top: 0.25rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.brand-description-toggle:hover {
+  color: #1e40af;
+  text-decoration: underline;
+}
+
 .brand-catalog-meta-row {
   margin-top: 0.55rem;
   display: flex;
