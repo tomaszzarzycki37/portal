@@ -210,7 +210,7 @@
 	display: grid;
 	grid-template-columns: 1fr;
 	gap: 0;
-	min-height: 450px;
+	min-height: 620px;
 	background-position: center;
 	background-size: cover;
 	background-repeat: no-repeat;
@@ -228,7 +228,7 @@
 .home-search-layout {
 	position: relative;
 	display: flex;
-	align-items: center;
+	align-items: stretch;
 	gap: 0.9rem;
 	width: 100%;
 	overflow: visible;
@@ -239,6 +239,7 @@
 	z-index: 1;
 	max-width: 340px;
 	width: min(100%, 340px);
+	height: 593px;
 	background: rgba(255, 255, 255, 0.98);
 	padding: 1.5rem;
 	border-radius: 1rem;
@@ -473,11 +474,13 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 
 .home-search-advanced-panel.is-open {
 	width: min(320px, calc(100vw - 3rem));
+	height: 593px;
 	padding: 1rem;
 	border-color: rgba(226, 232, 240, 0.9);
 	opacity: 1;
 	transform: translateX(0);
 	pointer-events: auto;
+	overflow-y: auto;
 }
 
 .home-search-advanced-panel-head {
@@ -575,7 +578,7 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	.home-hero-search-filters {
 		padding: 2.5rem 2rem;
 		display: flex;
-		align-items: flex-start;
+		align-items: stretch;
 		justify-content: flex-start;
 		overflow: visible;
 	}
@@ -583,6 +586,7 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	.home-hero-search-card {
 		max-width: 360px;
 		margin-left: 1.5rem;
+		height: 593px;
 	}
 
 	.home-search-advanced-tab {
@@ -609,6 +613,8 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	.home-search-advanced-panel.is-open {
 		width: 100%;
 		max-width: none;
+		height: auto;
+		overflow-y: visible;
 	}
 
 	.home-search-advanced-tab {
