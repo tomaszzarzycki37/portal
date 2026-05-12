@@ -1251,6 +1251,10 @@ body.app-theme-dark .header-tagline-section {
   letter-spacing: 0.03em;
 }
 
+.admin-wrap.admin-theme-dark .admin-section-caption {
+  color: #93c5fd;
+}
+
 .admin-car-list {
   display: grid;
   gap: 0.45rem;
