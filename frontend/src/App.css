@@ -236,6 +236,7 @@
 
 .home-hero-search-card {
 	position: relative;
+	z-index: 1;
 	max-width: 340px;
 	width: min(100%, 340px);
 	background: rgba(255, 255, 255, 0.98);
@@ -266,17 +267,16 @@
 
 .home-search-advanced-tab {
 	position: absolute;
-	left: 50%;
-	top: auto;
-	bottom: -0.7rem;
+	left: min(100%, 340px);
+	top: 50%;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 3.2rem;
-	height: 1.25rem;
+	width: 1.3rem;
+	height: 5.6rem;
 	padding: 0;
-	border-radius: 0 0 9999px 9999px;
-	border-top: 0;
+	border-radius: 0 9999px 9999px 0;
+	border-left: 0;
 	border: 1px solid #cbd5e1;
 	background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
 	color: #0f172a;
@@ -284,13 +284,13 @@
 	font-size: 0.72rem;
 	font-weight: 800;
 	cursor: pointer;
-	transform: translateX(-50%);
+	transform: translateY(-50%);
 	transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-	z-index: 2;
+	z-index: 0;
 }
 
 .home-search-advanced-tab:hover {
-	transform: translateX(-50%) translateY(0.08rem);
+	transform: translateY(-50%) translateX(0.05rem);
 	border-color: #93c5fd;
 	box-shadow: 0 12px 26px rgba(15, 23, 42, 0.16);
 }
@@ -310,12 +310,11 @@
 	stroke-width: 2.5;
 	stroke-linecap: round;
 	stroke-linejoin: round;
-	transform: rotate(90deg);
 	transition: transform 0.2s ease;
 }
 
 .home-search-advanced-tab.is-open svg {
-	transform: rotate(-90deg);
+	transform: rotate(180deg);
 }
 
 .home-filter-group {
@@ -564,6 +563,10 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 		margin-left: 1.5rem;
 	}
 
+	.home-search-advanced-tab {
+		left: min(100%, 360px);
+	}
+
 	.home-search-advanced-panel.is-open {
 		margin-top: 0.2rem;
 	}
@@ -582,10 +585,10 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	}
 
 	.home-search-advanced-tab {
-		left: 50%;
-		bottom: -0.64rem;
-		width: 2.9rem;
-		height: 1.15rem;
+		left: min(100%, 340px);
+		top: 50%;
+		width: 1.1rem;
+		height: 5rem;
 	}
 
 	.home-hero-search-card {

@@ -190,21 +190,21 @@ export default function HomePage() {
                 >
                   {t.pages.searchCta} {filteredCars.length} {t.pages.modelsAvailable} →
                 </Link>
-
-                <button
-                  type="button"
-                  className={`home-search-advanced-tab ${isAdvancedSearchOpen ? 'is-open' : ''}`}
-                  onClick={() => setIsAdvancedSearchOpen((prev) => !prev)}
-                  aria-expanded={isAdvancedSearchOpen}
-                  aria-controls="home-advanced-search-panel"
-                  aria-label={isAdvancedSearchOpen ? t.pages.closeAdvancedSearch : t.pages.advancedSearch}
-                  title={isAdvancedSearchOpen ? t.pages.closeAdvancedSearch : t.pages.advancedSearch}
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M10 6l6 6-6 6" />
-                  </svg>
-                </button>
               </div>
+
+              <button
+                type="button"
+                className={`home-search-advanced-tab ${isAdvancedSearchOpen ? 'is-open' : ''}`}
+                onClick={() => setIsAdvancedSearchOpen((prev) => !prev)}
+                aria-expanded={isAdvancedSearchOpen}
+                aria-controls="home-advanced-search-panel"
+                aria-label={isAdvancedSearchOpen ? t.pages.closeAdvancedSearch : t.pages.advancedSearch}
+                title={isAdvancedSearchOpen ? t.pages.closeAdvancedSearch : t.pages.advancedSearch}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M10 6l6 6-6 6" />
+                </svg>
+              </button>
 
               <aside
                 id="home-advanced-search-panel"
