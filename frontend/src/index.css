@@ -1745,6 +1745,7 @@ body.app-theme-dark .brand-lineup-add-btn:hover {
 
 .brand-catalog-description-collapsed {
   display: -webkit-box;
+  line-clamp: 8;
   -webkit-line-clamp: 8;
   -webkit-box-orient: vertical;
   overflow: hidden;

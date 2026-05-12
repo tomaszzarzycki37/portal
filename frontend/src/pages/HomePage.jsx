@@ -16,6 +16,7 @@ export default function HomePage() {
   const [engineSearch, setEngineSearch] = useState('')
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false)
 
   useEffect(() => {
     const loadCars = async () => {
@@ -145,106 +146,146 @@ export default function HomePage() {
           }}
         >
           <div className="home-hero-search-filters">
-            <div className="home-hero-search-card">
-              <h2>{t.pages.modelSearchTitle}</h2>
-              
-              <div className="home-filter-group">
-                <label className="home-filter-checkbox">
-                  <input 
-                    type="text" 
-                    className="form-input"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={t.pages.searchInputPlaceholder}
-                  />
-                </label>
+            <div className="home-search-layout">
+              <div className="home-hero-search-card">
+                <div className="home-search-card-head">
+                  <h2>{t.pages.modelSearchTitle}</h2>
+                  <button
+                    type="button"
+                    className={`home-search-advanced-toggle ${isAdvancedSearchOpen ? 'is-open' : ''}`}
+                    onClick={() => setIsAdvancedSearchOpen((prev) => !prev)}
+                    aria-expanded={isAdvancedSearchOpen}
+                    aria-controls="home-advanced-search-panel"
+                    aria-label={isAdvancedSearchOpen ? t.pages.closeAdvancedSearch : t.pages.advancedSearch}
+                    title={isAdvancedSearchOpen ? t.pages.closeAdvancedSearch : t.pages.advancedSearch}
+                  >
+                    <span>{isAdvancedSearchOpen ? t.pages.closeAdvancedSearch : t.pages.advancedSearch}</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M10 6l6 6-6 6" />
+                    </svg>
+                  </button>
+                </div>
 
-                {searchSuggestions.length > 0 && (
-                  <div className="home-search-results" role="listbox" aria-label={t.pages.searchModels}>
-                    {searchSuggestions.map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className="home-search-result-item"
-                        onClick={() => {
-                          setSearchTerm(item.label)
-                          if (item.brand) setSelectedBrand(item.brand)
-                        }}
-                      >
-                        <strong>{item.model || item.label}</strong>
-                        <span>{item.brand || t.pages.unknownBrand}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                <div className="home-filter-group">
+                  <label className="home-filter-checkbox">
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder={t.pages.searchInputPlaceholder}
+                    />
+                  </label>
 
-              <div className="home-filter-section">
-                <label className="home-filter-label">{t.pages.brandLabel}</label>
-                <select
-                  className="form-input"
-                  value={selectedBrand}
-                  onChange={(e) => setSelectedBrand(e.target.value)}
+                  {searchSuggestions.length > 0 && (
+                    <div className="home-search-results" role="listbox" aria-label={t.pages.searchModels}>
+                      {searchSuggestions.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="home-search-result-item"
+                          onClick={() => {
+                            setSearchTerm(item.label)
+                            if (item.brand) setSelectedBrand(item.brand)
+                          }}
+                        >
+                          <strong>{item.model || item.label}</strong>
+                          <span>{item.brand || t.pages.unknownBrand}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Link
+                  to="/cars"
+                  className="home-filter-cta"
+                  style={{ textDecoration: 'none', display: 'block', textAlign: 'center' }}
                 >
-                  <option value="all">{t.pages.allLabel}</option>
-                  {brands.map((brand) => (
-                    <option key={brand} value={brand}>{brand}</option>
-                  ))}
-                </select>
+                  {t.pages.searchCta} {filteredCars.length} {t.pages.modelsAvailable} →
+                </Link>
               </div>
 
-              <div className="home-filter-section">
-                <label className="home-filter-label">{t.pages.engineFilter}</label>
-                <input 
-                  type="text"
-                  className="form-input"
-                  value={engineSearch}
-                  onChange={(e) => setEngineSearch(e.target.value)}
-                  placeholder={t.pages.engineFilterPlaceholder}
-                  list="engineTypes"
-                />
-                <datalist id="engineTypes">
-                  {engineTypes.map((type) => (
-                    <option key={type} value={type} />
-                  ))}
-                </datalist>
-              </div>
-
-              <div className="home-filter-section">
-                <label className="home-filter-label">{t.pages.typeFilter}</label>
-                <select
-                  className="form-input"
-                  value={vehicleTypeFilter}
-                  onChange={(e) => setVehicleTypeFilter(e.target.value)}
-                >
-                  <option value="all">{t.pages.allLabel}</option>
-                  {vehicleTypes.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="home-filter-section">
-                <label className="home-filter-label">{t.pages.productionStatus}</label>
-                <select
-                  className="form-input"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">{t.pages.allLabel}</option>
-                  <option value="active">{t.pages.statusActive}</option>
-                  <option value="discontinued">{t.pages.statusDiscontinued}</option>
-                  <option value="upcoming">{t.pages.statusUpcoming}</option>
-                </select>
-              </div>
-
-              <Link 
-                to="/cars" 
-                className="home-filter-cta"
-                style={{ textDecoration: 'none', display: 'block', textAlign: 'center' }}
+              <aside
+                id="home-advanced-search-panel"
+                className={`home-search-advanced-panel ${isAdvancedSearchOpen ? 'is-open' : ''}`}
+                aria-hidden={!isAdvancedSearchOpen}
               >
-                {t.pages.searchCta} {filteredCars.length} {t.pages.modelsAvailable} →
-              </Link>
+                <div className="home-search-advanced-panel-head">
+                  <div>
+                    <p className="home-search-advanced-kicker">{t.pages.advancedSearchTitle}</p>
+                    <h3>{t.pages.advancedSearch}</h3>
+                  </div>
+                  <button
+                    type="button"
+                    className="home-search-advanced-close"
+                    onClick={() => setIsAdvancedSearchOpen(false)}
+                    aria-label={t.pages.closeAdvancedSearch}
+                    title={t.pages.closeAdvancedSearch}
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className="home-filter-section">
+                  <label className="home-filter-label">{t.pages.brandLabel}</label>
+                  <select
+                    className="form-input"
+                    value={selectedBrand}
+                    onChange={(e) => setSelectedBrand(e.target.value)}
+                  >
+                    <option value="all">{t.pages.allLabel}</option>
+                    {brands.map((brand) => (
+                      <option key={brand} value={brand}>{brand}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="home-filter-section">
+                  <label className="home-filter-label">{t.pages.engineFilter}</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={engineSearch}
+                    onChange={(e) => setEngineSearch(e.target.value)}
+                    placeholder={t.pages.engineFilterPlaceholder}
+                    list="engineTypes"
+                  />
+                  <datalist id="engineTypes">
+                    {engineTypes.map((type) => (
+                      <option key={type} value={type} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div className="home-filter-section">
+                  <label className="home-filter-label">{t.pages.typeFilter}</label>
+                  <select
+                    className="form-input"
+                    value={vehicleTypeFilter}
+                    onChange={(e) => setVehicleTypeFilter(e.target.value)}
+                  >
+                    <option value="all">{t.pages.allLabel}</option>
+                    {vehicleTypes.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="home-filter-section home-filter-section-last">
+                  <label className="home-filter-label">{t.pages.productionStatus}</label>
+                  <select
+                    className="form-input"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="all">{t.pages.allLabel}</option>
+                    <option value="active">{t.pages.statusActive}</option>
+                    <option value="discontinued">{t.pages.statusDiscontinued}</option>
+                    <option value="upcoming">{t.pages.statusUpcoming}</option>
+                  </select>
+                </div>
+              </aside>
             </div>
           </div>
         </div>
