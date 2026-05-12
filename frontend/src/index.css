@@ -523,6 +523,25 @@ body.app-theme-dark .header-tagline-section {
   color: #fbbf24;
 }
 
+.language-toggle-btn {
+  min-width: 38px;
+  justify-content: center;
+  display: inline-flex;
+  align-items: center;
+}
+
+.language-toggle-btn.active {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.18);
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.35), 0 6px 14px rgba(2, 6, 23, 0.25);
+}
+
+body.app-theme-dark .language-toggle-btn.active {
+  border-color: #fbbf24;
+  background: rgba(245, 158, 11, 0.2);
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.45), 0 8px 18px rgba(2, 6, 23, 0.35);
+}
+
 .theme-toggle-btn {
   min-width: 38px;
   justify-content: center;

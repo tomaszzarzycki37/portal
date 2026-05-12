@@ -108,14 +108,14 @@ export default function Header() {
         <div className="lang-switch desktop-only" aria-label="Language switcher">
           <button
             type="button"
-            className={`lang-btn ${lang === 'pl' ? 'active' : ''}`}
+            className={`lang-btn language-toggle-btn ${lang === 'pl' ? 'active' : ''}`}
             onClick={() => setLang('pl')}
           >
             PL
           </button>
           <button
             type="button"
-            className={`lang-btn ${lang === 'en' ? 'active' : ''}`}
+            className={`lang-btn language-toggle-btn ${lang === 'en' ? 'active' : ''}`}
             onClick={() => setLang('en')}
           >
             EN
@@ -200,14 +200,14 @@ export default function Header() {
             <div className="lang-switch" aria-label="Language switcher">
               <button
                 type="button"
-                className={`lang-btn ${lang === 'pl' ? 'active' : ''}`}
+                className={`lang-btn language-toggle-btn ${lang === 'pl' ? 'active' : ''}`}
                 onClick={() => setLang('pl')}
               >
                 PL
               </button>
               <button
                 type="button"
-                className={`lang-btn ${lang === 'en' ? 'active' : ''}`}
+                className={`lang-btn language-toggle-btn ${lang === 'en' ? 'active' : ''}`}
                 onClick={() => setLang('en')}
               >
                 EN
