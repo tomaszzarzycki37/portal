@@ -1894,6 +1894,53 @@ export default function AdminDashboard() {
               </div>
             )}
 
+            {isImageEditorOpen && (
+              <>
+                <p className="admin-section-caption">{t.adminPanel.imageEditorTitle}</p>
+
+                <label className="form-label" htmlFor="image">{t.adminPanel.image}</label>
+                <input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  className="form-input"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null
+                    setImageFile(file)
+                    if (file) {
+                      setImagePreview(URL.createObjectURL(file))
+                    } else if (selectedCar) {
+                      setImagePreview(getCarImage(selectedCar))
+                    }
+                  }}
+                />
+
+                <label className="form-label" htmlFor="brand-logo">{t.adminPanel.brandLogo}</label>
+                <input
+                  id="brand-logo"
+                  type="file"
+                  accept="image/*"
+                  className="form-input"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null
+                    setBrandLogoFile(file)
+                    if (file) {
+                      setBrandLogoPreview(URL.createObjectURL(file))
+                    } else if (selectedCar) {
+                      setBrandLogoPreview(resolveMediaUrl(selectedCar.brand?.logo || ''))
+                    }
+                  }}
+                />
+                {brandLogoPreview && (
+                  <img
+                    src={brandLogoPreview}
+                    alt={t.adminPanel.brandLogo}
+                    className="admin-brand-logo-preview"
+                  />
+                )}
+              </>
+            )}
+
             <p className="admin-section-caption">{t.adminInline.sectionBasics}</p>
             <div className="admin-form-grid">
               <div>
@@ -2078,53 +2125,6 @@ export default function AdminDashboard() {
               />
               {t.adminPanel.featured}
             </label>
-
-            {isImageEditorOpen && (
-              <>
-                <p className="admin-section-caption">{t.adminPanel.imageEditorTitle}</p>
-
-                <label className="form-label" htmlFor="image">{t.adminPanel.image}</label>
-                <input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  className="form-input"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] || null
-                    setImageFile(file)
-                    if (file) {
-                      setImagePreview(URL.createObjectURL(file))
-                    } else if (selectedCar) {
-                      setImagePreview(getCarImage(selectedCar))
-                    }
-                  }}
-                />
-
-                <label className="form-label" htmlFor="brand-logo">{t.adminPanel.brandLogo}</label>
-                <input
-                  id="brand-logo"
-                  type="file"
-                  accept="image/*"
-                  className="form-input"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] || null
-                    setBrandLogoFile(file)
-                    if (file) {
-                      setBrandLogoPreview(URL.createObjectURL(file))
-                    } else if (selectedCar) {
-                      setBrandLogoPreview(resolveMediaUrl(selectedCar.brand?.logo || ''))
-                    }
-                  }}
-                />
-                {brandLogoPreview && (
-                  <img
-                    src={brandLogoPreview}
-                    alt={t.adminPanel.brandLogo}
-                    className="admin-brand-logo-preview"
-                  />
-                )}
-              </>
-            )}
 
             {message && <p className="form-success">{message}</p>}
             {error && <p className="form-error">{error}</p>}
