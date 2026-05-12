@@ -2404,22 +2404,26 @@ export default function AdminDashboard() {
                           {user.is_staff ? t.adminPanel.usersSetRoleUser : t.adminPanel.usersSetRoleAdmin}
                         </button>
                       )}
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => handleToggleUserActive(user)}
-                        disabled={usersLoading || currentUser?.id === user.id || user.is_superuser}
-                      >
-                        {user.is_active ? t.adminPanel.usersBlock : t.adminPanel.usersUnblock}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-danger"
-                        onClick={() => handleDeleteUser(user)}
-                        disabled={usersLoading}
-                      >
-                        {t.adminPanel.usersDelete}
-                      </button>
+                      {!user.is_superuser && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => handleToggleUserActive(user)}
+                          disabled={usersLoading || currentUser?.id === user.id}
+                        >
+                          {user.is_active ? t.adminPanel.usersBlock : t.adminPanel.usersUnblock}
+                        </button>
+                      )}
+                      {!user.is_superuser && (
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          onClick={() => handleDeleteUser(user)}
+                          disabled={usersLoading || currentUser?.id === user.id}
+                        >
+                          {t.adminPanel.usersDelete}
+                        </button>
+                      )}
                     </div>
                   </div>
 
