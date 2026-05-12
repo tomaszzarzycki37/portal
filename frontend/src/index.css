@@ -2261,7 +2261,13 @@ body.app-theme-dark .brand-anecdote-text {
   margin-top: 0.7rem;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.5rem;
+}
+
+.detail-shortcuts-row .admin-inline-gear {
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .detail-badge {
