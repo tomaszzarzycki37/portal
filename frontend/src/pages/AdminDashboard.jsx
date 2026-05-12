@@ -657,6 +657,11 @@ export default function AdminDashboard() {
   }
 
   const currentUser = useMemo(() => getCurrentUser(), [])
+  const isPasswordConfirmationValid = Boolean(
+    userEditDraft?.new_password &&
+    userEditDraft?.confirm_password &&
+    userEditDraft.new_password === userEditDraft.confirm_password,
+  )
   const dashboardOwner = useMemo(() => currentUser?.username || 'admin', [currentUser])
   const dashboardOwnerInitial = useMemo(() => dashboardOwner.slice(0, 1).toUpperCase(), [dashboardOwner])
   const contentKeys = useMemo(() => getTranslationKeys(contentLang), [contentLang])
@@ -2514,6 +2519,11 @@ export default function AdminDashboard() {
                           disabled={savingUserDetails}
                           placeholder={t.adminPanel.usersPasswordPlaceholder}
                         />
+                        {isPasswordConfirmationValid && (
+                          <p className="form-success" style={{ marginTop: '0.45rem' }}>
+                            {t.adminPanel.usersPasswordMatch}
+                          </p>
+                        )}
                       </div>
 
                       <div style={{ gridColumn: '1 / -1' }}>
@@ -2602,6 +2612,12 @@ export default function AdminDashboard() {
                           {savingUserDetails ? t.pages.loading : t.adminPanel.usersSaveDetails}
                         </button>
                       </div>
+
+                      {usersMessage && (
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <p className="form-success" style={{ marginTop: '0.35rem' }}>{usersMessage}</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </article>
