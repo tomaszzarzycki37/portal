@@ -32,7 +32,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <p>&copy; {currentYear} China Cars. {t.footer.rights}</p>
+        <p>&copy; {currentYear} AutaChin. {t.footer.rights}</p>
       </div>
     </footer>
   )
