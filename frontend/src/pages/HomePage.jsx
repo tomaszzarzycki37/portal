@@ -3,8 +3,23 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCarImage } from '../utils/carImages'
+import { isAdminUser } from '../utils/auth'
 
 const FALLBACK_HERO_IMAGE = 'https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&w=1800&q=80'
+const HERO_BACKGROUND_CONTENT_KEY = 'home.heroSearchBackgroundUrl'
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const API_ORIGIN = import.meta.env.VITE_API_URL
+  ? API_BASE_URL.replace(/\/api\/?$/, '')
+  : import.meta.env.DEV
+    ? 'http://localhost:8000'
+    : ''
+
+function resolveMediaUrl(url) {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
+  if (url.startsWith('/')) return `${API_ORIGIN}${url}`
+  return `${API_ORIGIN}/${url}`
+}
 
 const parsePriceRange = (priceRange) => {
   const matches = String(priceRange || '').match(/\d[\d\s]*/g) || []
@@ -24,7 +39,7 @@ const parsePriceRange = (priceRange) => {
 }
 
 export default function HomePage() {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const [cars, setCars] = useState([])
   const [featuredReviews, setFeaturedReviews] = useState([])
   const [featuredSlideIndex, setFeaturedSlideIndex] = useState(0)
@@ -43,6 +58,13 @@ export default function HomePage() {
   const [priceFrom, setPriceFrom] = useState('')
   const [priceTo, setPriceTo] = useState('')
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false)
+  const [heroBackgroundImage, setHeroBackgroundImage] = useState(FALLBACK_HERO_IMAGE)
+  const [isHeroImageEditorOpen, setIsHeroImageEditorOpen] = useState(false)
+  const [heroImageFile, setHeroImageFile] = useState(null)
+  const [heroImageSaving, setHeroImageSaving] = useState(false)
+  const [heroImageMessage, setHeroImageMessage] = useState('')
+  const [heroImageError, setHeroImageError] = useState('')
+  const isAdmin = isAdminUser()
 
   useEffect(() => {
     const loadCars = async () => {
@@ -82,6 +104,26 @@ export default function HomePage() {
 
     return () => clearInterval(timer)
   }, [featuredReviews])
+
+  useEffect(() => {
+    const loadHeroBackgroundImage = async () => {
+      try {
+        const response = await api.get(`/common/content/?key=${encodeURIComponent(HERO_BACKGROUND_CONTENT_KEY)}`)
+        const records = response.data.results || response.data || []
+        const preferredRecord =
+          records.find((record) => record.lang === lang && String(record.value || '').trim())
+          || records.find((record) => record.lang === 'en' && String(record.value || '').trim())
+          || records.find((record) => String(record.value || '').trim())
+
+        const backgroundUrl = preferredRecord ? resolveMediaUrl(String(preferredRecord.value || '').trim()) : ''
+        setHeroBackgroundImage(backgroundUrl || FALLBACK_HERO_IMAGE)
+      } catch {
+        setHeroBackgroundImage(FALLBACK_HERO_IMAGE)
+      }
+    }
+
+    loadHeroBackgroundImage()
+  }, [lang])
 
   const vehicleTypes = useMemo(() => {
     const values = new Set(cars.map((car) => String(car.vehicle_type || '').trim()).filter(Boolean))
@@ -163,7 +205,52 @@ export default function HomePage() {
     return byId
   }, [cars])
 
-  const heroBackgroundImage = FALLBACK_HERO_IMAGE
+  const handleSaveHeroBackgroundImage = async () => {
+    if (!isAdmin || !heroImageFile) return
+
+    try {
+      setHeroImageSaving(true)
+      setHeroImageMessage('')
+      setHeroImageError('')
+
+      const uploadFormData = new FormData()
+      uploadFormData.append('file', heroImageFile)
+      const uploadResponse = await api.post('/common/content/upload/', uploadFormData)
+      const uploadedUrl = String(uploadResponse.data?.url || '').trim()
+
+      if (!uploadedUrl) {
+        throw new Error('missing_upload_url')
+      }
+
+      const existingResponse = await api.get(`/common/content/?key=${encodeURIComponent(HERO_BACKGROUND_CONTENT_KEY)}`)
+      const existingRecords = existingResponse.data.results || existingResponse.data || []
+
+      await Promise.all(['en', 'pl'].map(async (languageCode) => {
+        const existingRecord = existingRecords.find((record) => record.lang === languageCode)
+        const payload = {
+          key: HERO_BACKGROUND_CONTENT_KEY,
+          lang: languageCode,
+          value: uploadedUrl,
+        }
+
+        if (existingRecord?.id) {
+          await api.patch(`/common/content/${existingRecord.id}/`, payload)
+          return
+        }
+
+        await api.post('/common/content/', payload)
+      }))
+
+      setHeroBackgroundImage(resolveMediaUrl(uploadedUrl))
+      setHeroImageFile(null)
+      setHeroImageMessage(t.adminInline.saved)
+      setIsHeroImageEditorOpen(false)
+    } catch {
+      setHeroImageError(t.adminInline.saveError)
+    } finally {
+      setHeroImageSaving(false)
+    }
+  }
 
   return (
     <div className="home-wrap">
@@ -174,6 +261,57 @@ export default function HomePage() {
             backgroundImage: `linear-gradient(110deg, rgba(35, 54, 116, 0.78) 0%, rgba(73, 39, 132, 0.55) 45%, rgba(17, 24, 39, 0.35) 100%), url('${heroBackgroundImage}')`,
           }}
         >
+          {isAdmin && (
+            <div className={`home-hero-admin-tools ${isHeroImageEditorOpen ? 'is-open' : ''}`}>
+              <button
+                type="button"
+                className={`admin-inline-toggle admin-inline-gear home-hero-admin-gear ${isHeroImageEditorOpen ? 'is-open' : ''}`}
+                onClick={() => {
+                  setIsHeroImageEditorOpen((prev) => !prev)
+                  setHeroImageMessage('')
+                  setHeroImageError('')
+                }}
+                aria-expanded={isHeroImageEditorOpen}
+                aria-label={isHeroImageEditorOpen ? t.adminPanel.hideImageEditor : t.adminPanel.editImage}
+                title={isHeroImageEditorOpen ? t.adminPanel.hideImageEditor : t.adminPanel.editImage}
+              >
+                <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
+                </svg>
+              </button>
+
+              {isHeroImageEditorOpen && (
+                <div className="home-hero-admin-panel">
+                  <input
+                    id="home-hero-image-upload"
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      setHeroImageFile(e.target.files?.[0] || null)
+                      setHeroImageMessage('')
+                      setHeroImageError('')
+                    }}
+                  />
+                  <div className="admin-file-picker-row">
+                    <label htmlFor="home-hero-image-upload" className="btn btn-secondary btn-sm">{t.adminInline.chooseFile}</label>
+                    <span className="admin-file-picker-name">{heroImageFile ? heroImageFile.name : t.adminInline.noFileSelected}</span>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      disabled={!heroImageFile || heroImageSaving}
+                      onClick={handleSaveHeroBackgroundImage}
+                    >
+                      {heroImageSaving ? t.pages.loading : t.adminInline.save}
+                    </button>
+                  </div>
+                  {heroImageMessage && <p className="form-success">{heroImageMessage}</p>}
+                  {heroImageError && <p className="form-error">{heroImageError}</p>}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="home-hero-search-filters">
             <div className="home-search-layout">
               <div className="home-hero-search-card">
