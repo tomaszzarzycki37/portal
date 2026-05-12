@@ -3141,12 +3141,6 @@ export default function AdminDashboard() {
 
         {isCreateModelSectionOpen && (
           <div id="admin-create-model-content">
-                            onChange={(e) => setReviewEditDraft((prev) => ({
-                              ...prev,
-                              title: e.target.value,
-                              slug: prev.slug || toSlug(e.target.value),
-                            }))}
-
             <form onSubmit={handleCreateModel}>
           <div className="admin-form-grid">
             <div>
