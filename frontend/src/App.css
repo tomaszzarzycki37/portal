@@ -656,7 +656,7 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 
 	.home-search-advanced-panel.is-open {
 		width: min(520px, calc(100vw - 8rem));
-		margin-top: 0.2rem;
+		margin-top: 0;
 	}
 }
 
