@@ -67,7 +67,14 @@ export default function CarDetailPage() {
   const [heroImageError, setHeroImageError] = useState('')
   const [adminOpinionTitle, setAdminOpinionTitle] = useState('')
   const [adminOpinionContent, setAdminOpinionContent] = useState('')
-  const [adminOpinionRating, setAdminOpinionRating] = useState(5)
+  const [adminOpinionRatingQuality, setAdminOpinionRatingQuality] = useState(5)
+  const [adminOpinionRatingWorkmanship, setAdminOpinionRatingWorkmanship] = useState(5)
+  const [adminOpinionRatingEconomy, setAdminOpinionRatingEconomy] = useState(5)
+  const [adminOpinionRatingSafety, setAdminOpinionRatingSafety] = useState(5)
+  const [adminOpinionRatingComfort, setAdminOpinionRatingComfort] = useState(5)
+  const [adminOpinionRatingPerformance, setAdminOpinionRatingPerformance] = useState(5)
+  const [adminOpinionRatingDesign, setAdminOpinionRatingDesign] = useState(5)
+  const [adminOpinionRatingReliability, setAdminOpinionRatingReliability] = useState(5)
   const [adminOpinionSaving, setAdminOpinionSaving] = useState(false)
   const [adminOpinionMessage, setAdminOpinionMessage] = useState('')
   const [adminOpinionError, setAdminOpinionError] = useState('')
@@ -239,9 +246,8 @@ export default function CarDetailPage() {
 
     const trimmedTitle = String(adminOpinionTitle || '').trim()
     const trimmedContent = String(adminOpinionContent || '').trim()
-    const ratingValue = Number.parseInt(String(adminOpinionRating || '').trim(), 10)
 
-    if (!trimmedTitle || !trimmedContent || Number.isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+    if (!trimmedTitle || !trimmedContent) {
       setAdminOpinionMessage('')
       setAdminOpinionError(t.pages.opinionCreateValidation)
       return
@@ -256,7 +262,14 @@ export default function CarDetailPage() {
         car_model: car.id,
         title: trimmedTitle,
         content: trimmedContent,
-        rating: ratingValue,
+        rating_quality: adminOpinionRatingQuality,
+        rating_workmanship: adminOpinionRatingWorkmanship,
+        rating_economy: adminOpinionRatingEconomy,
+        rating_safety: adminOpinionRatingSafety,
+        rating_comfort: adminOpinionRatingComfort,
+        rating_performance: adminOpinionRatingPerformance,
+        rating_design: adminOpinionRatingDesign,
+        rating_reliability: adminOpinionRatingReliability,
       })
 
       const [carResponse, opinionsResponse] = await Promise.all([
@@ -268,7 +281,14 @@ export default function CarDetailPage() {
 
       setAdminOpinionTitle('')
       setAdminOpinionContent('')
-      setAdminOpinionRating(5)
+      setAdminOpinionRatingQuality(5)
+      setAdminOpinionRatingWorkmanship(5)
+      setAdminOpinionRatingEconomy(5)
+      setAdminOpinionRatingSafety(5)
+      setAdminOpinionRatingComfort(5)
+      setAdminOpinionRatingPerformance(5)
+      setAdminOpinionRatingDesign(5)
+      setAdminOpinionRatingReliability(5)
       setAdminOpinionMessage(t.pages.opinionCreated)
     } catch {
       setAdminOpinionError(t.pages.opinionCreateError)
@@ -579,18 +599,88 @@ export default function CarDetailPage() {
             />
 
             <label className="form-label" htmlFor="admin-opinion-rating">{t.pages.averageRating}</label>
-            <select
-              id="admin-opinion-rating"
-              className="form-input"
-              value={adminOpinionRating}
-              onChange={(e) => setAdminOpinionRating(e.target.value)}
-            >
-              <option value={5}>5</option>
-              <option value={4}>4</option>
-              <option value={3}>3</option>
-              <option value={2}>2</option>
-              <option value={1}>1</option>
-            </select>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div>
+                <label className="form-label">{t.pages.ratingQuality}</label>
+                <select className="form-input" value={adminOpinionRatingQuality} onChange={(e) => setAdminOpinionRatingQuality(Number(e.target.value))}>
+                  <option value={5}>5</option>
+                  <option value={4}>4</option>
+                  <option value={3}>3</option>
+                  <option value={2}>2</option>
+                  <option value={1}>1</option>
+                </select>
+              </div>
+              <div>
+                <label className="form-label">{t.pages.ratingWorkmanship}</label>
+                <select className="form-input" value={adminOpinionRatingWorkmanship} onChange={(e) => setAdminOpinionRatingWorkmanship(Number(e.target.value))}>
+                  <option value={5}>5</option>
+                  <option value={4}>4</option>
+                  <option value={3}>3</option>
+                  <option value={2}>2</option>
+                  <option value={1}>1</option>
+                </select>
+              </div>
+              <div>
+                <label className="form-label">{t.pages.ratingEconomy}</label>
+                <select className="form-input" value={adminOpinionRatingEconomy} onChange={(e) => setAdminOpinionRatingEconomy(Number(e.target.value))}>
+                  <option value={5}>5</option>
+                  <option value={4}>4</option>
+                  <option value={3}>3</option>
+                  <option value={2}>2</option>
+                  <option value={1}>1</option>
+                </select>
+              </div>
+              <div>
+                <label className="form-label">{t.pages.ratingSafety}</label>
+                <select className="form-input" value={adminOpinionRatingSafety} onChange={(e) => setAdminOpinionRatingSafety(Number(e.target.value))}>
+                  <option value={5}>5</option>
+                  <option value={4}>4</option>
+                  <option value={3}>3</option>
+                  <option value={2}>2</option>
+                  <option value={1}>1</option>
+                </select>
+              </div>
+              <div>
+                <label className="form-label">{t.pages.ratingComfort}</label>
+                <select className="form-input" value={adminOpinionRatingComfort} onChange={(e) => setAdminOpinionRatingComfort(Number(e.target.value))}>
+                  <option value={5}>5</option>
+                  <option value={4}>4</option>
+                  <option value={3}>3</option>
+                  <option value={2}>2</option>
+                  <option value={1}>1</option>
+                </select>
+              </div>
+              <div>
+                <label className="form-label">{t.pages.ratingPerformance}</label>
+                <select className="form-input" value={adminOpinionRatingPerformance} onChange={(e) => setAdminOpinionRatingPerformance(Number(e.target.value))}>
+                  <option value={5}>5</option>
+                  <option value={4}>4</option>
+                  <option value={3}>3</option>
+                  <option value={2}>2</option>
+                  <option value={1}>1</option>
+                </select>
+              </div>
+              <div>
+                <label className="form-label">{t.pages.ratingDesign}</label>
+                <select className="form-input" value={adminOpinionRatingDesign} onChange={(e) => setAdminOpinionRatingDesign(Number(e.target.value))}>
+                  <option value={5}>5</option>
+                  <option value={4}>4</option>
+                  <option value={3}>3</option>
+                  <option value={2}>2</option>
+                  <option value={1}>1</option>
+                </select>
+              </div>
+              <div>
+                <label className="form-label">{t.pages.ratingReliability}</label>
+                <select className="form-input" value={adminOpinionRatingReliability} onChange={(e) => setAdminOpinionRatingReliability(Number(e.target.value))}>
+                  <option value={5}>5</option>
+                  <option value={4}>4</option>
+                  <option value={3}>3</option>
+                  <option value={2}>2</option>
+                  <option value={1}>1</option>
+                </select>
+              </div>
+            </div>
 
             {adminOpinionMessage && <p className="form-success">{adminOpinionMessage}</p>}
             {adminOpinionError && <p className="form-error">{adminOpinionError}</p>}

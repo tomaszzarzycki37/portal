@@ -12,9 +12,47 @@ class Opinion(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='opinions')
     title = models.CharField(max_length=200)
     content = models.TextField()
-    rating = models.IntegerField(
+    
+    # Category-based ratings (1-5 each)
+    rating_quality = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text='Rating from 1 to 5'
+        default=5,
+        help_text='Quality rating (1-5)'
+    )
+    rating_workmanship = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        default=5,
+        help_text='Workmanship rating (1-5)'
+    )
+    rating_economy = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        default=5,
+        help_text='Economy rating (1-5)'
+    )
+    rating_safety = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        default=5,
+        help_text='Safety rating (1-5)'
+    )
+    rating_comfort = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        default=5,
+        help_text='Comfort rating (1-5)'
+    )
+    rating_performance = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        default=5,
+        help_text='Performance rating (1-5)'
+    )
+    rating_design = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        default=5,
+        help_text='Design rating (1-5)'
+    )
+    rating_reliability = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        default=5,
+        help_text='Reliability rating (1-5)'
     )
     
     # Metadata
@@ -33,6 +71,16 @@ class Opinion(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.author.username}"
+    
+    @property
+    def rating(self):
+        """Calculate average rating from all categories"""
+        ratings = [
+            self.rating_quality, self.rating_workmanship, self.rating_economy,
+            self.rating_safety, self.rating_comfort, self.rating_performance,
+            self.rating_design, self.rating_reliability
+        ]
+        return round(sum(ratings) / len(ratings), 1) if ratings else 0
 
 
 class Comment(models.Model):

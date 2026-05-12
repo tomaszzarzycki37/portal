@@ -31,14 +31,20 @@ class OpinionListSerializer(serializers.ModelSerializer):
     car_brand_name = serializers.CharField(source='car_model.brand.name', read_only=True)
     content = serializers.CharField(read_only=True)
     comments_count = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Opinion
-        fields = ['id', 'car_id', 'car_name', 'car_brand_name', 'title', 'content', 'rating', 'author', 
-                  'helpful_count', 'unhelpful_count', 'comments_count', 'is_verified_owner', 'created_at']
+        fields = ['id', 'car_id', 'car_name', 'car_brand_name', 'title', 'content', 'rating', 
+                  'rating_quality', 'rating_workmanship', 'rating_economy', 'rating_safety',
+                  'rating_comfort', 'rating_performance', 'rating_design', 'rating_reliability',
+                  'author', 'helpful_count', 'unhelpful_count', 'comments_count', 'is_verified_owner', 'created_at']
 
     def get_comments_count(self, obj):
         return obj.comments.count()
+    
+    def get_rating(self, obj):
+        return obj.rating
 
 
 class OpinionDetailSerializer(serializers.ModelSerializer):
@@ -47,11 +53,14 @@ class OpinionDetailSerializer(serializers.ModelSerializer):
     car_id = serializers.IntegerField(source='car_model.id', read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     user_vote = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Opinion
-        fields = ['id', 'car_id', 'car_name', 'title', 'content', 'rating', 'author', 
-                  'helpful_count', 'unhelpful_count', 'comments', 'user_vote',
+        fields = ['id', 'car_id', 'car_name', 'title', 'content', 'rating',
+                  'rating_quality', 'rating_workmanship', 'rating_economy', 'rating_safety',
+                  'rating_comfort', 'rating_performance', 'rating_design', 'rating_reliability',
+                  'author', 'helpful_count', 'unhelpful_count', 'comments', 'user_vote',
                   'is_verified_owner', 'is_approved', 'created_at', 'updated_at']
 
     def get_user_vote(self, obj):
@@ -60,12 +69,17 @@ class OpinionDetailSerializer(serializers.ModelSerializer):
             vote = Vote.objects.filter(opinion=obj, user=request.user).first()
             return VoteSerializer(vote).data if vote else None
         return None
+    
+    def get_rating(self, obj):
+        return obj.rating
 
 
 class OpinionCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Opinion
-        fields = ['car_model', 'title', 'content', 'rating']
+        fields = ['car_model', 'title', 'content', 'rating_quality', 'rating_workmanship',
+                  'rating_economy', 'rating_safety', 'rating_comfort', 'rating_performance',
+                  'rating_design', 'rating_reliability']
 
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user

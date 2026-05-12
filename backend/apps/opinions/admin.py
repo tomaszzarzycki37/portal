@@ -5,12 +5,12 @@ from .models import Opinion, Comment, Vote, PressReview
 
 @admin.register(Opinion)
 class OpinionAdmin(admin.ModelAdmin):
-    list_display = ['title', 'car_model', 'author', 'rating', 'is_approved', 'helpful_count', 'created_at']
-    list_filter = ['is_approved', 'rating', 'is_verified_owner', 'created_at']
+    list_display = ['title', 'car_model', 'author', 'is_approved', 'helpful_count', 'created_at']
+    list_filter = ['is_approved', 'is_verified_owner', 'created_at']
     search_fields = ['title', 'content', 'author__username', 'car_model__name']
     readonly_fields = ['created_at', 'updated_at', 'helpful_count', 'unhelpful_count']
     fieldsets = (
-        ('Content', {'fields': ('car_model', 'author', 'title', 'content', 'rating')}),
+        ('Content', {'fields': ('car_model', 'author', 'title', 'content',)}),
         ('Status', {'fields': ('is_approved', 'is_verified_owner')}),
         ('Engagement', {'fields': ('helpful_count', 'unhelpful_count')}),
         ('Timestamps', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
