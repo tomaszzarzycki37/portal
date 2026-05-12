@@ -624,7 +624,6 @@ export default function AdminDashboard() {
     }
 
     const payload = {
-      username: userEditDraft.username.trim(),
       email: userEditDraft.email.trim(),
       first_name: userEditDraft.first_name.trim(),
       last_name: userEditDraft.last_name.trim(),
@@ -2434,8 +2433,8 @@ export default function AdminDashboard() {
                         <input
                           className="form-input"
                           value={userEditDraft.username}
-                          onChange={(e) => handleUserDraftChange('username', e.target.value)}
-                          disabled={savingUserDetails}
+                          readOnly
+                          disabled
                         />
                       </div>
                       <div>
