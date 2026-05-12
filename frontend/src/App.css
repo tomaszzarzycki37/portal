@@ -210,6 +210,7 @@
 	display: grid;
 	grid-template-columns: 1fr;
 	gap: 0;
+	height: 676px;
 	min-height: 620px;
 	background-position: center;
 	background-size: cover;
@@ -583,6 +584,7 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	.home-hero-search-container {
 		grid-template-columns: 1fr;
 		align-items: stretch;
+		height: 676px;
 	}
 
 	.home-hero-search-filters {
@@ -600,6 +602,10 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	}
 
 	.home-search-advanced-tab {
+
+	.home-hero-search-container {
+		height: auto;
+	}
 		left: min(100%, 360px);
 	}
 
