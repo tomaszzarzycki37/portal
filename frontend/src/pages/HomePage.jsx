@@ -6,16 +6,42 @@ import { getCarImage } from '../utils/carImages'
 
 const FALLBACK_HERO_IMAGE = 'https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&w=1800&q=80'
 
+const parsePriceRange = (priceRange) => {
+  const matches = String(priceRange || '').match(/\d[\d\s]*/g) || []
+  const values = matches
+    .map((value) => Number.parseInt(String(value).replace(/\s+/g, ''), 10))
+    .filter(Number.isFinite)
+
+  if (values.length === 0) {
+    return { min: null, max: null }
+  }
+
+  if (values.length === 1) {
+    return { min: values[0], max: values[0] }
+  }
+
+  return { min: Math.min(values[0], values[1]), max: Math.max(values[0], values[1]) }
+}
+
 export default function HomePage() {
   const { t } = useTranslation()
   const [cars, setCars] = useState([])
   const [featuredReviews, setFeaturedReviews] = useState([])
   const [featuredSlideIndex, setFeaturedSlideIndex] = useState(0)
-  const [searchTerm, setSearchTerm] = useState('')
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [engineSearch, setEngineSearch] = useState('')
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [keywordSearch, setKeywordSearch] = useState('')
+  const [yearFrom, setYearFrom] = useState('')
+  const [yearTo, setYearTo] = useState('')
+  const [horsepowerFrom, setHorsepowerFrom] = useState('')
+  const [horsepowerTo, setHorsepowerTo] = useState('')
+  const [topSpeedFrom, setTopSpeedFrom] = useState('')
+  const [topSpeedTo, setTopSpeedTo] = useState('')
+  const [fuelConsumptionSearch, setFuelConsumptionSearch] = useState('')
+  const [priceFrom, setPriceFrom] = useState('')
+  const [priceTo, setPriceTo] = useState('')
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false)
 
   useEffect(() => {
@@ -73,58 +99,61 @@ export default function HomePage() {
   }, [cars])
 
   const filteredCars = useMemo(() => {
-    const normalizedSearch = String(searchTerm || '').trim().toLowerCase()
+    const normalizedKeyword = String(keywordSearch || '').trim().toLowerCase()
     const normalizedEngine = String(engineSearch || '').trim().toLowerCase()
+    const normalizedFuelConsumption = String(fuelConsumptionSearch || '').trim().toLowerCase()
+    const parsedYearFrom = Number.parseInt(String(yearFrom || '').trim(), 10)
+    const parsedYearTo = Number.parseInt(String(yearTo || '').trim(), 10)
+    const parsedHorsepowerFrom = Number.parseInt(String(horsepowerFrom || '').trim(), 10)
+    const parsedHorsepowerTo = Number.parseInt(String(horsepowerTo || '').trim(), 10)
+    const parsedTopSpeedFrom = Number.parseInt(String(topSpeedFrom || '').trim(), 10)
+    const parsedTopSpeedTo = Number.parseInt(String(topSpeedTo || '').trim(), 10)
+    const parsedPriceFrom = Number.parseInt(String(priceFrom || '').trim(), 10)
+    const parsedPriceTo = Number.parseInt(String(priceTo || '').trim(), 10)
 
     return cars.filter((car) => {
-      const haystack = `${car.brand_name || ''} ${car.name || ''} ${car.description || ''} ${car.engine_type || ''}`.toLowerCase()
-      if (normalizedSearch && !haystack.includes(normalizedSearch)) return false
+      const haystack = `${car.brand_name || ''} ${car.name || ''} ${car.description || ''} ${car.engine_type || ''} ${car.price_range || ''}`.toLowerCase()
+      if (normalizedKeyword && !haystack.includes(normalizedKeyword)) return false
       if (selectedBrand !== 'all' && String(car.brand_name || '') !== selectedBrand) return false
       if (normalizedEngine && !String(car.engine_type || '').toLowerCase().includes(normalizedEngine)) return false
       if (vehicleTypeFilter !== 'all' && String(car.vehicle_type || '') !== vehicleTypeFilter) return false
       if (statusFilter !== 'all' && String(car.production_status || '') !== statusFilter) return false
+      if (normalizedFuelConsumption && !String(car.fuel_consumption || '').toLowerCase().includes(normalizedFuelConsumption)) return false
+
+      const yearIntroduced = Number.parseInt(String(car.year_introduced || '').trim(), 10)
+      if (Number.isFinite(parsedYearFrom) && Number.isFinite(yearIntroduced) && yearIntroduced < parsedYearFrom) return false
+      if (Number.isFinite(parsedYearTo) && Number.isFinite(yearIntroduced) && yearIntroduced > parsedYearTo) return false
+
+      const horsepower = Number.parseInt(String(car.horsepower || '').trim(), 10)
+      if (Number.isFinite(parsedHorsepowerFrom) && Number.isFinite(horsepower) && horsepower < parsedHorsepowerFrom) return false
+      if (Number.isFinite(parsedHorsepowerTo) && Number.isFinite(horsepower) && horsepower > parsedHorsepowerTo) return false
+
+      const topSpeed = Number.parseInt(String(car.top_speed || '').trim(), 10)
+      if (Number.isFinite(parsedTopSpeedFrom) && Number.isFinite(topSpeed) && topSpeed < parsedTopSpeedFrom) return false
+      if (Number.isFinite(parsedTopSpeedTo) && Number.isFinite(topSpeed) && topSpeed > parsedTopSpeedTo) return false
+
+      const { min: carPriceMin, max: carPriceMax } = parsePriceRange(car.price_range)
+      if (Number.isFinite(parsedPriceFrom) && Number.isFinite(carPriceMax) && carPriceMax < parsedPriceFrom) return false
+      if (Number.isFinite(parsedPriceTo) && Number.isFinite(carPriceMin) && carPriceMin > parsedPriceTo) return false
       return true
     })
-  }, [cars, searchTerm, selectedBrand, engineSearch, vehicleTypeFilter, statusFilter])
-
-  const searchSuggestions = useMemo(() => {
-    const normalizedSearch = String(searchTerm || '').trim().toLowerCase()
-    if (normalizedSearch.length < 2) {
-      return []
-    }
-
-    const seen = new Set()
-    const suggestions = []
-
-    cars.forEach((car) => {
-      const brand = String(car.brand_name || '').trim()
-      const model = String(car.name || '').trim()
-      if (!brand && !model) {
-        return
-      }
-
-      const brandModel = `${brand} ${model}`.trim()
-      const haystack = `${brand} ${model}`.toLowerCase()
-      if (!haystack.includes(normalizedSearch)) {
-        return
-      }
-
-      const dedupeKey = `${brandModel.toLowerCase()}`
-      if (seen.has(dedupeKey)) {
-        return
-      }
-
-      seen.add(dedupeKey)
-      suggestions.push({
-        id: String(car.id ?? dedupeKey),
-        brand,
-        model,
-        label: brandModel,
-      })
-    })
-
-    return suggestions.slice(0, 8)
-  }, [cars, searchTerm])
+  }, [
+    cars,
+    keywordSearch,
+    selectedBrand,
+    engineSearch,
+    vehicleTypeFilter,
+    statusFilter,
+    fuelConsumptionSearch,
+    yearFrom,
+    yearTo,
+    horsepowerFrom,
+    horsepowerTo,
+    topSpeedFrom,
+    topSpeedTo,
+    priceFrom,
+    priceTo,
+  ])
 
   const carById = useMemo(() => {
     const byId = new Map()
@@ -152,35 +181,65 @@ export default function HomePage() {
                   <h2>{t.pages.modelSearchTitle}</h2>
                 </div>
 
-                <div className="home-filter-group">
-                  <label className="home-filter-checkbox">
+                <div className="home-search-basic-grid">
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">{t.pages.brandLabel}</label>
+                    <select
+                      className="form-input"
+                      value={selectedBrand}
+                      onChange={(e) => setSelectedBrand(e.target.value)}
+                    >
+                      <option value="all">{t.pages.allLabel}</option>
+                      {brands.map((brand) => (
+                        <option key={brand} value={brand}>{brand}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">{t.pages.engineFilter}</label>
                     <input
                       type="text"
                       className="form-input"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder={t.pages.searchInputPlaceholder}
+                      value={engineSearch}
+                      onChange={(e) => setEngineSearch(e.target.value)}
+                      placeholder={t.pages.engineFilterPlaceholder}
+                      list="engineTypes"
                     />
-                  </label>
-
-                  {searchSuggestions.length > 0 && (
-                    <div className="home-search-results" role="listbox" aria-label={t.pages.searchModels}>
-                      {searchSuggestions.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className="home-search-result-item"
-                          onClick={() => {
-                            setSearchTerm(item.label)
-                            if (item.brand) setSelectedBrand(item.brand)
-                          }}
-                        >
-                          <strong>{item.model || item.label}</strong>
-                          <span>{item.brand || t.pages.unknownBrand}</span>
-                        </button>
+                    <datalist id="engineTypes">
+                      {engineTypes.map((type) => (
+                        <option key={type} value={type} />
                       ))}
-                    </div>
-                  )}
+                    </datalist>
+                  </div>
+
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">{t.pages.typeFilter}</label>
+                    <select
+                      className="form-input"
+                      value={vehicleTypeFilter}
+                      onChange={(e) => setVehicleTypeFilter(e.target.value)}
+                    >
+                      <option value="all">{t.pages.allLabel}</option>
+                      {vehicleTypes.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">{t.pages.productionStatus}</label>
+                    <select
+                      className="form-input"
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                      <option value="all">{t.pages.allLabel}</option>
+                      <option value="active">{t.pages.statusActive}</option>
+                      <option value="discontinued">{t.pages.statusDiscontinued}</option>
+                      <option value="upcoming">{t.pages.statusUpcoming}</option>
+                    </select>
+                  </div>
                 </div>
 
                 <Link
@@ -228,62 +287,127 @@ export default function HomePage() {
                 </div>
 
                 <div className="home-filter-section">
-                  <label className="home-filter-label">{t.pages.brandLabel}</label>
-                  <select
-                    className="form-input"
-                    value={selectedBrand}
-                    onChange={(e) => setSelectedBrand(e.target.value)}
-                  >
-                    <option value="all">{t.pages.allLabel}</option>
-                    {brands.map((brand) => (
-                      <option key={brand} value={brand}>{brand}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="home-filter-section">
-                  <label className="home-filter-label">{t.pages.engineFilter}</label>
+                  <label className="home-filter-label">{t.pages.searchModels}</label>
                   <input
                     type="text"
                     className="form-input"
-                    value={engineSearch}
-                    onChange={(e) => setEngineSearch(e.target.value)}
-                    placeholder={t.pages.engineFilterPlaceholder}
-                    list="engineTypes"
+                    value={keywordSearch}
+                    onChange={(e) => setKeywordSearch(e.target.value)}
+                    placeholder={t.pages.searchModelsPlaceholder}
                   />
-                  <datalist id="engineTypes">
-                    {engineTypes.map((type) => (
-                      <option key={type} value={type} />
-                    ))}
-                  </datalist>
                 </div>
 
-                <div className="home-filter-section">
-                  <label className="home-filter-label">{t.pages.typeFilter}</label>
-                  <select
-                    className="form-input"
-                    value={vehicleTypeFilter}
-                    onChange={(e) => setVehicleTypeFilter(e.target.value)}
-                  >
-                    <option value="all">{t.pages.allLabel}</option>
-                    {vehicleTypes.map((type) => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
+                <div className="home-search-advanced-grid">
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">Rok od</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={yearFrom}
+                      onChange={(e) => setYearFrom(e.target.value)}
+                      placeholder="2018"
+                      min="1900"
+                      max="2100"
+                    />
+                  </div>
+
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">Rok do</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={yearTo}
+                      onChange={(e) => setYearTo(e.target.value)}
+                      placeholder="2026"
+                      min="1900"
+                      max="2100"
+                    />
+                  </div>
+
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">Moc od</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={horsepowerFrom}
+                      onChange={(e) => setHorsepowerFrom(e.target.value)}
+                      placeholder="150"
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">Moc do</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={horsepowerTo}
+                      onChange={(e) => setHorsepowerTo(e.target.value)}
+                      placeholder="500"
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">Prędkość od</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={topSpeedFrom}
+                      onChange={(e) => setTopSpeedFrom(e.target.value)}
+                      placeholder="160"
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">Prędkość do</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={topSpeedTo}
+                      onChange={(e) => setTopSpeedTo(e.target.value)}
+                      placeholder="250"
+                      min="0"
+                    />
+                  </div>
                 </div>
 
-                <div className="home-filter-section home-filter-section-last">
-                  <label className="home-filter-label">{t.pages.productionStatus}</label>
-                  <select
-                    className="form-input"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  >
-                    <option value="all">{t.pages.allLabel}</option>
-                    <option value="active">{t.pages.statusActive}</option>
-                    <option value="discontinued">{t.pages.statusDiscontinued}</option>
-                    <option value="upcoming">{t.pages.statusUpcoming}</option>
-                  </select>
+                <div className="home-search-advanced-grid home-search-advanced-grid-secondary">
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">Zużycie paliwa</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={fuelConsumptionSearch}
+                      onChange={(e) => setFuelConsumptionSearch(e.target.value)}
+                      placeholder="5.5, EV, hybrid..."
+                    />
+                  </div>
+
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">Zakres cenowy od</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={priceFrom}
+                      onChange={(e) => setPriceFrom(e.target.value)}
+                      placeholder="90000"
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="home-filter-section home-filter-section-last">
+                    <label className="home-filter-label">Zakres cenowy do</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={priceTo}
+                      onChange={(e) => setPriceTo(e.target.value)}
+                      placeholder="250000"
+                      min="0"
+                    />
+                  </div>
                 </div>
               </aside>
             </div>
