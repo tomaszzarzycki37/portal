@@ -1508,6 +1508,10 @@ body.app-theme-dark .header-tagline-section {
   padding-top: 1rem;
 }
 
+.admin-review-edit-grid > div + div {
+  margin-top: 0.55rem;
+}
+
 .cars-grid {
   display: grid;
   grid-template-columns: 1fr;
