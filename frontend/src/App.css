@@ -927,6 +927,19 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 		color: #334155;
 	}
 
+	.opinion-category-rating {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.opinion-category-rating .rating {
+		justify-self: end;
+		white-space: nowrap;
+		text-align: right;
+	}
+
 	.opinion-list-footer {
 		display: flex;
 		justify-content: space-between;
