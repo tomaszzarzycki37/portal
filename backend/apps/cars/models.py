@@ -118,7 +118,19 @@ class CarModel(models.Model):
         from apps.opinions.models import Opinion
         opinions = Opinion.objects.filter(car_model=self)
         if opinions.exists():
-            return opinions.aggregate(models.Avg('rating'))['rating__avg']
+            rating_averages = opinions.aggregate(
+                quality=models.Avg('rating_quality'),
+                workmanship=models.Avg('rating_workmanship'),
+                economy=models.Avg('rating_economy'),
+                safety=models.Avg('rating_safety'),
+                comfort=models.Avg('rating_comfort'),
+                performance=models.Avg('rating_performance'),
+                design=models.Avg('rating_design'),
+                reliability=models.Avg('rating_reliability'),
+            )
+            values = [value for value in rating_averages.values() if value is not None]
+            if values:
+                return sum(values) / len(values)
         return 0
 
     @property
