@@ -56,21 +56,51 @@ export default function CarsListPage() {
   }, [])
 
   const fetchCatalog = async () => {
+    setLoading(true)
+
+    let nextBrands = []
+    let nextCars = []
+
     try {
-      setLoading(true)
-      const [carsResponse, brandsResponse] = await Promise.all([
-        api.get('/cars/?page_size=200'),
-        api.get('/cars/brands/'),
-      ])
-      const list = carsResponse.data.results || carsResponse.data
-      const brandsList = brandsResponse.data.results || brandsResponse.data || []
-      setBrands(brandsList)
-      setCars(list)
+      const brandsResponse = await api.get('/cars/brands/')
+      const brandsPayload = brandsResponse?.data
+      nextBrands = Array.isArray(brandsPayload)
+        ? brandsPayload
+        : Array.isArray(brandsPayload?.results)
+          ? brandsPayload.results
+          : []
     } catch (error) {
-      console.error('Error fetching cars:', error)
-    } finally {
-      setLoading(false)
+      console.error('Error fetching brands:', error)
     }
+
+    try {
+      const carsResponse = await api.get('/cars/?page_size=200')
+      const carsPayload = carsResponse?.data
+      nextCars = Array.isArray(carsPayload)
+        ? carsPayload
+        : Array.isArray(carsPayload?.results)
+          ? carsPayload.results
+          : []
+    } catch (error) {
+      console.error('Error fetching cars with page_size:', error)
+
+      try {
+        // Fallback for environments where page_size can be ignored or rejected.
+        const fallbackCarsResponse = await api.get('/cars/')
+        const fallbackPayload = fallbackCarsResponse?.data
+        nextCars = Array.isArray(fallbackPayload)
+          ? fallbackPayload
+          : Array.isArray(fallbackPayload?.results)
+            ? fallbackPayload.results
+            : []
+      } catch (fallbackError) {
+        console.error('Error fetching cars fallback:', fallbackError)
+      }
+    }
+
+    setBrands(nextBrands)
+    setCars(nextCars)
+    setLoading(false)
   }
 
   const sortedCars = useMemo(
