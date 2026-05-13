@@ -5,11 +5,21 @@ import api from '../services/api'
 import { getCarImage } from '../utils/carImages'
 
 export default function CarReviewsPage() {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const { id } = useParams()
   const [car, setCar] = useState(null)
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
+
+  const getReviewCountLabel = (count) => {
+    if (lang !== 'pl') return count === 1 ? t.pages.reviewSingle : t.pages.reviewPlural
+    if (count === 1) return t.pages.reviewSingle
+
+    const mod10 = count % 10
+    const mod100 = count % 100
+    const isFew = mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
+    return isFew ? t.pages.reviewFew : t.pages.reviewPlural
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,7 +76,7 @@ export default function CarReviewsPage() {
           <p className="detail-description">{t.pages.reviewsSectionIntro}</p>
 
           <div className="detail-badges">
-            <span className="detail-badge">{reviews.length} {reviews.length === 1 ? t.pages.reviewSingle : t.pages.reviewPlural}</span>
+            <span className="detail-badge">{reviews.length} {getReviewCountLabel(reviews.length)}</span>
           </div>
 
           <div style={{ marginTop: '0.75rem' }}>

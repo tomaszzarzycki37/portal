@@ -188,6 +188,16 @@ export default function ReviewsPage() {
     })
   }
 
+  const getReviewCountLabel = (count) => {
+    if (lang !== 'pl') return count === 1 ? t.pages.reviewSingle : t.pages.reviewPlural
+    if (count === 1) return t.pages.reviewSingle
+
+    const mod10 = count % 10
+    const mod100 = count % 100
+    const isFew = mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
+    return isFew ? t.pages.reviewFew : t.pages.reviewPlural
+  }
+
   const handleStartEditReview = async (reviewId) => {
     setReviewError('')
     setReviewMessage('')
@@ -512,7 +522,7 @@ export default function ReviewsPage() {
       ) : (
         <div className="opinions-list-wrap">
           <p className="admin-subtitle">
-            {filteredAndSortedReviews.length} {filteredAndSortedReviews.length === 1 ? t.pages.reviewSingle : t.pages.reviewPlural}
+            {filteredAndSortedReviews.length} {getReviewCountLabel(filteredAndSortedReviews.length)}
           </p>
 
           <div className="opinions-list">
