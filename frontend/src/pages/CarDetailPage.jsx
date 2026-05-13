@@ -42,6 +42,15 @@ function extractApiErrorMessage(error, fallbackMessage) {
   return fallbackMessage
 }
 
+function formatRatingDisplay(value) {
+  const numeric = Number(value)
+  const normalized = Number.isFinite(numeric) ? Math.min(5, Math.max(1, numeric)) : 5
+  const rounded = Math.round(normalized)
+  const stars = `${'★'.repeat(rounded)}${'☆'.repeat(5 - rounded)}`
+  const numericLabel = Number.isInteger(normalized) ? String(normalized) : normalized.toFixed(1)
+  return `${stars} (${numericLabel})`
+}
+
 export default function CarDetailPage() {
   const { t } = useTranslation()
   const { id } = useParams()
@@ -90,6 +99,16 @@ export default function CarDetailPage() {
   const [adminError, setAdminError] = useState('')
   const isAdmin = isAdminUser()
   const isLoggedIn = isAuthenticatedUser()
+  const opinionRatingCategories = [
+    { key: 'rating_quality', label: t.pages.ratingQuality },
+    { key: 'rating_workmanship', label: t.pages.ratingWorkmanship },
+    { key: 'rating_economy', label: t.pages.ratingEconomy },
+    { key: 'rating_safety', label: t.pages.ratingSafety },
+    { key: 'rating_comfort', label: t.pages.ratingComfort },
+    { key: 'rating_performance', label: t.pages.ratingPerformance },
+    { key: 'rating_design', label: t.pages.ratingDesign },
+    { key: 'rating_reliability', label: t.pages.ratingReliability },
+  ]
 
   useEffect(() => {
     const fetchData = async () => {
@@ -825,38 +844,12 @@ export default function CarDetailPage() {
                     <p className="opinion-meta">{opinion.author?.username || 'user'}</p>
                     <p className="opinion-text">{opinion.content}</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                      <div className="opinion-category-rating">
-                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingQuality}</span>
-                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_quality || 5}</span>
-                      </div>
-                      <div className="opinion-category-rating">
-                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingWorkmanship}</span>
-                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_workmanship || 5}</span>
-                      </div>
-                      <div className="opinion-category-rating">
-                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingEconomy}</span>
-                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_economy || 5}</span>
-                      </div>
-                      <div className="opinion-category-rating">
-                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingSafety}</span>
-                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_safety || 5}</span>
-                      </div>
-                      <div className="opinion-category-rating">
-                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingComfort}</span>
-                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_comfort || 5}</span>
-                      </div>
-                      <div className="opinion-category-rating">
-                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingPerformance}</span>
-                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_performance || 5}</span>
-                      </div>
-                      <div className="opinion-category-rating">
-                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingDesign}</span>
-                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_design || 5}</span>
-                      </div>
-                      <div className="opinion-category-rating">
-                        <span style={{ fontSize: '0.85rem', color: '#666' }}>{t.pages.ratingReliability}</span>
-                        <span className="rating" style={{ fontSize: '0.95rem' }}>★ {opinion.rating_reliability || 5}</span>
-                      </div>
+                      {opinionRatingCategories.map((category) => (
+                        <div key={category.key} className="opinion-category-rating">
+                          <span style={{ fontSize: '0.85rem', color: '#666' }}>{category.label}</span>
+                          <span className="rating" style={{ fontSize: '0.95rem' }}>{formatRatingDisplay(opinion[category.key])}</span>
+                        </div>
+                      ))}
                     </div>
                     <div className="opinion-rating-row">
                       <span className="opinion-counts">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>

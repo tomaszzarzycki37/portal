@@ -5,6 +5,15 @@ import api from '../services/api'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { canEditByAuthorId } from '../utils/auth'
 
+function formatRatingDisplay(value) {
+  const numeric = Number(value)
+  const normalized = Number.isFinite(numeric) ? Math.min(5, Math.max(1, numeric)) : 5
+  const rounded = Math.round(normalized)
+  const stars = `${'★'.repeat(rounded)}${'☆'.repeat(5 - rounded)}`
+  const numericLabel = Number.isInteger(normalized) ? String(normalized) : normalized.toFixed(1)
+  return `${stars} (${numericLabel})`
+}
+
 export default function OpinionsPage() {
   const { t, lang } = useTranslation()
   const [opinions, setOpinions] = useState([])
@@ -217,6 +226,17 @@ export default function OpinionsPage() {
     }
   }
 
+  const opinionRatingCategories = [
+    { key: 'rating_quality', label: t.pages.ratingQuality },
+    { key: 'rating_workmanship', label: t.pages.ratingWorkmanship },
+    { key: 'rating_economy', label: t.pages.ratingEconomy },
+    { key: 'rating_safety', label: t.pages.ratingSafety },
+    { key: 'rating_comfort', label: t.pages.ratingComfort },
+    { key: 'rating_performance', label: t.pages.ratingPerformance },
+    { key: 'rating_design', label: t.pages.ratingDesign },
+    { key: 'rating_reliability', label: t.pages.ratingReliability },
+  ]
+
   return (
     <div className="opinions-page-wrap">
       <h1 className="page-title">{t.nav.opinions}</h1>
@@ -322,13 +342,21 @@ export default function OpinionsPage() {
                                       <>
                                         <div className="opinion-list-header">
                                           <h4 className="opinion-title">{opinion.title}</h4>
-                                          <span className="opinion-rating">★ {opinion.rating}/5</span>
+                                          <span className="opinion-rating">{formatRatingDisplay(opinion.rating)}</span>
                                         </div>
                                         <div className="opinion-list-meta">
                                           <span className="opinion-author">{opinion.author?.username || t.pages.unknownAuthor}</span>
                                           <span className="opinion-date">{formatDate(opinion.created_at)}</span>
                                         </div>
                                         <p className="opinion-content">{opinion.content}</p>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                                          {opinionRatingCategories.map((category) => (
+                                            <div key={category.key} className="opinion-category-rating">
+                                              <span style={{ fontSize: '0.85rem', color: '#666' }}>{category.label}</span>
+                                              <span className="rating" style={{ fontSize: '0.95rem' }}>{formatRatingDisplay(opinion[category.key])}</span>
+                                            </div>
+                                          ))}
+                                        </div>
                                         <div className="opinion-list-footer">
                                           <span className="opinion-votes">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
                                           {opinion.car_id && (
