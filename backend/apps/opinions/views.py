@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q
+from django.db.models import Q, F, FloatField, ExpressionWrapper
 from apps.common.helpers import IsOwnerOrAdminOrReadOnly
 from .models import Opinion, Comment, Vote, PressReview
 from .serializers import (
@@ -19,10 +19,31 @@ class OpinionViewSet(viewsets.ModelViewSet):
     queryset = Opinion.objects.filter(is_approved=True).select_related('author', 'car_model', 'car_model__brand')
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['car_model', 'author', 'rating']
+    # Keep filterset fields limited to DB fields to avoid django-filter TypeError.
+    filterset_fields = ['car_model', 'author']
     search_fields = ['title', 'content', 'author__username']
-    ordering_fields = ['rating', 'helpful_count', 'created_at']
+    ordering_fields = ['rating_value', 'helpful_count', 'created_at']
     ordering = ['-created_at']
+
+    def get_queryset(self):
+        rating_value = ExpressionWrapper(
+            (
+                F('rating_quality')
+                + F('rating_workmanship')
+                + F('rating_economy')
+                + F('rating_safety')
+                + F('rating_comfort')
+                + F('rating_performance')
+                + F('rating_design')
+                + F('rating_reliability')
+            ) / 8.0,
+            output_field=FloatField(),
+        )
+        return (
+            Opinion.objects.filter(is_approved=True)
+            .select_related('author', 'car_model', 'car_model__brand')
+            .annotate(rating_value=rating_value)
+        )
 
     def get_permissions(self):
         if self.action in ['update', 'partial_update', 'destroy']:
@@ -81,7 +102,7 @@ class OpinionViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def top_rated(self, request):
         """Get top-rated opinions"""
-        opinions = self.get_queryset().order_by('-rating')[:10]
+        opinions = self.get_queryset().order_by('-rating_value', '-created_at')[:10]
         serializer = self.get_serializer(opinions, many=True)
         return Response(serializer.data)
 

@@ -1,3 +1,5 @@
+import { normalizeMediaUrl } from './mediaUrl'
+
 const demoImageMap = {
   'BYD Seal': 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=80',
   'BYD Atto 3': 'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?auto=format&fit=crop&w=1200&q=80',
@@ -12,7 +14,7 @@ const genericCarImage =
 
 export function getCarImage(car) {
   if (!car) return genericCarImage
-  if (car.image) return car.image
+  if (car.image) return normalizeMediaUrl(car.image)
 
   const key = `${car.brand_name || car.brand?.name || ''} ${car.name || ''}`.trim()
   return demoImageMap[key] || genericCarImage

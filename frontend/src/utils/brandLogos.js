@@ -1,3 +1,5 @@
+import { normalizeMediaUrl } from './mediaUrl'
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 const API_ORIGIN = import.meta.env.VITE_API_URL
   ? API_BASE_URL.replace(/\/api\/?$/, '')
@@ -7,9 +9,9 @@ const API_ORIGIN = import.meta.env.VITE_API_URL
 
 export function resolveBrandLogoUrl(url) {
   if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
-  if (url.startsWith('/')) return `${API_ORIGIN}${url}`
-  return `${API_ORIGIN}/${url}`
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return normalizeMediaUrl(url)
+  if (url.startsWith('/')) return normalizeMediaUrl(`${API_ORIGIN}${url}`)
+  return normalizeMediaUrl(`${API_ORIGIN}/${url}`)
 }
 
 export function createBrandPlaceholderUrl(name) {
