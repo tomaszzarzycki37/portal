@@ -270,7 +270,7 @@ export default function ProfilePage() {
                 value={ formData.phone }
                 onChange={ handleInputChange }
                 className="form-input"
-                placeholder="+1 (555) 123-4567"
+                placeholder={ t.profile.phonePlaceholder || '+1 (555) 123-4567' }
               />
             </div>
 
@@ -285,7 +285,7 @@ export default function ProfilePage() {
                 value={ formData.location }
                 onChange={ handleInputChange }
                 className="form-input"
-                placeholder="City, Country"
+                placeholder={ t.profile.locationPlaceholder || 'City, Country' }
               />
             </div>
           </section>
