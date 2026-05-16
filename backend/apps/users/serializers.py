@@ -15,6 +15,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'avatar',
             'location',
             'phone',
+            'last_seen',
             'email_verified',
             'is_car_owner',
             'force_password_reset',

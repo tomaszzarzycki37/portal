@@ -1,4 +1,5 @@
 """Views for users app"""
+from datetime import timedelta
 import csv
 import secrets
 import string
@@ -126,6 +127,30 @@ class UserViewSet(viewsets.ModelViewSet):
         )
 
         return Response({'detail': 'Password changed successfully.'})
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
+    def active_now(self, request):
+        """List users active recently based on profile.last_seen timestamp."""
+        minutes_raw = request.query_params.get('minutes', '15')
+        try:
+            minutes = int(minutes_raw)
+        except (TypeError, ValueError):
+            minutes = 15
+
+        minutes = max(1, min(minutes, 180))
+        cutoff = timezone.now() - timedelta(minutes=minutes)
+
+        queryset = (
+            User.objects.select_related('profile')
+            .filter(is_active=True, profile__last_seen__gte=cutoff)
+            .order_by('-profile__last_seen')
+        )
+        serializer = UserSerializer(queryset, many=True)
+        return Response({
+            'minutes_window': minutes,
+            'count': len(serializer.data),
+            'results': serializer.data,
+        })
 
     @action(detail=True, methods=['get'], permission_classes=[IsAdminUser])
     def password_audit(self, request, pk=None):

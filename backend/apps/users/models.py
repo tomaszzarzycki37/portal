@@ -14,6 +14,7 @@ class UserProfile(models.Model):
     phone = models.CharField(max_length=20, blank=True)
     email_verified = models.BooleanField(default=False)
     is_car_owner = models.BooleanField(default=False)
+    last_seen = models.DateTimeField(blank=True, null=True)
     force_password_reset = models.BooleanField(default=False)
     password_changed_at = models.DateTimeField(blank=True, null=True)
     password_changed_by = models.ForeignKey(

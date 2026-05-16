@@ -261,7 +261,9 @@ export default function AdminDashboard() {
   const [editingReviewId, setEditingReviewId] = useState(null)
   const [reviewEditDraft, setReviewEditDraft] = useState(null)
   const [usersList, setUsersList] = useState([])
+  const [activeUsersList, setActiveUsersList] = useState([])
   const [usersLoading, setUsersLoading] = useState(false)
+  const [activeUsersLoading, setActiveUsersLoading] = useState(false)
   const [usersError, setUsersError] = useState('')
   const [usersMessage, setUsersMessage] = useState('')
   const [usersSearch, setUsersSearch] = useState('')
@@ -382,6 +384,20 @@ export default function AdminDashboard() {
       setUsersList([])
     } finally {
       setUsersLoading(false)
+    }
+  }
+
+  const loadActiveUsers = async () => {
+    setActiveUsersLoading(true)
+    try {
+      const response = await api.get('/users/active_now/?minutes=15')
+      const users = response.data?.results || []
+      setActiveUsersList(users)
+    } catch {
+      setActiveUsersList([])
+      setUsersError(t.adminPanel.usersActiveNowLoadError)
+    } finally {
+      setActiveUsersLoading(false)
     }
   }
 
@@ -985,8 +1001,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!isUserModerationSectionOpen) return
-    if (usersList.length > 0) return
-    loadUsers()
+    if (usersList.length === 0) {
+      loadUsers()
+    }
+    loadActiveUsers()
   }, [isUserModerationSectionOpen])
 
   useEffect(() => {
@@ -2330,8 +2348,15 @@ export default function AdminDashboard() {
                 <option value="newest">{t.adminPanel.usersSortNewest}</option>
                 <option value="last_login">{t.adminPanel.usersSortLastLogin}</option>
               </select>
-              <button type="button" className="btn btn-secondary" onClick={loadUsers} disabled={usersLoading}>
-                {usersLoading ? t.pages.loading : t.adminPanel.refreshUsers}
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={async () => {
+                  await Promise.all([loadUsers(), loadActiveUsers()])
+                }}
+                disabled={usersLoading || activeUsersLoading}
+              >
+                {(usersLoading || activeUsersLoading) ? t.pages.loading : t.adminPanel.refreshUsers}
               </button>
             </div>
 
@@ -2340,6 +2365,45 @@ export default function AdminDashboard() {
               <span className="admin-meta"><strong>{t.adminPanel.usersStatAdmins}:</strong> {usersStats.admins}</span>
               <span className="admin-meta"><strong>{t.adminPanel.usersStatActive}:</strong> {usersStats.active}</span>
               <span className="admin-meta"><strong>{t.adminPanel.usersStatBlocked}:</strong> {usersStats.blocked}</span>
+              <span className="admin-meta"><strong>{t.adminPanel.usersStatOnlineNow}:</strong> {activeUsersList.length}</span>
+            </div>
+
+            <div style={{ marginTop: '0.75rem' }}>
+              <p className="admin-section-caption" style={{ marginBottom: '0.35rem' }}>{t.adminPanel.usersActiveNowTitle}</p>
+              <p className="admin-meta" style={{ marginBottom: '0.55rem' }}>{t.adminPanel.usersActiveNowSubtitle}</p>
+
+              <div className="admin-review-list">
+                {(activeUsersLoading && activeUsersList.length === 0) && (
+                  <p className="admin-meta">{t.pages.loading}</p>
+                )}
+
+                {!activeUsersLoading && activeUsersList.length === 0 && (
+                  <p className="admin-meta">{t.adminPanel.usersNoActiveNow}</p>
+                )}
+
+                {activeUsersList.length > 0 && (
+                  <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: 'left', padding: '0.45rem 0.25rem' }}>{t.adminPanel.usersFieldUsername}</th>
+                        <th style={{ textAlign: 'left', padding: '0.45rem 0.25rem' }}>{t.adminPanel.usersFieldEmail}</th>
+                        <th style={{ textAlign: 'left', padding: '0.45rem 0.25rem' }}>{t.adminPanel.usersRoleFilterLabel}</th>
+                        <th style={{ textAlign: 'left', padding: '0.45rem 0.25rem' }}>{t.adminPanel.usersLastSeenLabel}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeUsersList.map((user) => (
+                        <tr key={user.id}>
+                          <td style={{ padding: '0.45rem 0.25rem' }}>{user.username}</td>
+                          <td style={{ padding: '0.45rem 0.25rem' }}>{user.email || '—'}</td>
+                          <td style={{ padding: '0.45rem 0.25rem' }}>{user.is_staff ? t.nav.roleAdmin : t.nav.roleUser}</td>
+                          <td style={{ padding: '0.45rem 0.25rem' }}>{formatUserDate(user.profile?.last_seen)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
 
             <div className="admin-actions-row" style={{ justifyContent: 'flex-start', marginTop: '0.35rem' }}>
