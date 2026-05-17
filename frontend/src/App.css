@@ -2050,6 +2050,35 @@ body.app-theme-dark .review-verdict-text {
 	margin: 0;
 	color: #475569;
 }
+.admin-inline-field-row-language {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: nowrap;
+	grid-column: 1 / -1;
+}
+.admin-inline-field-row-language .form-label {
+	margin: 0;
+	white-space: nowrap;
+	flex: 0 0 auto;
+}
+.admin-inline-field-select {
+	min-width: 160px;
+	max-width: 220px;
+	flex: 0 1 220px;
+}
+
+@media (max-width: 640px) {
+	.admin-inline-field-row-language {
+		flex-wrap: wrap;
+	}
+
+	.admin-inline-field-select {
+		max-width: none;
+		flex: 1 1 100%;
+		width: 100%;
+	}
+}
 
 .feature-tile-red {
 	background: linear-gradient(160deg, #fee2e2, #fecaca);

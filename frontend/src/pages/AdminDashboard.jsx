@@ -3404,11 +3404,11 @@ export default function AdminDashboard() {
             <p className="admin-subtitle">{t.adminPanel.headerSettingsSubtitle}</p>
 
             <div className="admin-form-grid">
-          <div>
+          <div className="admin-inline-field-row admin-inline-field-row-language">
             <label className="form-label" htmlFor="header-lang">{t.adminPanel.textLanguage}</label>
             <select
               id="header-lang"
-              className="form-input"
+              className="form-input admin-inline-field-select"
               value={headerLang}
               onChange={(e) => setHeaderLang(e.target.value)}
             >
@@ -3606,11 +3606,11 @@ export default function AdminDashboard() {
             <p className="admin-subtitle">{t.adminPanel.textManagerSubtitle}</p>
 
             <div className="admin-form-grid">
-              <div>
+              <div className="admin-inline-field-row admin-inline-field-row-language">
                 <label className="form-label" htmlFor="content-lang">{t.adminPanel.textLanguage}</label>
                 <select
                   id="content-lang"
-                  className="form-input"
+                  className="form-input admin-inline-field-select"
                   value={contentLang}
                   onChange={(e) => setContentLang(e.target.value)}
                 >
