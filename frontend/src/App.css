@@ -945,11 +945,25 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 		justify-content: space-between;
 		align-items: center;
 		gap: 1rem;
+		flex-wrap: wrap;
 		margin-top: 1rem;
 		padding-top: 1rem;
 		border-top: 1px solid #f1f5f9;
 		font-size: 0.9rem;
 		color: #64748b;
+	}
+
+	.opinion-footer-actions {
+		display: inline-flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 0.6rem;
+		flex-wrap: nowrap;
+	}
+
+	.opinion-list-footer .btn,
+	.opinion-list-footer .opinion-view-car {
+		min-width: 120px;
 	}
 
 	.opinion-votes {

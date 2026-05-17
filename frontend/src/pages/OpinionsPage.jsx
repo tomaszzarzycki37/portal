@@ -458,23 +458,25 @@ export default function OpinionsPage() {
                                               👎 {opinion.unhelpful_count}
                                             </button>
                                           </div>
-                                          {opinion.car_id && (
-                                            <Link to={`/cars/${opinion.car_id}`} className="opinion-view-car">
-                                              {t.pages.viewCar}
-                                            </Link>
-                                          )}
+                                          <div className="opinion-footer-actions">
+                                            {opinion.car_id && (
+                                              <Link to={`/cars/${opinion.car_id}`} className="opinion-view-car">
+                                                {t.pages.viewCar}
+                                              </Link>
+                                            )}
+                                            {canEditByAuthorId(opinion.author?.id) && editingOpinionId !== opinion.id && (
+                                              <>
+                                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleStartEditOpinion(opinion)}>
+                                                  {t.pages.editLabel}
+                                                </button>
+                                                <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteOpinion(opinion.id)}>
+                                                  {t.pages.deleteLabel}
+                                                </button>
+                                              </>
+                                            )}
+                                          </div>
                                         </div>
                                       </>
-                                    )}
-                                    {canEditByAuthorId(opinion.author?.id) && editingOpinionId !== opinion.id && (
-                                      <div className="admin-actions-row" style={{ marginTop: '0.35rem' }}>
-                                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleStartEditOpinion(opinion)}>
-                                          {t.pages.editLabel}
-                                        </button>
-                                        <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteOpinion(opinion.id)}>
-                                          {t.pages.deleteLabel}
-                                        </button>
-                                      </div>
                                     )}
                                   </article>
                                 ))}
