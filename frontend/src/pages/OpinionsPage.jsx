@@ -230,8 +230,15 @@ export default function OpinionsPage() {
     setEditingOpinionDraft({
       title: opinion.title || '',
       content: opinion.content || '',
-      rating: String(opinion.rating || 5),
       car_model: String(opinion.car_id || ''),
+      rating_quality: Number(opinion.rating_quality || 5),
+      rating_workmanship: Number(opinion.rating_workmanship || 5),
+      rating_economy: Number(opinion.rating_economy || 5),
+      rating_safety: Number(opinion.rating_safety || 5),
+      rating_comfort: Number(opinion.rating_comfort || 5),
+      rating_performance: Number(opinion.rating_performance || 5),
+      rating_design: Number(opinion.rating_design || 5),
+      rating_reliability: Number(opinion.rating_reliability || 5),
     })
     setOpinionMessage('')
     setOpinionError('')
@@ -239,9 +246,22 @@ export default function OpinionsPage() {
 
   const handleSaveOpinion = async (opinionId) => {
     if (!editingOpinionDraft) return
-    const ratingValue = Number.parseInt(String(editingOpinionDraft.rating || '').trim(), 10)
     const normalizedContent = String(editingOpinionDraft.content || '').trim()
-    if (!editingOpinionDraft.title.trim() || !getMeaningfulRichText(normalizedContent) || !editingOpinionDraft.car_model || Number.isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+    const ratingKeys = [
+      'rating_quality',
+      'rating_workmanship',
+      'rating_economy',
+      'rating_safety',
+      'rating_comfort',
+      'rating_performance',
+      'rating_design',
+      'rating_reliability',
+    ]
+    const hasInvalidRating = ratingKeys.some((key) => {
+      const value = Number(editingOpinionDraft[key])
+      return !Number.isFinite(value) || value < 1 || value > 5
+    })
+    if (!editingOpinionDraft.title.trim() || !getMeaningfulRichText(normalizedContent) || !editingOpinionDraft.car_model || hasInvalidRating) {
       setOpinionError(t.pages.opinionCreateValidation)
       return
     }
@@ -254,7 +274,14 @@ export default function OpinionsPage() {
         car_model: Number.parseInt(editingOpinionDraft.car_model, 10),
         title: editingOpinionDraft.title.trim(),
         content: normalizedContent,
-        rating: ratingValue,
+        rating_quality: Number(editingOpinionDraft.rating_quality),
+        rating_workmanship: Number(editingOpinionDraft.rating_workmanship),
+        rating_economy: Number(editingOpinionDraft.rating_economy),
+        rating_safety: Number(editingOpinionDraft.rating_safety),
+        rating_comfort: Number(editingOpinionDraft.rating_comfort),
+        rating_performance: Number(editingOpinionDraft.rating_performance),
+        rating_design: Number(editingOpinionDraft.rating_design),
+        rating_reliability: Number(editingOpinionDraft.rating_reliability),
       })
       await reloadOpinions()
       setEditingOpinionId(null)
@@ -407,17 +434,24 @@ export default function OpinionsPage() {
                                           placeholder={t.adminPanel.reviewEditorPlaceholder}
                                         />
                                         <label className="form-label">{t.pages.averageRating}</label>
-                                        <select
-                                          className="form-input"
-                                          value={editingOpinionDraft.rating}
-                                          onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating: e.target.value }))}
-                                        >
-                                          <option value={5}>5</option>
-                                          <option value={4}>4</option>
-                                          <option value={3}>3</option>
-                                          <option value={2}>2</option>
-                                          <option value={1}>1</option>
-                                        </select>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                          {opinionRatingCategories.map((category) => (
+                                            <div key={category.key}>
+                                              <label className="form-label">{category.label}</label>
+                                              <select
+                                                className="form-input"
+                                                value={editingOpinionDraft[category.key] ?? 5}
+                                                onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, [category.key]: Number(e.target.value) }))}
+                                              >
+                                                <option value={5}>5</option>
+                                                <option value={4}>4</option>
+                                                <option value={3}>3</option>
+                                                <option value={2}>2</option>
+                                                <option value={1}>1</option>
+                                              </select>
+                                            </div>
+                                          ))}
+                                        </div>
                                         <div className="admin-actions-row">
                                           <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setEditingOpinionId(null); setEditingOpinionDraft(null) }}>
                                             {t.pages.cancelLabel}
