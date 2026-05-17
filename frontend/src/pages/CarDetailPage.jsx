@@ -148,6 +148,7 @@ export default function CarDetailPage() {
   const [opinionComments, setOpinionComments] = useState({})
   const [commentTexts, setCommentTexts] = useState({})
   const [commentSaving, setCommentSaving] = useState({})
+  const [voteSaving, setVoteSaving] = useState({})
   const [adminSaving, setAdminSaving] = useState(false)
   const [adminMessage, setAdminMessage] = useState('')
   const [adminError, setAdminError] = useState('')
@@ -446,6 +447,25 @@ export default function CarDetailPage() {
       setAdminOpinionError(t.pages.opinionDeleteError)
     } finally {
       setOpinionActionLoading(false)
+    }
+  }
+
+  const handleVoteOpinion = async (opinionId, voteType) => {
+    if (!['helpful', 'unhelpful'].includes(voteType)) return
+    if (!isLoggedIn) {
+      setAdminOpinionError(t.pages.loginToContribute)
+      return
+    }
+
+    try {
+      setVoteSaving((prev) => ({ ...prev, [opinionId]: true }))
+      await api.post(`/opinions/${opinionId}/vote/`, { vote_type: voteType })
+      const opinionsResponse = await api.get(`/opinions/?car_model=${id}&ordering=-created_at`)
+      setOpinions(opinionsResponse.data.results || opinionsResponse.data)
+    } catch {
+      setAdminOpinionError(t.pages.opinionUpdateError)
+    } finally {
+      setVoteSaving((prev) => ({ ...prev, [opinionId]: false }))
     }
   }
 
@@ -909,6 +929,26 @@ export default function CarDetailPage() {
                     </div>
                     <div className="opinion-rating-row">
                       <span className="opinion-counts">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
+                      <div className="admin-actions-row" style={{ marginLeft: '0.5rem' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          disabled={!!voteSaving[opinion.id]}
+                          onClick={() => handleVoteOpinion(opinion.id, 'helpful')}
+                          title="Helpful"
+                        >
+                          👍
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          disabled={!!voteSaving[opinion.id]}
+                          onClick={() => handleVoteOpinion(opinion.id, 'unhelpful')}
+                          title="Unhelpful"
+                        >
+                          👎
+                        </button>
+                      </div>
                       <button
                         type="button"
                         className="btn-comment-toggle"

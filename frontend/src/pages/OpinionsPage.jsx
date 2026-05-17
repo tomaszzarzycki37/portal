@@ -79,6 +79,7 @@ export default function OpinionsPage() {
   const [editingOpinionId, setEditingOpinionId] = useState(null)
   const [editingOpinionDraft, setEditingOpinionDraft] = useState(null)
   const [opinionActionSaving, setOpinionActionSaving] = useState(false)
+  const [opinionVoteSaving, setOpinionVoteSaving] = useState({})
   const [opinionMessage, setOpinionMessage] = useState('')
   const [opinionError, setOpinionError] = useState('')
 
@@ -281,6 +282,25 @@ export default function OpinionsPage() {
     }
   }
 
+  const handleVoteOpinion = async (opinionId, voteType) => {
+    if (!['helpful', 'unhelpful'].includes(voteType)) return
+    if (!isAuthenticatedUser()) {
+      setOpinionError(t.pages.loginToContribute)
+      return
+    }
+
+    try {
+      setOpinionVoteSaving((prev) => ({ ...prev, [opinionId]: true }))
+      setOpinionError('')
+      await api.post(`/opinions/${opinionId}/vote/`, { vote_type: voteType })
+      await reloadOpinions()
+    } catch {
+      setOpinionError(t.pages.opinionUpdateError)
+    } finally {
+      setOpinionVoteSaving((prev) => ({ ...prev, [opinionId]: false }))
+    }
+  }
+
   const opinionRatingCategories = [
     { key: 'rating_quality', label: t.pages.ratingQuality },
     { key: 'rating_workmanship', label: t.pages.ratingWorkmanship },
@@ -417,6 +437,26 @@ export default function OpinionsPage() {
                                         </div>
                                         <div className="opinion-list-footer">
                                           <span className="opinion-votes">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
+                                          <div className="admin-actions-row" style={{ marginLeft: '0.5rem' }}>
+                                            <button
+                                              type="button"
+                                              className="btn btn-secondary btn-sm"
+                                              disabled={!!opinionVoteSaving[opinion.id]}
+                                              onClick={() => handleVoteOpinion(opinion.id, 'helpful')}
+                                              title="Helpful"
+                                            >
+                                              👍
+                                            </button>
+                                            <button
+                                              type="button"
+                                              className="btn btn-secondary btn-sm"
+                                              disabled={!!opinionVoteSaving[opinion.id]}
+                                              onClick={() => handleVoteOpinion(opinion.id, 'unhelpful')}
+                                              title="Unhelpful"
+                                            >
+                                              👎
+                                            </button>
+                                          </div>
                                           {opinion.car_id && (
                                             <Link to={`/cars/${opinion.car_id}`} className="opinion-view-car">
                                               {t.pages.viewCar}
