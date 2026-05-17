@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCurrentUser, isAuthenticatedUser } from '../utils/auth'
+import { getCarImage } from '../utils/carImages'
 
 function sanitizeRichHtml(value) {
   return DOMPurify.sanitize(String(value || ''))
@@ -15,6 +16,7 @@ export default function MyContentPage() {
   const isLoggedIn = useMemo(() => isAuthenticatedUser(), [])
   const [reviews, setReviews] = useState([])
   const [opinions, setOpinions] = useState([])
+  const [carsById, setCarsById] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -28,13 +30,22 @@ export default function MyContentPage() {
       try {
         setLoading(true)
         setError('')
-        const [reviewsResponse, opinionsResponse] = await Promise.all([
+        const [reviewsResponse, opinionsResponse, carsResponse] = await Promise.all([
           api.get(`/reviews/?author=${currentUser.id}&page_size=200&ordering=-published_at`),
           api.get(`/opinions/?author=${currentUser.id}&page_size=200&ordering=-created_at`),
+          api.get('/cars/?page_size=300'),
         ])
+
+        const carsList = carsResponse.data.results || carsResponse.data || []
+        const nextCarsById = {}
+        carsList.forEach((car) => {
+          if (!car?.id) return
+          nextCarsById[car.id] = car
+        })
 
         setReviews(reviewsResponse.data.results || reviewsResponse.data || [])
         setOpinions(opinionsResponse.data.results || opinionsResponse.data || [])
+        setCarsById(nextCarsById)
       } catch {
         setError(t.adminPanel.loadError)
       } finally {
@@ -116,6 +127,14 @@ export default function MyContentPage() {
               <div className="opinions-list">
                 {opinions.map((opinion) => (
                   <article key={opinion.id} className="opinion-list-item">
+                    <div className="opinion-model-image-wrap">
+                      <img
+                        src={getCarImage(carsById[opinion.car_id] || { name: opinion.car_name, brand_name: opinion.car_brand_name })}
+                        alt={`${opinion.car_brand_name || ''} ${opinion.car_name || ''}`.trim() || 'Car model'}
+                        className="opinion-model-image"
+                        loading="lazy"
+                      />
+                    </div>
                     <div className="opinion-list-header">
                       <h3 className="opinion-title">{opinion.title}</h3>
                       <span className="opinion-rating">★ {opinion.rating}/5</span>

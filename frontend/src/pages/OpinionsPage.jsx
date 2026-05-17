@@ -6,6 +6,7 @@ import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
+import { getCarImage } from '../utils/carImages'
 import { canEditByAuthorId, isAuthenticatedUser } from '../utils/auth'
 
 const WORD_LIKE_MODULES = {
@@ -73,6 +74,7 @@ export default function OpinionsPage() {
   const [opinions, setOpinions] = useState([])
   const [brandCatalog, setBrandCatalog] = useState([])
   const [carBrandById, setCarBrandById] = useState({})
+  const [carsById, setCarsById] = useState({})
   const [loading, setLoading] = useState(true)
   const [expandedBrands, setExpandedBrands] = useState(new Set())
   const [expandedModels, setExpandedModels] = useState(new Set())
@@ -98,14 +100,17 @@ export default function OpinionsPage() {
         const carsList = carsResponse.data.results || carsResponse.data || []
 
         const nextCarBrandById = {}
+        const nextCarsById = {}
         carsList.forEach((car) => {
           if (!car?.id) return
+          nextCarsById[car.id] = car
           nextCarBrandById[car.id] = car.brand_name || ''
         })
 
         setOpinions(opinionsList)
         setBrandCatalog(brandsList)
         setCarBrandById(nextCarBrandById)
+        setCarsById(nextCarsById)
       } catch (error) {
         console.error('Error fetching opinions:', error)
       } finally {
@@ -378,6 +383,14 @@ export default function OpinionsPage() {
                               <div className="opinions-list">
                                 {modelGroup.opinions.map((opinion) => (
                                   <article key={opinion.id} className="opinion-list-item">
+                                    <div className="opinion-model-image-wrap">
+                                      <img
+                                        src={getCarImage(carsById[opinion.car_id] || { name: opinion.car_name, brand_name: opinion.car_brand_name })}
+                                        alt={`${opinion.car_brand_name || ''} ${opinion.car_name || ''}`.trim() || 'Car model'}
+                                        className="opinion-model-image"
+                                        loading="lazy"
+                                      />
+                                    </div>
                                     {editingOpinionId === opinion.id && editingOpinionDraft ? (
                                       <div className="admin-form-card" style={{ marginBottom: '0.5rem' }}>
                                         <label className="form-label">{t.pages.opinionTitle}</label>

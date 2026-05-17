@@ -865,6 +865,20 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 		box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
 	}
 
+	.opinion-model-image-wrap {
+		margin: -0.4rem -0.4rem 0.9rem;
+	}
+
+	.opinion-model-image {
+		display: block;
+		width: 100%;
+		height: 170px;
+		object-fit: cover;
+		border-radius: 0.75rem;
+		border: 1px solid #e2e8f0;
+		background: #f8fafc;
+	}
+
 	.opinion-list-header {
 		display: flex;
 		justify-content: space-between;
