@@ -5,8 +5,15 @@ import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { canEditByAuthorId, getCurrentUser, isAdminUser, isAuthenticatedUser } from '../utils/auth'
 
+function decodeHtmlEntities(value) {
+  if (!value) return ''
+  const textarea = document.createElement('textarea')
+  textarea.innerHTML = String(value)
+  return textarea.value
+}
+
 function sanitizeEditorialHtml(value) {
-  return DOMPurify.sanitize(String(value || ''))
+  return DOMPurify.sanitize(decodeHtmlEntities(value))
 }
 
 function escapeHtml(value) {
@@ -527,7 +534,7 @@ export default function ReviewsPage() {
 
           <div className="opinions-list">
             {filteredAndSortedReviews.map((review) => {
-              const content = String(review.content || '')
+              const content = decodeHtmlEntities(review.content)
               const isHtmlContent = /<\/?[a-z][\s\S]*>/i.test(content)
               const parsed = isHtmlContent ? null : parseReviewContent(content)
               const canManageReview = canEditByAuthorId(review.author_id)
