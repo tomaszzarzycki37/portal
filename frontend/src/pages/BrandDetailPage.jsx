@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import api from '../services/api'
 import { useTranslation } from '../i18n'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
-import { getCarImage } from '../utils/carImages'
+import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser } from '../utils/auth'
 
 function readFileAsDataUrl(file) {
@@ -639,6 +639,7 @@ export default function BrandDetailPage() {
                           src={getCarImage(car)}
                           alt={car.name}
                           className="car-thumb"
+                          onError={handleCarImageError}
                           style={isDarkTheme ? { border: '1px solid #4b5563' } : undefined}
                         />
                         <h3 className="car-name" style={isDarkTheme ? { color: '#f3f4f6' } : undefined}>{car.name}</h3>

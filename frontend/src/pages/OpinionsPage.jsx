@@ -6,7 +6,7 @@ import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
-import { getCarImage } from '../utils/carImages'
+import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { canEditByAuthorId, isAuthenticatedUser } from '../utils/auth'
 
 const WORD_LIKE_MODULES = {
@@ -459,6 +459,7 @@ export default function OpinionsPage() {
                                         alt={`${opinion.car_brand_name || ''} ${opinion.car_name || ''}`.trim() || 'Car model'}
                                         className="opinion-model-image"
                                         loading="lazy"
+                                        onError={handleCarImageError}
                                       />
                                     </div>
                                     {editingOpinionId === opinion.id && editingOpinionDraft ? (

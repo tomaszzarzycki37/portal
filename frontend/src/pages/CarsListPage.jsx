@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import api from '../services/api'
 import { useTranslation } from '../i18n'
 import { createBrandPlaceholderUrl, getBrandLogoOrPlaceholder } from '../utils/brandLogos'
-import { getCarImage } from '../utils/carImages'
+import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser } from '../utils/auth'
 
 function detectDriveType(engineType) {
@@ -417,6 +417,7 @@ export default function CarsListPage() {
                             <img
                               src={getCarImage(primaryVariant)}
                               alt={family.name}
+                              onError={handleCarImageError}
                               style={{ width: '76px', height: '48px', objectFit: 'cover', borderRadius: '0.4rem', border: '1px solid #dbe4f0', flexShrink: 0 }}
                             />
                             <div>

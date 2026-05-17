@@ -5,7 +5,7 @@ import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
-import { getCarImage } from '../utils/carImages'
+import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { canEditByAuthorId, isAdminUser, isAuthenticatedUser } from '../utils/auth'
 
 const WORD_LIKE_MODULES = {
@@ -568,7 +568,7 @@ export default function CarDetailPage() {
           )}
         </div>
 
-        <img src={getCarImage(car)} alt={car.name} className="detail-image" />
+        <img src={getCarImage(car)} alt={car.name} className="detail-image" onError={handleCarImageError} />
       </section>
 
       <section className="detail-specs-card">

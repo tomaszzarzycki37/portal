@@ -3,7 +3,7 @@ import DOMPurify from 'dompurify'
 import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
-import { getCarImage } from '../utils/carImages'
+import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser } from '../utils/auth'
 
 function decodeHtmlEntities(value) {
@@ -98,7 +98,7 @@ export default function CarReviewsPage() {
           </div>
         </div>
 
-        <img src={getCarImage(car)} alt={car.name} className="detail-image" />
+        <img src={getCarImage(car)} alt={car.name} className="detail-image" onError={handleCarImageError} />
       </section>
 
       {reviews.length === 0 ? (

@@ -5,7 +5,7 @@ import 'react-quill/dist/quill.snow.css'
 import { getBaseTranslationValue, getTranslationKeys, useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCurrentUser, isAdminUser } from '../utils/auth'
-import { getCarImage } from '../utils/carImages'
+import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { normalizeMediaUrl } from '../utils/mediaUrl'
 
 const CURRENCY_CONFIG = {
@@ -1896,7 +1896,7 @@ export default function AdminDashboard() {
 
             {selectedCar && (
               <div className="admin-preview-meta">
-                <img src={imagePreview || getCarImage(selectedCar)} alt={selectedCar.name} className="admin-preview-image" />
+                <img src={imagePreview || getCarImage(selectedCar)} alt={selectedCar.name} className="admin-preview-image" onError={handleCarImageError} />
                 <div>
                   <p className="admin-preview-title">{selectedCar.brand_name} {selectedCar.name}</p>
                   <p className="admin-preview-sub">{selectedCar.year_introduced} • {selectedCar.vehicle_type}</p>

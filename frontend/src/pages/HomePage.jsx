@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
-import { getCarImage } from '../utils/carImages'
+import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser } from '../utils/auth'
 import { normalizeMediaUrl } from '../utils/mediaUrl'
 
@@ -602,6 +602,7 @@ export default function HomePage() {
                         src={getCarImage(carById.get(review.car_id))}
                         alt={`${review.car_brand_name} ${review.car_name}`.trim()}
                         loading="lazy"
+                        onError={handleCarImageError}
                       />
                       <Link to={`/cars/${review.car_id}/reviews`} className="home-featured-review-open-link">{t.home.openFeaturedReview}</Link>
                     </div>

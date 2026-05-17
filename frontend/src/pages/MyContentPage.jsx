@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCurrentUser, isAuthenticatedUser } from '../utils/auth'
-import { getCarImage } from '../utils/carImages'
+import { getCarImage, handleCarImageError } from '../utils/carImages'
 
 function sanitizeRichHtml(value) {
   return DOMPurify.sanitize(String(value || ''))
@@ -133,6 +133,7 @@ export default function MyContentPage() {
                         alt={`${opinion.car_brand_name || ''} ${opinion.car_name || ''}`.trim() || 'Car model'}
                         className="opinion-model-image"
                         loading="lazy"
+                        onError={handleCarImageError}
                       />
                     </div>
                     <div className="opinion-list-header">
