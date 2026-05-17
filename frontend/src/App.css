@@ -872,7 +872,7 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	.opinion-model-image {
 		display: block;
 		width: 100%;
-		height: 170px;
+		height: 140px;
 		object-fit: cover;
 		border-radius: 0.75rem;
 		border: 1px solid #e2e8f0;
