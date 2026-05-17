@@ -979,6 +979,11 @@ export default function AdminDashboard() {
       nextParams.delete('editReview')
       nextParams.delete('section')
       setSearchParams(nextParams, { replace: true })
+
+      setTimeout(() => {
+        const el = document.querySelector('.admin-review-edit-grid')
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 120)
     }
 
     openReviewEditor()
