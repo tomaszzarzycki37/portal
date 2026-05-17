@@ -12,8 +12,8 @@ admin.site.site_title = 'Panel administratora'
 admin.site.index_title = 'Zarzadzanie serwisem'
 
 urlpatterns = [
-    # Admin
-    path('admin/', admin.site.urls),
+    # Django admin (separate path to avoid collision with frontend /admin route)
+    path('django-admin/', admin.site.urls),
     
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
