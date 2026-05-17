@@ -1331,6 +1331,10 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+.opinion-card-item {
+	position: relative;
+}
+
 .review-admin-quick-edit {
 	position: absolute;
 	top: 0.7rem;
@@ -1351,6 +1355,7 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 }
 
 .review-card-rich:hover .review-admin-quick-edit,
+.opinion-card-item:hover .review-admin-quick-edit,
 .review-admin-quick-edit:focus-visible {
 	opacity: 1;
 	pointer-events: auto;
