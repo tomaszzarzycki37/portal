@@ -82,6 +82,10 @@ export default function OpinionsPage() {
   const [editingOpinionDraft, setEditingOpinionDraft] = useState(null)
   const [opinionActionSaving, setOpinionActionSaving] = useState(false)
   const [opinionVoteSaving, setOpinionVoteSaving] = useState({})
+  const [expandedOpinions, setExpandedOpinions] = useState(new Set())
+  const [opinionComments, setOpinionComments] = useState({})
+  const [commentTexts, setCommentTexts] = useState({})
+  const [commentSaving, setCommentSaving] = useState({})
   const [opinionMessage, setOpinionMessage] = useState('')
   const [opinionError, setOpinionError] = useState('')
 
@@ -223,6 +227,45 @@ export default function OpinionsPage() {
     const opinionsResponse = await api.get('/opinions/?page_size=200&ordering=-created_at')
     const opinionsList = opinionsResponse.data.results || opinionsResponse.data || []
     setOpinions(opinionsList)
+  }
+
+  const handleToggleComments = async (opinionId) => {
+    setExpandedOpinions((prev) => {
+      const next = new Set(prev)
+      if (next.has(opinionId)) {
+        next.delete(opinionId)
+      } else {
+        next.add(opinionId)
+      }
+      return next
+    })
+
+    if (!opinionComments[opinionId]) {
+      try {
+        const res = await api.get(`/opinions/${opinionId}/`)
+        setOpinionComments((prev) => ({ ...prev, [opinionId]: res.data.comments || [] }))
+      } catch {
+        setOpinionComments((prev) => ({ ...prev, [opinionId]: [] }))
+      }
+    }
+  }
+
+  const handleAddComment = async (opinionId) => {
+    const text = (commentTexts[opinionId] || '').trim()
+    if (!text) return
+
+    setCommentSaving((prev) => ({ ...prev, [opinionId]: true }))
+    try {
+      await api.post(`/opinions/${opinionId}/add_comment/`, { content: text })
+      const res = await api.get(`/opinions/${opinionId}/`)
+      setOpinionComments((prev) => ({ ...prev, [opinionId]: res.data.comments || [] }))
+      setCommentTexts((prev) => ({ ...prev, [opinionId]: '' }))
+      await reloadOpinions()
+    } catch {
+      setOpinionError(t.pages.opinionUpdateError)
+    } finally {
+      setCommentSaving((prev) => ({ ...prev, [opinionId]: false }))
+    }
   }
 
   const handleStartEditOpinion = (opinion) => {
@@ -506,6 +549,13 @@ export default function OpinionsPage() {
                                             </button>
                                           </div>
                                           <div className="opinion-footer-actions">
+                                            <button
+                                              type="button"
+                                              className="btn-comment-toggle"
+                                              onClick={() => handleToggleComments(opinion.id)}
+                                            >
+                                              {expandedOpinions.has(opinion.id) ? '−' : '+'} {opinion.comments_count || 0} {t.pages.showComments}
+                                            </button>
                                             {opinion.car_id && (
                                               <Link to={`/cars/${opinion.car_id}`} className="opinion-view-car">
                                                 {t.pages.viewCar}
@@ -523,6 +573,47 @@ export default function OpinionsPage() {
                                             )}
                                           </div>
                                         </div>
+                                        {expandedOpinions.has(opinion.id) && (
+                                          <div className="opinion-comments">
+                                            {(opinionComments[opinion.id] || []).length === 0 ? (
+                                              <p className="opinion-no-comments">{t.pages.noComments}</p>
+                                            ) : (
+                                              (opinionComments[opinion.id] || []).map((c) => (
+                                                <div key={c.id} className="comment-item">
+                                                  <span className="comment-author">{c.author?.username}</span>
+                                                  <span className="comment-text">{c.content}</span>
+                                                </div>
+                                              ))
+                                            )}
+                                            <div className="comment-add-row">
+                                              {isAuthenticatedUser() ? (
+                                                <>
+                                                  <input
+                                                    className="form-input comment-input"
+                                                    placeholder={t.pages.commentPlaceholder}
+                                                    value={commentTexts[opinion.id] || ''}
+                                                    onChange={(e) =>
+                                                      setCommentTexts((prev) => ({ ...prev, [opinion.id]: e.target.value }))
+                                                    }
+                                                    onKeyDown={(e) => {
+                                                      if (e.key === 'Enter') handleAddComment(opinion.id)
+                                                    }}
+                                                  />
+                                                  <button
+                                                    type="button"
+                                                    className="btn btn-primary btn-sm"
+                                                    disabled={commentSaving[opinion.id]}
+                                                    onClick={() => handleAddComment(opinion.id)}
+                                                  >
+                                                    {t.pages.commentSubmit}
+                                                  </button>
+                                                </>
+                                              ) : (
+                                                <p className="admin-meta">{t.pages.loginToContribute}</p>
+                                              )}
+                                            </div>
+                                          </div>
+                                        )}
                                       </>
                                     )}
                                   </article>
