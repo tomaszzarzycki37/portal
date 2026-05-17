@@ -21,6 +21,19 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
+# Reverse-proxy HTTPS support (Apache -> Gunicorn)
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in config(
+        'CSRF_TRUSTED_ORIGINS',
+        default='https://autachin.pl,https://www.autachin.pl,http://localhost:3000,http://localhost:5173'
+    ).split(',')
+    if origin.strip()
+]
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',

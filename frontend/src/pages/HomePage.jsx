@@ -4,6 +4,7 @@ import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCarImage } from '../utils/carImages'
 import { isAdminUser } from '../utils/auth'
+import { normalizeMediaUrl } from '../utils/mediaUrl'
 
 const FALLBACK_HERO_IMAGE = 'https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&w=1800&q=80'
 const HERO_BACKGROUND_CONTENT_KEY = 'home.heroSearchBackgroundUrl'
@@ -16,9 +17,9 @@ const API_ORIGIN = import.meta.env.VITE_API_URL
 
 function resolveMediaUrl(url) {
   if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
-  if (url.startsWith('/')) return `${API_ORIGIN}${url}`
-  return `${API_ORIGIN}/${url}`
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return normalizeMediaUrl(url)
+  if (url.startsWith('/')) return normalizeMediaUrl(`${API_ORIGIN}${url}`)
+  return normalizeMediaUrl(`${API_ORIGIN}/${url}`)
 }
 
 const parsePriceRange = (priceRange) => {

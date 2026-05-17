@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from '../i18n'
 import { isAdminUser } from '../utils/auth'
 import api from '../services/api'
+import { normalizeMediaUrl } from '../utils/mediaUrl'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 const API_ORIGIN = import.meta.env.VITE_API_URL
@@ -13,9 +14,9 @@ const API_ORIGIN = import.meta.env.VITE_API_URL
 
 function resolveBrandLogoSrc(url) {
   if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
-  if (url.startsWith('/')) return `${API_ORIGIN}${url}`
-  return `${API_ORIGIN}/${url}`
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return normalizeMediaUrl(url)
+  if (url.startsWith('/')) return normalizeMediaUrl(`${API_ORIGIN}${url}`)
+  return normalizeMediaUrl(`${API_ORIGIN}/${url}`)
 }
 
 export default function Header() {

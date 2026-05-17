@@ -6,6 +6,7 @@ import { getBaseTranslationValue, getTranslationKeys, useTranslation } from '../
 import api from '../services/api'
 import { getCurrentUser, isAdminUser } from '../utils/auth'
 import { getCarImage } from '../utils/carImages'
+import { normalizeMediaUrl } from '../utils/mediaUrl'
 
 const CURRENCY_CONFIG = {
   USD: { symbol: '$', rateToUsd: 1 },
@@ -76,9 +77,9 @@ function RichTextEditor({ id, label, value, onChange, compact = false }) {
 
 function resolveMediaUrl(url) {
   if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://')) return url
-  if (url.startsWith('/')) return `${API_ORIGIN}${url}`
-  return `${API_ORIGIN}/${url}`
+  if (url.startsWith('http://') || url.startsWith('https://')) return normalizeMediaUrl(url)
+  if (url.startsWith('/')) return normalizeMediaUrl(`${API_ORIGIN}${url}`)
+  return normalizeMediaUrl(`${API_ORIGIN}/${url}`)
 }
 
 function readFileAsDataUrl(file) {
