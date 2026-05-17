@@ -7,6 +7,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+admin.site.site_header = 'Panel administratora'
+admin.site.site_title = 'Panel administratora'
+admin.site.index_title = 'Zarzadzanie serwisem'
+
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
