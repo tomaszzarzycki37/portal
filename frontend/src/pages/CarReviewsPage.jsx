@@ -1,8 +1,20 @@
 import { useEffect, useState } from 'react'
+import DOMPurify from 'dompurify'
 import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCarImage } from '../utils/carImages'
+
+function decodeHtmlEntities(value) {
+  if (!value) return ''
+  const textarea = document.createElement('textarea')
+  textarea.innerHTML = String(value)
+  return textarea.value
+}
+
+function sanitizeRichHtml(value) {
+  return DOMPurify.sanitize(decodeHtmlEntities(value))
+}
 
 export default function CarReviewsPage() {
   const { t, lang } = useTranslation()
@@ -99,14 +111,9 @@ export default function CarReviewsPage() {
                   {review.publication_name}
                   {review.author_name ? ` - ${review.author_name}` : ''}
                 </p>
-                <p className="opinion-text">{review.content}</p>
+                <div className="opinion-text" dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(review.content) }} />
                 <div className="opinion-rating-row">
                   <span className="opinion-counts">{review.published_at}</span>
-                  {review.publication_url && (
-                    <a href={review.publication_url} target="_blank" rel="noreferrer" className="opinion-view-car">
-                      {t.pages.openSourceArticle}
-                    </a>
-                  )}
                 </div>
               </article>
             ))}

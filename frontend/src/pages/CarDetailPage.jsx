@@ -34,6 +34,13 @@ function sanitizeRichHtml(value) {
   return DOMPurify.sanitize(String(value || ''))
 }
 
+function decodeHtmlEntities(value) {
+  if (!value) return ''
+  const textarea = document.createElement('textarea')
+  textarea.innerHTML = String(value)
+  return textarea.value
+}
+
 function getMeaningfulRichText(value) {
   return String(value || '')
     .replace(/<[^>]*>/g, ' ')
@@ -668,14 +675,10 @@ export default function CarDetailPage() {
                   {review.publication_name}
                   {review.author_name ? ` - ${review.author_name}` : ''}
                 </p>
-                <p className="opinion-text">{review.summary || review.content}</p>
-                {review.publication_url && (
-                  <div className="opinion-rating-row">
-                    <a href={review.publication_url} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
-                      {t.pages.openSourceArticle}
-                    </a>
-                  </div>
-                )}
+                <div
+                  className="opinion-text"
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(decodeHtmlEntities(review.summary || review.content)) }}
+                />
               </article>
             ))}
           </div>
