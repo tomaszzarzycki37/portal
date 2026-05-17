@@ -459,6 +459,8 @@ export default function CarDetailPage() {
 
     try {
       setVoteSaving((prev) => ({ ...prev, [opinionId]: true }))
+      setAdminOpinionError('')
+      setAdminOpinionMessage('')
       await api.post(`/opinions/${opinionId}/vote/`, { vote_type: voteType })
       const opinionsResponse = await api.get(`/opinions/?car_model=${id}&ordering=-created_at`)
       setOpinions(opinionsResponse.data.results || opinionsResponse.data)
@@ -928,25 +930,25 @@ export default function CarDetailPage() {
                       ))}
                     </div>
                     <div className="opinion-rating-row">
-                      <span className="opinion-counts">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
-                      <div className="admin-actions-row" style={{ marginLeft: '0.5rem' }}>
+                      <div className="opinion-votes" role="group" aria-label="Opinion votes">
                         <button
                           type="button"
-                          className="btn btn-secondary btn-sm"
+                          className="opinion-vote-btn"
                           disabled={!!voteSaving[opinion.id]}
                           onClick={() => handleVoteOpinion(opinion.id, 'helpful')}
                           title="Helpful"
                         >
-                          👍
+                          👍 {opinion.helpful_count}
                         </button>
+                        <span className="opinion-vote-separator">|</span>
                         <button
                           type="button"
-                          className="btn btn-secondary btn-sm"
+                          className="opinion-vote-btn"
                           disabled={!!voteSaving[opinion.id]}
                           onClick={() => handleVoteOpinion(opinion.id, 'unhelpful')}
                           title="Unhelpful"
                         >
-                          👎
+                          👎 {opinion.unhelpful_count}
                         </button>
                       </div>
                       <button

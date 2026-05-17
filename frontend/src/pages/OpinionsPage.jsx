@@ -6,7 +6,7 @@ import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
-import { canEditByAuthorId } from '../utils/auth'
+import { canEditByAuthorId, isAuthenticatedUser } from '../utils/auth'
 
 const WORD_LIKE_MODULES = {
   toolbar: [
@@ -292,6 +292,7 @@ export default function OpinionsPage() {
     try {
       setOpinionVoteSaving((prev) => ({ ...prev, [opinionId]: true }))
       setOpinionError('')
+      setOpinionMessage('')
       await api.post(`/opinions/${opinionId}/vote/`, { vote_type: voteType })
       await reloadOpinions()
     } catch {
@@ -436,25 +437,25 @@ export default function OpinionsPage() {
                                           ))}
                                         </div>
                                         <div className="opinion-list-footer">
-                                          <span className="opinion-votes">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
-                                          <div className="admin-actions-row" style={{ marginLeft: '0.5rem' }}>
+                                          <div className="opinion-votes" role="group" aria-label="Opinion votes">
                                             <button
                                               type="button"
-                                              className="btn btn-secondary btn-sm"
+                                              className="opinion-vote-btn"
                                               disabled={!!opinionVoteSaving[opinion.id]}
                                               onClick={() => handleVoteOpinion(opinion.id, 'helpful')}
                                               title="Helpful"
                                             >
-                                              👍
+                                              👍 {opinion.helpful_count}
                                             </button>
+                                            <span className="opinion-vote-separator">|</span>
                                             <button
                                               type="button"
-                                              className="btn btn-secondary btn-sm"
+                                              className="opinion-vote-btn"
                                               disabled={!!opinionVoteSaving[opinion.id]}
                                               onClick={() => handleVoteOpinion(opinion.id, 'unhelpful')}
                                               title="Unhelpful"
                                             >
-                                              👎
+                                              👎 {opinion.unhelpful_count}
                                             </button>
                                           </div>
                                           {opinion.car_id && (
