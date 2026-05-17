@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
+import DOMPurify from 'dompurify'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCurrentUser, isAuthenticatedUser } from '../utils/auth'
+
+function sanitizeRichHtml(value) {
+  return DOMPurify.sanitize(String(value || ''))
+}
 
 export default function MyContentPage() {
   const { t, lang } = useTranslation()
@@ -119,7 +124,7 @@ export default function MyContentPage() {
                       <span>{opinion.car_brand_name} {opinion.car_name}</span>
                       <span>{formatDate(opinion.created_at)}</span>
                     </div>
-                    <p className="opinion-content">{opinion.content}</p>
+                    <div className="opinion-content" dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(opinion.content) }} />
                     <div className="opinion-list-footer">
                       <span className="opinion-votes">👍 {opinion.helpful_count} | 👎 {opinion.unhelpful_count}</span>
                       <Link to="/opinions" className="opinion-view-car">{t.pages.editLabel}</Link>

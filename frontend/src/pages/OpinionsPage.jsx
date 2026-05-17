@@ -1,9 +1,63 @@
 import { useEffect, useMemo, useState } from 'react'
+import DOMPurify from 'dompurify'
 import { Link } from 'react-router-dom'
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { canEditByAuthorId } from '../utils/auth'
+
+const WORD_LIKE_MODULES = {
+  toolbar: [
+    [{ font: [] }, { size: ['small', false, 'large', 'huge'] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ color: [] }, { background: [] }],
+    [{ align: [] }],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ indent: '-1' }, { indent: '+1' }],
+    ['blockquote', 'code-block'],
+    ['link', 'clean'],
+  ],
+}
+
+const WORD_LIKE_FORMATS = [
+  'font', 'size',
+  'bold', 'italic', 'underline', 'strike',
+  'color', 'background',
+  'align', 'list', 'bullet', 'indent',
+  'blockquote', 'code-block',
+  'link',
+]
+
+function sanitizeRichHtml(value) {
+  return DOMPurify.sanitize(String(value || ''))
+}
+
+function getMeaningfulRichText(value) {
+  return String(value || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function RichTextEditor({ id, label, value, onChange, placeholder }) {
+  return (
+    <div className="admin-rich-editor admin-rich-editor-compact">
+      <label className="form-label" htmlFor={id}>{label}</label>
+      <ReactQuill
+        id={id}
+        theme="snow"
+        value={value || ''}
+        onChange={onChange}
+        modules={WORD_LIKE_MODULES}
+        formats={WORD_LIKE_FORMATS}
+        placeholder={placeholder}
+      />
+    </div>
+  )
+}
 
 function formatRatingDisplay(value) {
   const numeric = Number(value)
@@ -180,7 +234,8 @@ export default function OpinionsPage() {
   const handleSaveOpinion = async (opinionId) => {
     if (!editingOpinionDraft) return
     const ratingValue = Number.parseInt(String(editingOpinionDraft.rating || '').trim(), 10)
-    if (!editingOpinionDraft.title.trim() || !editingOpinionDraft.content.trim() || !editingOpinionDraft.car_model || Number.isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+    const normalizedContent = String(editingOpinionDraft.content || '').trim()
+    if (!editingOpinionDraft.title.trim() || !getMeaningfulRichText(normalizedContent) || !editingOpinionDraft.car_model || Number.isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
       setOpinionError(t.pages.opinionCreateValidation)
       return
     }
@@ -192,7 +247,7 @@ export default function OpinionsPage() {
       await api.patch(`/opinions/${opinionId}/`, {
         car_model: Number.parseInt(editingOpinionDraft.car_model, 10),
         title: editingOpinionDraft.title.trim(),
-        content: editingOpinionDraft.content.trim(),
+        content: normalizedContent,
         rating: ratingValue,
       })
       await reloadOpinions()
@@ -310,12 +365,12 @@ export default function OpinionsPage() {
                                           value={editingOpinionDraft.title}
                                           onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, title: e.target.value }))}
                                         />
-                                        <label className="form-label">{t.adminPanel.description}</label>
-                                        <textarea
-                                          className="form-input form-textarea"
-                                          rows={4}
+                                        <RichTextEditor
+                                          id={`opinion-content-${opinion.id}`}
+                                          label={t.adminPanel.description}
                                           value={editingOpinionDraft.content}
-                                          onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, content: e.target.value }))}
+                                          onChange={(nextValue) => setEditingOpinionDraft((prev) => ({ ...prev, content: nextValue }))}
+                                          placeholder={t.adminPanel.reviewEditorPlaceholder}
                                         />
                                         <label className="form-label">{t.pages.averageRating}</label>
                                         <select
@@ -348,7 +403,10 @@ export default function OpinionsPage() {
                                           <span className="opinion-author">{opinion.author?.username || t.pages.unknownAuthor}</span>
                                           <span className="opinion-date">{formatDate(opinion.created_at)}</span>
                                         </div>
-                                        <p className="opinion-content">{opinion.content}</p>
+                                        <div
+                                          className="opinion-content"
+                                          dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(opinion.content) }}
+                                        />
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                                           {opinionRatingCategories.map((category) => (
                                             <div key={category.key} className="opinion-category-rating">

@@ -1,9 +1,63 @@
 import { useEffect, useState } from 'react'
+import DOMPurify from 'dompurify'
 import { Link, useParams } from 'react-router-dom'
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCarImage } from '../utils/carImages'
 import { canEditByAuthorId, isAdminUser, isAuthenticatedUser } from '../utils/auth'
+
+const WORD_LIKE_MODULES = {
+  toolbar: [
+    [{ font: [] }, { size: ['small', false, 'large', 'huge'] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ color: [] }, { background: [] }],
+    [{ align: [] }],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ indent: '-1' }, { indent: '+1' }],
+    ['blockquote', 'code-block'],
+    ['link', 'clean'],
+  ],
+}
+
+const WORD_LIKE_FORMATS = [
+  'font', 'size',
+  'bold', 'italic', 'underline', 'strike',
+  'color', 'background',
+  'align', 'list', 'bullet', 'indent',
+  'blockquote', 'code-block',
+  'link',
+]
+
+function sanitizeRichHtml(value) {
+  return DOMPurify.sanitize(String(value || ''))
+}
+
+function getMeaningfulRichText(value) {
+  return String(value || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function RichTextEditor({ id, label, value, onChange, placeholder }) {
+  return (
+    <div className="admin-rich-editor admin-rich-editor-compact">
+      <label className="form-label" htmlFor={id}>{label}</label>
+      <ReactQuill
+        id={id}
+        theme="snow"
+        value={value || ''}
+        onChange={onChange}
+        modules={WORD_LIKE_MODULES}
+        formats={WORD_LIKE_FORMATS}
+        placeholder={placeholder}
+      />
+    </div>
+  )
+}
 
 function extractApiErrorMessage(error, fallbackMessage) {
   const payload = error?.response?.data
@@ -266,7 +320,7 @@ export default function CarDetailPage() {
     const trimmedTitle = String(adminOpinionTitle || '').trim()
     const trimmedContent = String(adminOpinionContent || '').trim()
 
-    if (!trimmedTitle || !trimmedContent) {
+    if (!trimmedTitle || !getMeaningfulRichText(trimmedContent)) {
       setAdminOpinionMessage('')
       setAdminOpinionError(t.pages.opinionCreateValidation)
       return
@@ -339,7 +393,7 @@ export default function CarDetailPage() {
     const trimmedTitle = String(editingOpinionDraft.title || '').trim()
     const trimmedContent = String(editingOpinionDraft.content || '').trim()
 
-    if (!trimmedTitle || !trimmedContent) {
+    if (!trimmedTitle || !getMeaningfulRichText(trimmedContent)) {
       setAdminOpinionError(t.pages.opinionCreateValidation)
       return
     }
@@ -621,13 +675,12 @@ export default function CarDetailPage() {
               onChange={(e) => setAdminOpinionTitle(e.target.value)}
             />
 
-            <label className="form-label" htmlFor="admin-opinion-content">{t.adminPanel.description}</label>
-            <textarea
+            <RichTextEditor
               id="admin-opinion-content"
-              className="form-input form-textarea"
-              rows={4}
+              label={t.adminPanel.description}
               value={adminOpinionContent}
-              onChange={(e) => setAdminOpinionContent(e.target.value)}
+              onChange={setAdminOpinionContent}
+              placeholder={t.adminPanel.reviewEditorPlaceholder}
             />
 
             <label className="form-label" htmlFor="admin-opinion-rating">{t.pages.averageRating}</label>
@@ -739,12 +792,12 @@ export default function CarDetailPage() {
                       value={editingOpinionDraft.title}
                       onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, title: e.target.value }))}
                     />
-                    <label className="form-label">{t.adminPanel.description}</label>
-                    <textarea
-                      className="form-input form-textarea"
-                      rows={4}
+                    <RichTextEditor
+                      id={`edit-opinion-content-${opinion.id}`}
+                      label={t.adminPanel.description}
                       value={editingOpinionDraft.content}
-                      onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, content: e.target.value }))}
+                      onChange={(nextValue) => setEditingOpinionDraft((prev) => ({ ...prev, content: nextValue }))}
+                      placeholder={t.adminPanel.reviewEditorPlaceholder}
                     />
                     <label className="form-label">{t.pages.averageRating}</label>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -842,7 +895,10 @@ export default function CarDetailPage() {
                   <>
                     <h3 className="opinion-title">{opinion.title}</h3>
                     <p className="opinion-meta">{opinion.author?.username || 'user'}</p>
-                    <p className="opinion-text">{opinion.content}</p>
+                    <div
+                      className="opinion-text"
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(opinion.content) }}
+                    />
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                       {opinionRatingCategories.map((category) => (
                         <div key={category.key} className="opinion-category-rating">
