@@ -61,9 +61,16 @@
   #header,
   #branding,
   #content-related,
+  #nav-sidebar,
+  #toggle-nav-sidebar,
   .breadcrumbs,
   #footer {
     display: none !important;
+  }
+
+  .main,
+  .main.shifted {
+    margin-left: 0 !important;
   }
 
   #content {
@@ -215,6 +222,8 @@
 {% endblock %}
 
 {% block bodyclass %}{{ block.super }} login{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
 
 {% block content %}
 <iframe class="admin-login-bg-frame" src="/" title="Portal preview" aria-hidden="true" tabindex="-1"></iframe>
