@@ -1768,6 +1768,48 @@ body.app-theme-dark .opinion-list-meta {
 	color: #cbd5e1;
 }
 
+body.app-theme-dark .btn-comment-toggle {
+	background: #1b2028;
+	border-color: #475569;
+	color: #e2e8f0;
+}
+
+body.app-theme-dark .btn-comment-toggle:hover {
+	background: #222a35;
+	border-color: #64748b;
+}
+
+body.app-theme-dark .opinion-comments {
+	border-top-color: #4b5563;
+}
+
+body.app-theme-dark .opinion-no-comments {
+	color: #94a3b8;
+}
+
+body.app-theme-dark .comment-item {
+	background: #111827;
+	border-color: #374151;
+}
+
+body.app-theme-dark .comment-author {
+	color: #e2e8f0;
+}
+
+body.app-theme-dark .comment-text {
+	color: #d1d5db;
+}
+
+body.app-theme-dark .comment-input {
+	background: #111827;
+	border-color: #334155;
+	color: #e5e7eb;
+}
+
+body.app-theme-dark .comment-input::placeholder {
+	color: #94a3b8;
+}
+
 body.app-theme-dark .home-search-result-item {
 	background: #171b22;
 	border-color: #3b414b;
