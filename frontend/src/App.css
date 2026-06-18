@@ -1579,6 +1579,10 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	color: #0f172a;
 }
 
+.review-inline-editor-modal .admin-actions-row {
+	margin-top: 1.2rem;
+}
+
 /* Test Results */
 .review-results {
 	margin: 1.25rem 1.5rem 0;

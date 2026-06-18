@@ -769,12 +769,8 @@ export default function ReviewsPage() {
                   {/* Overview (legacy content only) */}
                   {parsed && parsed.overview && (
                     <p
-                      className={`review-overview-text ${canManageReview ? 'review-inline-editable-block' : ''}`}
+                      className="review-overview-text"
                       dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.overview) }}
-                      role={canManageReview ? 'button' : undefined}
-                      tabIndex={canManageReview ? 0 : undefined}
-                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'content') : undefined}
-                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'content')) : undefined}
                     />
                   )}
 
@@ -795,13 +791,7 @@ export default function ReviewsPage() {
 
                   {/* Verdict (legacy content only) */}
                   {parsed && parsed.verdict && (
-                    <div
-                      className={`review-verdict ${canManageReview ? 'review-inline-editable-block' : ''}`}
-                      role={canManageReview ? 'button' : undefined}
-                      tabIndex={canManageReview ? 0 : undefined}
-                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'content') : undefined}
-                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'content')) : undefined}
-                    >
+                    <div className="review-verdict">
                       <span className="review-verdict-label">{t.pages.verdict}</span>
                       <p className="review-verdict-text" dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.verdict) }} />
                     </div>
