@@ -23,30 +23,38 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [themeMode, setThemeMode] = useState(() => localStorage.getItem('admin_theme_mode') || 'light')
   const [brandTagline, setBrandTagline] = useState('')
+  const [brandLogoUrl, setBrandLogoUrl] = useState('')
   const token = localStorage.getItem('access_token')
   const isAdmin = isAdminUser()
   const { t, lang, setLang } = useTranslation()
-  const brandLogoSrc = resolveBrandLogoSrc(t.nav.brandLogoUrl)
+  const brandLogoSrc = resolveBrandLogoSrc(brandLogoUrl || t.nav.brandLogoUrl)
   const hasBrandLogo = Boolean(brandLogoSrc)
 
   useEffect(() => {
-    const fetchBrandTagline = async () => {
+    const fetchBrandData = async () => {
       try {
-        const response = await api.get(`/common/content/?lang=${lang}&key=nav.brandTagline`)
+        const response = await api.get(`/common/content/?lang=${lang}`)
         const list = response.data.results || response.data || []
         const taglineRecord = list.find((item) => item.key === 'nav.brandTagline')
+        const logoRecord = list.find((item) => item.key === 'nav.brandLogoUrl')
         if (taglineRecord && taglineRecord.value) {
           setBrandTagline(taglineRecord.value)
         } else {
           setBrandTagline(t.nav.brandTagline || '')
         }
+        if (logoRecord && logoRecord.value) {
+          setBrandLogoUrl(logoRecord.value)
+        } else {
+          setBrandLogoUrl(t.nav.brandLogoUrl || '')
+        }
       } catch {
         setBrandTagline(t.nav.brandTagline || '')
+        setBrandLogoUrl(t.nav.brandLogoUrl || '')
       }
     }
 
-    fetchBrandTagline()
-  }, [lang, t.nav.brandTagline])
+    fetchBrandData()
+  }, [lang, t.nav.brandTagline, t.nav.brandLogoUrl])
 
   useEffect(() => {
     const syncBodyThemeClass = (mode) => {

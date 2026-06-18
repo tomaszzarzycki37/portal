@@ -19,6 +19,8 @@ export default function Footer() {
           <ul className="footer-links">
             <li><a href="/">{t.footer.home}</a></li>
             <li><a href="/cars">{t.footer.cars}</a></li>
+            <li><a href="/opinions">{t.footer.opinions}</a></li>
+            <li><a href="/reviews">{t.footer.reviews}</a></li>
           </ul>
         </div>
 
