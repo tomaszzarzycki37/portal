@@ -1154,7 +1154,7 @@ export default function CarDetailPage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
               <div>
-                <label className="form-label" htmlFor="admin-price-min">{t.adminPanel.priceMin || 'Min Price'}</label>
+                <label className="form-label" htmlFor="admin-price-min">{t.adminPanel.priceMinK}</label>
                 <input
                   id="admin-price-min"
                   type="number"
@@ -1165,7 +1165,7 @@ export default function CarDetailPage() {
                 />
               </div>
               <div>
-                <label className="form-label" htmlFor="admin-price-max">{t.adminPanel.priceMax || 'Max Price'}</label>
+                <label className="form-label" htmlFor="admin-price-max">{t.adminPanel.priceMaxK}</label>
                 <input
                   id="admin-price-max"
                   type="number"
@@ -1176,7 +1176,7 @@ export default function CarDetailPage() {
                 />
               </div>
               <div>
-                <label className="form-label" htmlFor="admin-currency">{t.adminPanel.currency || 'Currency'}</label>
+                <label className="form-label" htmlFor="admin-currency">{t.adminPanel.baseCurrency}</label>
                 <select
                   id="admin-currency"
                   className="form-input"

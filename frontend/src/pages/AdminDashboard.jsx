@@ -3316,7 +3316,7 @@ export default function AdminDashboard() {
             </div>
 
             <div>
-              <label className="form-label" htmlFor="new-model-price-min">{t.adminInline.priceMin || 'Min Price'}</label>
+              <label className="form-label" htmlFor="new-model-price-min">{t.adminPanel.priceMinK}</label>
               <input
                 id="new-model-price-min"
                 type="number"
@@ -3328,7 +3328,7 @@ export default function AdminDashboard() {
             </div>
 
             <div>
-              <label className="form-label" htmlFor="new-model-price-max">{t.adminInline.priceMax || 'Max Price'}</label>
+              <label className="form-label" htmlFor="new-model-price-max">{t.adminPanel.priceMaxK}</label>
               <input
                 id="new-model-price-max"
                 type="number"
@@ -3340,7 +3340,7 @@ export default function AdminDashboard() {
             </div>
 
             <div>
-              <label className="form-label" htmlFor="new-model-currency">{t.adminInline.currency || 'Currency'}</label>
+              <label className="form-label" htmlFor="new-model-currency">{t.adminPanel.baseCurrency}</label>
               <select
                 id="new-model-currency"
                 className="form-input"
