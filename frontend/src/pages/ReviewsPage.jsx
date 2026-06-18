@@ -786,6 +786,10 @@ export default function ReviewsPage() {
               const isHtmlContent = /<\/?[a-z][\s\S]*>/i.test(content)
               const parsed = isHtmlContent ? null : parseReviewContent(content)
               const canManageReview = canEditByAuthorId(review.author_id)
+              const emptyGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia' : 'Brak zdjęć'
+              const emptyOverviewLabel = canManageReview ? 'Kliknij, aby dodać opis testu' : 'Brak opisu testu'
+              const emptyResultsLabel = canManageReview ? 'Kliknij, aby dodać wyniki testu' : 'Brak wyników testu'
+              const emptyVerdictLabel = canManageReview ? 'Kliknij, aby dodać werdykt' : 'Brak werdyktu'
               return (
                 <article key={review.id} className="review-card-rich">
                   {canManageReview && (
@@ -875,30 +879,36 @@ export default function ReviewsPage() {
                   </div>
 
                   {/* Image gallery (legacy content only) */}
-                  {parsed && parsed.images.length > 0 && (
+                  {parsed && (
                     <div className={`review-gallery ${canManageReview ? 'review-inline-editable-block' : ''}`}
                       role={canManageReview ? 'button' : undefined}
                       tabIndex={canManageReview ? 0 : undefined}
                       onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'images') : undefined}
                       onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'images')) : undefined}>
-                      <img
-                        src={parsed.images[0]}
-                        alt={review.title}
-                        className="review-gallery-main"
-                        loading="lazy"
-                      />
-                      {parsed.images.length > 1 && (
-                        <div className="review-gallery-thumbs">
-                          {parsed.images.slice(1).map((img, i) => (
-                            <img
-                              key={i}
-                              src={img}
-                              alt={`${review.title} ${i + 2}`}
-                              className="review-gallery-thumb"
-                              loading="lazy"
-                            />
-                          ))}
-                        </div>
+                      {parsed.images.length > 0 ? (
+                        <>
+                          <img
+                            src={parsed.images[0]}
+                            alt={review.title}
+                            className="review-gallery-main"
+                            loading="lazy"
+                          />
+                          {parsed.images.length > 1 && (
+                            <div className="review-gallery-thumbs">
+                              {parsed.images.slice(1).map((img, i) => (
+                                <img
+                                  key={i}
+                                  src={img}
+                                  alt={`${review.title} ${i + 2}`}
+                                  className="review-gallery-thumb"
+                                  loading="lazy"
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="review-gallery-empty">{emptyGalleryLabel}</div>
                       )}
                     </div>
                   )}
@@ -916,10 +926,10 @@ export default function ReviewsPage() {
                   )}
 
                   {/* Overview (legacy content only) */}
-                  {parsed && parsed.overview && (
+                  {parsed && (
                     <p
-                      className={`review-overview-text ${canManageReview ? 'review-inline-editable-block' : ''}`}
-                      dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.overview) }}
+                      className={`review-overview-text ${canManageReview ? 'review-inline-editable-block' : ''} ${parsed.overview ? '' : 'review-section-empty'}`}
+                      dangerouslySetInnerHTML={{ __html: parsed.overview ? formatEditorialText(parsed.overview) : escapeHtml(emptyOverviewLabel) }}
                       role={canManageReview ? 'button' : undefined}
                       tabIndex={canManageReview ? 0 : undefined}
                       onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'overview') : undefined}
@@ -928,33 +938,40 @@ export default function ReviewsPage() {
                   )}
 
                   {/* Test results (legacy content only) */}
-                  {parsed && parsed.testResults.length > 0 && (
+                  {parsed && (
                     <div className={`review-results ${canManageReview ? 'review-inline-editable-block' : ''}`}
                       role={canManageReview ? 'button' : undefined}
                       tabIndex={canManageReview ? 0 : undefined}
                       onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'testResults') : undefined}
                       onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'testResults')) : undefined}>
                       <h4 className="review-results-title">{t.pages.testResults}</h4>
-                      <div className="review-results-grid">
-                        {parsed.testResults.map((result, i) => (
-                          <div key={i} className="review-result-item">
-                            <span className="review-result-value">{result.value}</span>
-                            <span className="review-result-key">{result.key}</span>
-                          </div>
-                        ))}
-                      </div>
+                      {parsed.testResults.length > 0 ? (
+                        <div className="review-results-grid">
+                          {parsed.testResults.map((result, i) => (
+                            <div
+                              key={i}
+                              className="review-result-item"
+                            >
+                              <span className="review-result-value">{result.value}</span>
+                              <span className="review-result-key">{result.key}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="review-section-empty review-results-empty">{emptyResultsLabel}</p>
+                      )}
                     </div>
                   )}
 
                   {/* Verdict (legacy content only) */}
-                  {parsed && parsed.verdict && (
+                  {parsed && (
                     <div className={`review-verdict ${canManageReview ? 'review-inline-editable-block' : ''}`}
                       role={canManageReview ? 'button' : undefined}
                       tabIndex={canManageReview ? 0 : undefined}
                       onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'verdict') : undefined}
                       onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'verdict')) : undefined}>
                       <span className="review-verdict-label">{t.pages.verdict}</span>
-                      <p className="review-verdict-text" dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.verdict) }} />
+                      <p className={`review-verdict-text ${parsed.verdict ? '' : 'review-section-empty'}`} dangerouslySetInnerHTML={{ __html: parsed.verdict ? formatEditorialText(parsed.verdict) : escapeHtml(emptyVerdictLabel) }} />
                     </div>
                   )}
 
