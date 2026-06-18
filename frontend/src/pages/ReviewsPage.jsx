@@ -436,7 +436,7 @@ export default function ReviewsPage() {
 
       {isLoggedIn ? (
         <section className="admin-form-card" style={{ marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.5rem' }}>
             <h2 className="admin-section-heading" style={{ marginBottom: 0, flex: 1 }}>{t.pages.createReviewTitle}</h2>
             <button
               type="button"
