@@ -1391,6 +1391,51 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	margin-bottom: 0.5rem;
 }
 
+.review-inline-text-btn {
+	border: 0;
+	padding: 0;
+	margin: 0;
+	background: transparent;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+
+.review-inline-meta-btn {
+	text-transform: inherit;
+	letter-spacing: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+}
+
+.review-inline-title-btn {
+	display: inline;
+	text-align: left;
+	font-size: inherit;
+	font-weight: inherit;
+	line-height: inherit;
+}
+
+.review-inline-text-btn:hover,
+.review-inline-editable-block:hover {
+	color: #b45309;
+}
+
+.review-inline-text-btn:focus-visible,
+.review-inline-editable-block:focus-visible {
+	outline: 2px solid rgba(180, 83, 9, 0.4);
+	outline-offset: 2px;
+	border-radius: 0.35rem;
+}
+
+.review-inline-editable-block {
+	cursor: pointer;
+}
+
+.review-inline-tags {
+	display: inline-block;
+}
+
 .review-author-name,
 .review-date-tag {
 	font-weight: 400;
@@ -1502,6 +1547,36 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 .review-html-content a {
 	color: #2563eb;
 	text-decoration: underline;
+}
+
+.review-inline-editor-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 1500;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1rem;
+	background: rgba(15, 23, 42, 0.3);
+	backdrop-filter: blur(8px);
+}
+
+.review-inline-editor-modal {
+	width: min(920px, 96vw);
+	max-height: 90vh;
+	overflow: auto;
+	border: 1px solid #cbd5e1;
+	border-radius: 1rem;
+	background: #ffffff;
+	box-shadow: 0 24px 48px rgba(15, 23, 42, 0.28);
+	padding: 1rem;
+}
+
+.review-inline-editor-title {
+	margin: 0 0 0.8rem;
+	font-size: 1rem;
+	font-weight: 700;
+	color: #0f172a;
 }
 
 /* Test Results */

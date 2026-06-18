@@ -30,6 +30,8 @@ const WORD_LIKE_FORMATS = [
   'link',
 ]
 
+const INLINE_REVIEW_EDIT_FIELDS = new Set(['title', 'summary', 'content', 'publication_name', 'author_name', 'tags'])
+
 function RichTextEditor({ id, label, value, onChange, placeholder }) {
   return (
     <div className="admin-rich-editor admin-rich-editor-compact">
@@ -127,6 +129,8 @@ export default function ReviewsPage() {
   const [selectedModel, setSelectedModel] = useState('all')
   const [editingReviewId, setEditingReviewId] = useState(null)
   const [reviewDraft, setReviewDraft] = useState(null)
+  const [sectionEditor, setSectionEditor] = useState(null)
+  const [sectionValue, setSectionValue] = useState('')
   const [reviewSaving, setReviewSaving] = useState(false)
   const [reviewMessage, setReviewMessage] = useState('')
   const [reviewError, setReviewError] = useState('')
@@ -253,8 +257,7 @@ export default function ReviewsPage() {
     try {
       const response = await api.get(`/reviews/${reviewId}/`)
       const detail = response.data
-      setEditingReviewId(reviewId)
-      setReviewDraft({
+      const nextDraft = {
         car_model: String(detail.car_id || ''),
         title: detail.title || '',
         summary: detail.summary || '',
@@ -268,15 +271,52 @@ export default function ReviewsPage() {
         author_name: detail.author_name || '',
         published_at: String(detail.published_at || '').slice(0, 10),
         is_published: !!detail.is_published,
-      })
+      }
+      setEditingReviewId(reviewId)
+      setReviewDraft(nextDraft)
+      return nextDraft
     } catch {
       setReviewError(t.adminPanel.reviewLoadError)
+      return null
     }
   }
 
-  const handleSaveReview = async (reviewId) => {
-    if (!reviewDraft) return
-    if (!reviewDraft.car_model || !reviewDraft.title.trim() || !reviewDraft.content.trim() || !reviewDraft.publication_name.trim() || !reviewDraft.published_at) {
+  const getInlineFieldLabel = (field) => {
+    if (field === 'title') return t.pages.opinionTitle
+    if (field === 'summary') return t.adminPanel.reviewSummary
+    if (field === 'content') return t.adminPanel.reviewContent
+    if (field === 'publication_name') return t.adminPanel.reviewPublication
+    if (field === 'author_name') return t.adminPanel.reviewAuthor
+    if (field === 'tags') return t.adminPanel.reviewTags
+    return t.pages.editLabel
+  }
+
+  const handleOpenSectionEditor = async (reviewId, field) => {
+    if (!INLINE_REVIEW_EDIT_FIELDS.has(field)) return
+    setReviewError('')
+    setReviewMessage('')
+
+    let draft = reviewDraft
+    if (editingReviewId !== reviewId || !reviewDraft) {
+      draft = await handleStartEditReview(reviewId)
+    }
+    if (!draft) return
+
+    setSectionEditor({ reviewId, field })
+    setSectionValue(String(draft[field] || ''))
+  }
+
+  const handleCloseSectionEditor = () => {
+    setSectionEditor(null)
+    setSectionValue('')
+  }
+
+  const handleSaveSectionEditor = async () => {
+    if (!sectionEditor) return
+
+    const { reviewId, field } = sectionEditor
+    const normalizedValue = String(sectionValue || '').trim()
+    if ((field === 'title' || field === 'content' || field === 'publication_name') && !normalizedValue) {
       setReviewError(t.adminPanel.createReviewValidation)
       return
     }
@@ -285,29 +325,25 @@ export default function ReviewsPage() {
     setReviewError('')
     setReviewMessage('')
     try {
-      await api.patch(`/reviews/${reviewId}/`, {
-        car_model: Number.parseInt(reviewDraft.car_model, 10),
-        title: reviewDraft.title.trim(),
-        summary: reviewDraft.summary.trim(),
-        content: reviewDraft.content.trim(),
-        category: reviewDraft.category,
-        tags: reviewDraft.tags.trim(),
-        reading_time_minutes: Number.parseInt(String(reviewDraft.reading_time_minutes || '0'), 10) || 0,
-        internal_notes: reviewDraft.internal_notes.trim(),
-        publication_name: reviewDraft.publication_name.trim(),
-        publication_url: reviewDraft.publication_url.trim(),
-        author_name: reviewDraft.author_name.trim(),
-        published_at: reviewDraft.published_at,
-        is_published: !!reviewDraft.is_published,
-      })
+      await api.patch(`/reviews/${reviewId}/`, { [field]: normalizedValue })
       await reloadReviews()
-      setEditingReviewId(null)
-      setReviewDraft(null)
+      setReviewDraft((prev) => {
+        if (!prev || editingReviewId !== reviewId) return prev
+        return { ...prev, [field]: normalizedValue }
+      })
       setReviewMessage(t.pages.reviewUpdatedUser)
+      handleCloseSectionEditor()
     } catch {
       setReviewError(t.adminPanel.reviewUpdateError)
     } finally {
       setReviewSaving(false)
+    }
+  }
+
+  const handleEditableKeyDown = (event, cb) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      cb()
     }
   }
 
@@ -322,6 +358,9 @@ export default function ReviewsPage() {
       if (editingReviewId === reviewId) {
         setEditingReviewId(null)
         setReviewDraft(null)
+      }
+      if (sectionEditor?.reviewId === reviewId) {
+        handleCloseSectionEditor()
       }
       setReviewMessage(t.pages.reviewDeletedUser)
     } catch {
@@ -608,16 +647,9 @@ export default function ReviewsPage() {
                     <button
                       type="button"
                       className="review-admin-quick-edit"
-                      onClick={() => {
-                        if (editingReviewId === review.id) {
-                          setEditingReviewId(null)
-                          setReviewDraft(null)
-                          return
-                        }
-                        handleStartEditReview(review.id)
-                      }}
-                      aria-label={editingReviewId === review.id ? (t.pages.cancelLabel || 'Cancel') : (t.adminPanel.editReview || 'Edit review')}
-                      title={editingReviewId === review.id ? (t.pages.cancelLabel || 'Cancel') : (t.adminPanel.editReview || 'Edit review')}
+                      onClick={() => handleOpenSectionEditor(review.id, 'title')}
+                      aria-label={t.adminPanel.editReview || 'Edit review'}
+                      title={t.adminPanel.editReview || 'Edit review'}
                     >
                       <svg className="review-admin-quick-edit-icon" viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
@@ -628,20 +660,64 @@ export default function ReviewsPage() {
                   {/* Header */}
                   <div className="review-card-header">
                     <div className="review-card-meta-top">
-                      <span className="review-publication">{review.publication_name}</span>
-                      {review.author_name && <span className="review-author-name"> · {review.author_name}</span>}
+                      {canManageReview ? (
+                        <button
+                          type="button"
+                          className="review-inline-text-btn review-inline-meta-btn"
+                          onClick={() => handleOpenSectionEditor(review.id, 'publication_name')}
+                        >
+                          {review.publication_name}
+                        </button>
+                      ) : (
+                        <span className="review-publication">{review.publication_name}</span>
+                      )}
+                      {review.author_name && (
+                        canManageReview ? (
+                          <button
+                            type="button"
+                            className="review-inline-text-btn review-inline-meta-btn review-author-name"
+                            onClick={() => handleOpenSectionEditor(review.id, 'author_name')}
+                          >
+                            {' · '}{review.author_name}
+                          </button>
+                        ) : <span className="review-author-name"> · {review.author_name}</span>
+                      )}
                       <span className="review-date-tag"> · {formatDate(review.published_at)}</span>
                       {review.reading_time_minutes ? <span className="review-date-tag"> · {review.reading_time_minutes} min read</span> : null}
                     </div>
-                    <h3 className="review-card-title">{review.title}</h3>
+                    <h3 className="review-card-title">
+                      {canManageReview ? (
+                        <button
+                          type="button"
+                          className="review-inline-text-btn review-inline-title-btn"
+                          onClick={() => handleOpenSectionEditor(review.id, 'title')}
+                        >
+                          {review.title}
+                        </button>
+                      ) : review.title}
+                    </h3>
                     {review.summary && (
                       <p
-                        className="review-card-summary"
+                        className={`review-card-summary ${canManageReview ? 'review-inline-editable-block' : ''}`}
                         dangerouslySetInnerHTML={{ __html: sanitizeEditorialHtml(review.summary) }}
+                        role={canManageReview ? 'button' : undefined}
+                        tabIndex={canManageReview ? 0 : undefined}
+                        onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'summary') : undefined}
+                        onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'summary')) : undefined}
                       />
                     )}
                     {review.category && <p className="admin-meta">{getReviewCategoryLabel(review.category, t)}</p>}
-                    {review.tags && <p className="admin-meta">{review.tags}</p>}
+                    {review.tags && (
+                      <p
+                        className={`admin-meta ${canManageReview ? 'review-inline-editable-block review-inline-tags' : ''}`}
+                        role={canManageReview ? 'button' : undefined}
+                        tabIndex={canManageReview ? 0 : undefined}
+                        onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'tags') : undefined}
+                        onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'tags')) : undefined}
+                      >
+                        {review.tags}
+                      </p>
+                    )}
                     {(review.car_brand_name || review.car_name) && (
                       <div className="review-car-tag">
                         {review.car_id ? (
@@ -681,14 +757,25 @@ export default function ReviewsPage() {
                   {/* Rich HTML content */}
                   {isHtmlContent && (
                     <div
-                      className="review-html-content"
+                      className={`review-html-content ${canManageReview ? 'review-inline-editable-block' : ''}`}
                       dangerouslySetInnerHTML={{ __html: sanitizeEditorialHtml(content) }}
+                      role={canManageReview ? 'button' : undefined}
+                      tabIndex={canManageReview ? 0 : undefined}
+                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'content') : undefined}
+                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'content')) : undefined}
                     />
                   )}
 
                   {/* Overview (legacy content only) */}
                   {parsed && parsed.overview && (
-                    <p className="review-overview-text" dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.overview) }} />
+                    <p
+                      className={`review-overview-text ${canManageReview ? 'review-inline-editable-block' : ''}`}
+                      dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.overview) }}
+                      role={canManageReview ? 'button' : undefined}
+                      tabIndex={canManageReview ? 0 : undefined}
+                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'content') : undefined}
+                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'content')) : undefined}
+                    />
                   )}
 
                   {/* Test results (legacy content only) */}
@@ -708,7 +795,13 @@ export default function ReviewsPage() {
 
                   {/* Verdict (legacy content only) */}
                   {parsed && parsed.verdict && (
-                    <div className="review-verdict">
+                    <div
+                      className={`review-verdict ${canManageReview ? 'review-inline-editable-block' : ''}`}
+                      role={canManageReview ? 'button' : undefined}
+                      tabIndex={canManageReview ? 0 : undefined}
+                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'content') : undefined}
+                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'content')) : undefined}
+                    >
                       <span className="review-verdict-label">{t.pages.verdict}</span>
                       <p className="review-verdict-text" dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.verdict) }} />
                     </div>
@@ -723,7 +816,7 @@ export default function ReviewsPage() {
                     )}
                     {canManageReview && (
                       <>
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleStartEditReview(review.id)}>
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleOpenSectionEditor(review.id, 'content')}>
                           {t.pages.editLabel}
                         </button>
                         <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteReview(review.id)}>
@@ -733,79 +826,51 @@ export default function ReviewsPage() {
                     )}
                   </div>
 
-                  {editingReviewId === review.id && reviewDraft && (
-                    <div className="admin-form-card" style={{ margin: '0.8rem' }}>
-                      <div className="admin-form-grid">
-                        <div>
-                          <label className="form-label">{t.adminPanel.chooseModel}</label>
-                          <select className="form-input" value={reviewDraft.car_model} onChange={(e) => setReviewDraft((prev) => ({ ...prev, car_model: e.target.value }))}>
-                            {cars.map((car) => <option key={car.id} value={car.id}>{car.brand_name} {car.name}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="form-label">{t.pages.opinionTitle}</label>
-                          <input className="form-input" value={reviewDraft.title} onChange={(e) => setReviewDraft((prev) => ({ ...prev, title: e.target.value }))} />
-                        </div>
-                        <div>
-                          <label className="form-label">{t.adminPanel.reviewPublication}</label>
-                          <input className="form-input" value={reviewDraft.publication_name} onChange={(e) => setReviewDraft((prev) => ({ ...prev, publication_name: e.target.value }))} />
-                        </div>
-                        <div>
-                          <label className="form-label">{t.adminPanel.reviewAuthor}</label>
-                          <input className="form-input" value={reviewDraft.author_name} onChange={(e) => setReviewDraft((prev) => ({ ...prev, author_name: e.target.value }))} />
-                        </div>
-                        <div>
-                          <label className="form-label">{t.adminPanel.reviewDate}</label>
-                          <input type="date" className="form-input" value={reviewDraft.published_at} onChange={(e) => setReviewDraft((prev) => ({ ...prev, published_at: e.target.value }))} />
-                        </div>
-                        <div>
-                          <label className="form-label">{t.adminPanel.reviewCategory}</label>
-                          <select className="form-input" value={reviewDraft.category} onChange={(e) => setReviewDraft((prev) => ({ ...prev, category: e.target.value }))}>
-                            <option value="test">{t.adminPanel.reviewCategoryTest}</option>
-                            <option value="news">{t.adminPanel.reviewCategoryNews}</option>
-                            <option value="guide">{t.adminPanel.reviewCategoryGuide}</option>
-                            <option value="opinion">{t.adminPanel.reviewCategoryOpinion}</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="form-label">{t.adminPanel.reviewReadingTime}</label>
-                          <input type="number" min="0" className="form-input" value={reviewDraft.reading_time_minutes} onChange={(e) => setReviewDraft((prev) => ({ ...prev, reading_time_minutes: e.target.value }))} />
-                        </div>
-                        <div className="admin-form-grid-full">
-                          <label className="form-label">{t.adminPanel.reviewTags}</label>
-                          <input className="form-input" value={reviewDraft.tags} onChange={(e) => setReviewDraft((prev) => ({ ...prev, tags: e.target.value }))} />
-                        </div>
-                        <div className="admin-form-grid-full">
-                          <label className="form-label">{t.adminPanel.reviewSummary}</label>
-                          <textarea className="form-input form-textarea" rows={3} value={reviewDraft.summary} onChange={(e) => setReviewDraft((prev) => ({ ...prev, summary: e.target.value }))} />
-                        </div>
-                        <div className="admin-form-grid-full">
-                          <RichTextEditor
-                            id="edit-review-content"
-                            label={t.adminPanel.reviewContent}
-                            value={reviewDraft.content}
-                            onChange={(val) => setReviewDraft((prev) => ({ ...prev, content: val }))}
-                            placeholder={t.adminPanel.reviewEditorPlaceholder}
-                          />
-                        </div>
-                        <div className="admin-form-grid-full">
-                          <label className="form-label">{t.adminPanel.reviewInternalNotes}</label>
-                          <textarea className="form-input form-textarea" rows={3} value={reviewDraft.internal_notes} onChange={(e) => setReviewDraft((prev) => ({ ...prev, internal_notes: e.target.value }))} />
-                        </div>
-                        <label className="form-checkbox-row admin-form-grid-full">
-                          <input type="checkbox" checked={reviewDraft.is_published} onChange={(e) => setReviewDraft((prev) => ({ ...prev, is_published: e.target.checked }))} />
-                          {t.adminPanel.reviewPublished}
-                        </label>
-                      </div>
-                      <div className="admin-actions-row">
-                        <button type="button" className="btn btn-secondary" onClick={() => { setEditingReviewId(null); setReviewDraft(null) }}>{t.pages.cancelLabel}</button>
-                        <button type="button" className="btn btn-primary" disabled={reviewSaving} onClick={() => handleSaveReview(review.id)}>{reviewSaving ? t.pages.loading : t.pages.saveLabel}</button>
-                      </div>
-                    </div>
-                  )}
                 </article>
               )
             })}
+          </div>
+        </div>
+      )}
+
+      {sectionEditor && (
+        <div className="review-inline-editor-backdrop" onClick={handleCloseSectionEditor}>
+          <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
+            <h3 className="review-inline-editor-title">{t.pages.editLabel}: {getInlineFieldLabel(sectionEditor.field)}</h3>
+            {sectionEditor.field === 'content' ? (
+              <RichTextEditor
+                id={`review-inline-editor-${sectionEditor.reviewId}-${sectionEditor.field}`}
+                label={getInlineFieldLabel(sectionEditor.field)}
+                value={sectionValue}
+                onChange={setSectionValue}
+                placeholder={t.adminPanel.reviewEditorPlaceholder}
+              />
+            ) : sectionEditor.field === 'summary' ? (
+              <div>
+                <label className="form-label" htmlFor="review-inline-summary">{getInlineFieldLabel(sectionEditor.field)}</label>
+                <textarea
+                  id="review-inline-summary"
+                  className="form-input form-textarea"
+                  rows={4}
+                  value={sectionValue}
+                  onChange={(event) => setSectionValue(event.target.value)}
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="form-label" htmlFor="review-inline-value">{getInlineFieldLabel(sectionEditor.field)}</label>
+                <input
+                  id="review-inline-value"
+                  className="form-input"
+                  value={sectionValue}
+                  onChange={(event) => setSectionValue(event.target.value)}
+                />
+              </div>
+            )}
+            <div className="admin-actions-row">
+              <button type="button" className="btn btn-secondary" onClick={handleCloseSectionEditor}>{t.pages.cancelLabel}</button>
+              <button type="button" className="btn btn-primary" disabled={reviewSaving} onClick={handleSaveSectionEditor}>{reviewSaving ? t.pages.loading : t.pages.saveLabel}</button>
+            </div>
           </div>
         </div>
       )}
