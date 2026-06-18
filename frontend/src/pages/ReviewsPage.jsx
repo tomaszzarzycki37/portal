@@ -131,6 +131,8 @@ export default function ReviewsPage() {
   const [reviewDraft, setReviewDraft] = useState(null)
   const [sectionEditor, setSectionEditor] = useState(null)
   const [sectionValue, setSectionValue] = useState('')
+  const [sectionImagePreviews, setSectionImagePreviews] = useState([])
+  const [sectionImageUploading, setSectionImageUploading] = useState(false)
   const [reviewSaving, setReviewSaving] = useState(false)
   const [reviewMessage, setReviewMessage] = useState('')
   const [reviewError, setReviewError] = useState('')
@@ -295,6 +297,35 @@ export default function ReviewsPage() {
     return t.pages.editLabel
   }
 
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+
+    setSectionImageUploading(true)
+    try {
+      const uploadedUrls = await Promise.all(
+        files.map(async (file) => {
+          const formData = new FormData()
+          formData.append('file', file)
+          const response = await api.post('/common/upload/', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          })
+          return response.data.url
+        })
+      )
+      setSectionImagePreviews(prev => [...prev, ...uploadedUrls])
+    } catch (error) {
+      setReviewError('Błąd przy uploadzeniu zdjęć')
+    } finally {
+      setSectionImageUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  const handleRemoveImage = (index) => {
+    setSectionImagePreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
   const handleOpenSectionEditor = async (reviewId, field) => {
     if (!INLINE_REVIEW_EDIT_FIELDS.has(field)) return
     setReviewError('')
@@ -320,15 +351,17 @@ export default function ReviewsPage() {
             .join('\n')
           setSectionValue(formatted)
         } else if (field === 'images') {
-          // Format images as "url\nurl"
-          const formatted = (parsedContent.images || []).join('\n')
-          setSectionValue(formatted)
+          // Load existing image URLs
+          const imageUrls = parsedContent.images || []
+          setSectionImagePreviews(imageUrls)
+          setSectionValue('')
         } else {
           // overview, verdict
           setSectionValue(String(parsedContent[field] || ''))
         }
       } catch {
         setSectionValue('')
+        if (field === 'images') setSectionImagePreviews([])
       }
     } else {
       setSectionValue(String(draft[field] || ''))
@@ -338,6 +371,8 @@ export default function ReviewsPage() {
   const handleCloseSectionEditor = () => {
     setSectionEditor(null)
     setSectionValue('')
+    setSectionImagePreviews([])
+    setSectionImageUploading(false)
   }
 
   const handleSaveSectionEditor = async () => {
@@ -377,8 +412,8 @@ export default function ReviewsPage() {
             return { key: key || '', value: value || '' }
           })
         } else if (field === 'images') {
-          // Parse images format: "url\nurl"
-          parsedContent.images = normalizedValue.split('\n').filter(url => url.trim())
+          // Use preview images array
+          parsedContent.images = sectionImagePreviews
         } else {
           // overview, verdict
           parsedContent[field] = normalizedValue
@@ -918,16 +953,81 @@ export default function ReviewsPage() {
                 onChange={setSectionValue}
                 placeholder={t.adminPanel.reviewEditorPlaceholder}
               />
-            ) : sectionEditor.field === 'summary' || sectionEditor.field === 'testResults' || sectionEditor.field === 'images' ? (
+            ) : sectionEditor.field === 'images' ? (
+              <div className="review-image-editor">
+                <label className="form-label" htmlFor="review-image-input">Zdjęcia</label>
+                <div className="review-image-upload-area">
+                  <input
+                    id="review-image-input"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={sectionImageUploading}
+                    style={{ display: 'none' }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => document.getElementById('review-image-input').click()}
+                    disabled={sectionImageUploading}
+                  >
+                    {sectionImageUploading ? t.pages.loading : 'Wybierz zdjęcia'}
+                  </button>
+                </div>
+                {sectionImagePreviews.length > 0 && (
+                  <div className="review-image-gallery">
+                    <div className="review-gallery-main-container">
+                      <div className="review-gallery-main-wrapper">
+                        <img
+                          src={sectionImagePreviews[0]}
+                          alt="Main"
+                          className="review-gallery-main"
+                        />
+                        <button
+                          type="button"
+                          className="review-image-remove-btn"
+                          onClick={() => handleRemoveImage(0)}
+                          title="Usuń główne zdjęcie"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                    {sectionImagePreviews.length > 1 && (
+                      <div className="review-gallery-thumbs">
+                        {sectionImagePreviews.slice(1).map((img, i) => (
+                          <div key={i} className="review-gallery-thumb-wrapper">
+                            <img
+                              src={img}
+                              alt={`Thumb ${i + 1}`}
+                              className="review-gallery-thumb"
+                            />
+                            <button
+                              type="button"
+                              className="review-image-remove-btn-thumb"
+                              onClick={() => handleRemoveImage(i + 1)}
+                              title="Usuń zdjęcie"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : sectionEditor.field === 'summary' || sectionEditor.field === 'testResults' ? (
               <div>
                 <label className="form-label" htmlFor="review-inline-textarea">{getInlineFieldLabel(sectionEditor.field)}</label>
                 <textarea
                   id="review-inline-textarea"
                   className="form-input form-textarea"
-                  rows={sectionEditor.field === 'testResults' || sectionEditor.field === 'images' ? 6 : 4}
+                  rows={sectionEditor.field === 'testResults' ? 6 : 4}
                   value={sectionValue}
                   onChange={(event) => setSectionValue(event.target.value)}
-                  placeholder={sectionEditor.field === 'testResults' ? 'key:value\nkey:value' : sectionEditor.field === 'images' ? 'https://image.url\nhttps://image.url' : ''}
+                  placeholder={sectionEditor.field === 'testResults' ? 'key:value\nkey:value' : ''}
                 />
               </div>
             ) : (
