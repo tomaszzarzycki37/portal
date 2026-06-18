@@ -50,8 +50,7 @@ class PressReviewAdmin(admin.ModelAdmin):
     ]
     list_filter = ['is_published', 'is_featured', 'is_pinned', 'category', 'published_at', 'publication_name']
     search_fields = ['title', 'slug', 'summary', 'content', 'tags', 'publication_name', 'author_name', 'car_model__name']
-    readonly_fields = ['created_at', 'updated_at']
-    prepopulated_fields = {'slug': ('title',)}
+    readonly_fields = ['created_at', 'updated_at', 'slug']
     fieldsets = (
         ('Article', {'fields': ('car_model', 'title', 'slug', 'summary', 'content', 'category', 'tags')}),
         ('Publication', {'fields': ('publication_name', 'publication_url', 'author_name', 'published_at', 'reading_time_minutes')}),

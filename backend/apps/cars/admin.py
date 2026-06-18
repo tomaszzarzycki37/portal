@@ -9,7 +9,7 @@ class BrandAdmin(admin.ModelAdmin):
     list_display = ['name', 'has_logo', 'has_en_description', 'founded_year', 'is_active', 'created_at']
     list_filter = ['is_active', 'country', 'created_at']
     search_fields = ['name', 'description', 'description_en', 'description_pl']
-    prepopulated_fields = {'slug': ('name',)}
+    readonly_fields = ['slug']
     fieldsets = (
         ('Basic Information', {
             'fields': ('name', 'slug', 'logo'),

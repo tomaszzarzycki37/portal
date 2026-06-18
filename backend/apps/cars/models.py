@@ -26,7 +26,7 @@ def _build_unique_slug(model_cls, base_value, instance_id=None):
 class Brand(models.Model):
     """Chinese car brand model"""
     name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, editable=False)
     description = models.TextField(blank=True)
     description_en = models.TextField(blank=True, help_text="English description (required)")
     description_pl = models.TextField(blank=True, help_text="Polish description (optional but recommended)")
