@@ -23,18 +23,29 @@ class CarModelListSerializer(serializers.ModelSerializer):
     brand_name = serializers.CharField(source='brand.name', read_only=True)
     avg_rating = serializers.SerializerMethodField()
     opinions_count = serializers.SerializerMethodField()
+    price_range_display = serializers.SerializerMethodField()
 
     class Meta:
         model = CarModel
         fields = ['id', 'brand_id', 'brand_name', 'name', 'slug', 'vehicle_type', 'year_introduced',
-                  'description', 'engine_type', 'production_status', 'image', 'price_range',
-                  'avg_rating', 'opinions_count', 'is_featured']
+                  'description', 'engine_type', 'production_status', 'image', 'price_min', 'price_max', 
+                  'currency', 'price_range_display', 'avg_rating', 'opinions_count', 'is_featured']
 
     def get_avg_rating(self, obj):
         return round(obj.avg_rating, 1) if obj.avg_rating else 0
 
     def get_opinions_count(self, obj):
         return obj.opinions_count
+    
+    def get_price_range_display(self, obj):
+        """Format price range for display"""
+        if obj.price_min and obj.price_max:
+            return f"{obj.price_min:.0f} - {obj.price_max:.0f} {obj.currency}"
+        elif obj.price_min:
+            return f"From {obj.price_min:.0f} {obj.currency}"
+        elif obj.price_max:
+            return f"Up to {obj.price_max:.0f} {obj.currency}"
+        return None
 
 
 class CarModelDetailSerializer(serializers.ModelSerializer):
@@ -43,14 +54,15 @@ class CarModelDetailSerializer(serializers.ModelSerializer):
     images = CarImageSerializer(many=True, read_only=True)
     avg_rating = serializers.SerializerMethodField()
     opinions_count = serializers.SerializerMethodField()
+    price_range_display = serializers.SerializerMethodField()
 
     class Meta:
         model = CarModel
         fields = ['id', 'brand', 'brand_id', 'name', 'slug', 'vehicle_type', 'year_introduced', 
                   'description', 'image', 'images', 'engine_type', 'horsepower', 
-                  'acceleration', 'top_speed', 'fuel_consumption', 'price_range',
-                  'production_status', 'is_featured', 'avg_rating', 'opinions_count',
-                  'created_at', 'updated_at']
+                  'acceleration', 'top_speed', 'fuel_consumption', 'price_min', 'price_max', 
+                  'currency', 'price_range_display', 'production_status', 'is_featured', 
+                  'avg_rating', 'opinions_count', 'created_at', 'updated_at']
         read_only_fields = ['slug']
 
     def get_avg_rating(self, obj):
@@ -58,3 +70,13 @@ class CarModelDetailSerializer(serializers.ModelSerializer):
 
     def get_opinions_count(self, obj):
         return obj.opinions_count
+    
+    def get_price_range_display(self, obj):
+        """Format price range for display"""
+        if obj.price_min and obj.price_max:
+            return f"{obj.price_min:.0f} - {obj.price_max:.0f} {obj.currency}"
+        elif obj.price_min:
+            return f"From {obj.price_min:.0f} {obj.currency}"
+        elif obj.price_max:
+            return f"Up to {obj.price_max:.0f} {obj.currency}"
+        return None

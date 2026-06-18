@@ -22,21 +22,14 @@ function resolveMediaUrl(url) {
   return normalizeMediaUrl(`${API_ORIGIN}/${url}`)
 }
 
-const parsePriceRange = (priceRange) => {
-  const matches = String(priceRange || '').match(/\d[\d\s]*/g) || []
-  const values = matches
-    .map((value) => Number.parseInt(String(value).replace(/\s+/g, ''), 10))
-    .filter(Number.isFinite)
-
-  if (values.length === 0) {
-    return { min: null, max: null }
-  }
-
-  if (values.length === 1) {
-    return { min: values[0], max: values[0] }
-  }
-
-  return { min: Math.min(values[0], values[1]), max: Math.max(values[0], values[1]) }
+const parsePriceRange = (car) => {
+  const priceMin = Number.parseFloat(String(car.price_min || ''))
+  const priceMax = Number.parseFloat(String(car.price_max || ''))
+  
+  const min = Number.isFinite(priceMin) ? priceMin : null
+  const max = Number.isFinite(priceMax) ? priceMax : null
+  
+  return { min, max }
 }
 
 export default function HomePage() {
@@ -155,7 +148,7 @@ export default function HomePage() {
     const parsedPriceTo = Number.parseInt(String(priceTo || '').trim(), 10)
 
     return cars.filter((car) => {
-      const haystack = `${car.brand_name || ''} ${car.name || ''} ${car.description || ''} ${car.engine_type || ''} ${car.price_range || ''}`.toLowerCase()
+      const haystack = `${car.brand_name || ''} ${car.name || ''} ${car.description || ''} ${car.engine_type || ''} ${car.price_range_display || ''}`.toLowerCase()
       if (normalizedKeyword && !haystack.includes(normalizedKeyword)) return false
       if (selectedBrand !== 'all' && String(car.brand_name || '') !== selectedBrand) return false
       if (normalizedEngine && !String(car.engine_type || '').toLowerCase().includes(normalizedEngine)) return false
@@ -175,7 +168,7 @@ export default function HomePage() {
       if (Number.isFinite(parsedTopSpeedFrom) && Number.isFinite(topSpeed) && topSpeed < parsedTopSpeedFrom) return false
       if (Number.isFinite(parsedTopSpeedTo) && Number.isFinite(topSpeed) && topSpeed > parsedTopSpeedTo) return false
 
-      const { min: carPriceMin, max: carPriceMax } = parsePriceRange(car.price_range)
+      const { min: carPriceMin, max: carPriceMax } = parsePriceRange(car)
       if (Number.isFinite(parsedPriceFrom) && Number.isFinite(carPriceMax) && carPriceMax < parsedPriceFrom) return false
       if (Number.isFinite(parsedPriceTo) && Number.isFinite(carPriceMin) && carPriceMin > parsedPriceTo) return false
       return true

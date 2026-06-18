@@ -78,6 +78,16 @@ class CarModel(models.Model):
         ('truck', 'Truck'),
         ('other', 'Other'),
     ]
+    
+    CURRENCY_CHOICES = [
+        ('CNY', '¥ CNY - Chinese Yuan'),
+        ('USD', '$ USD - US Dollar'),
+        ('EUR', '€ EUR - Euro'),
+        ('GBP', '£ GBP - British Pound'),
+        ('JPY', '¥ JPY - Japanese Yen'),
+        ('PLN', 'zł PLN - Polish Zloty'),
+        ('INR', '₹ INR - Indian Rupee'),
+    ]
 
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE, related_name='models')
     name = models.CharField(max_length=150)
@@ -93,7 +103,9 @@ class CarModel(models.Model):
     acceleration = models.CharField(max_length=50, blank=True, help_text='0-100 km/h in seconds')
     top_speed = models.IntegerField(null=True, blank=True, help_text='km/h')
     fuel_consumption = models.CharField(max_length=50, blank=True, help_text='L/100km')
-    price_range = models.CharField(max_length=100, blank=True)
+    price_min = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Minimum price')
+    price_max = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Maximum price')
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='CNY', help_text='Price currency')
     
     # Status
     production_status = models.CharField(

@@ -55,22 +55,37 @@ class CarImageInline(admin.TabularInline):
 
 @admin.register(CarModel)
 class CarModelAdmin(admin.ModelAdmin):
-    list_display = ['name', 'brand', 'vehicle_type', 'year_introduced', 'avg_rating', 'opinions_count', 'is_featured']
+    list_display = ['name', 'brand', 'vehicle_type', 'year_introduced', 'price_display', 'avg_rating', 'opinions_count', 'is_featured']
     list_filter = ['brand', 'vehicle_type', 'year_introduced', 'production_status', 'is_featured', 'created_at']
     search_fields = ['name', 'brand__name', 'description']
     prepopulated_fields = {'slug': ('name',)}
     inlines = [CarImageInline]
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at', 'price_display']
     fieldsets = (
         ('Basic Information', {'fields': ('brand', 'name', 'slug', 'vehicle_type', 'year_introduced')}),
         ('Description & Images', {'fields': ('description', 'image')}),
         ('Specifications', {
-            'fields': ('engine_type', 'horsepower', 'acceleration', 'top_speed', 'fuel_consumption', 'price_range'),
+            'fields': ('engine_type', 'horsepower', 'acceleration', 'top_speed', 'fuel_consumption'),
             'classes': ('collapse',)
+        }),
+        ('Pricing', {
+            'fields': ('price_min', 'price_max', 'currency', 'price_display'),
+            'description': 'Set the price range. price_display shows the formatted price range.'
         }),
         ('Status', {'fields': ('production_status', 'is_featured')}),
         ('Timestamps', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
     )
+
+    def price_display(self, obj):
+        """Display formatted price range"""
+        if obj.price_min and obj.price_max:
+            return f"{obj.price_min:,.0f} - {obj.price_max:,.0f} {obj.currency}"
+        elif obj.price_min:
+            return f"From {obj.price_min:,.0f} {obj.currency}"
+        elif obj.price_max:
+            return f"Up to {obj.price_max:,.0f} {obj.currency}"
+        return "Not set"
+    price_display.short_description = 'Price Range'
 
     def avg_rating(self, obj):
         rating = obj.avg_rating

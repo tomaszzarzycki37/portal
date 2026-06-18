@@ -127,7 +127,9 @@ export default function CarDetailPage() {
   const [adminAcceleration, setAdminAcceleration] = useState('')
   const [adminTopSpeed, setAdminTopSpeed] = useState('')
   const [adminFuelConsumption, setAdminFuelConsumption] = useState('')
-  const [adminPriceRange, setAdminPriceRange] = useState('')
+  const [adminPriceMin, setAdminPriceMin] = useState('')
+  const [adminPriceMax, setAdminPriceMax] = useState('')
+  const [adminCurrency, setAdminCurrency] = useState('CNY')
   const [adminProductionStatus, setAdminProductionStatus] = useState('active')
   const [adminFeatured, setAdminFeatured] = useState(false)
   const [adminImage, setAdminImage] = useState(null)
@@ -204,7 +206,9 @@ export default function CarDetailPage() {
               : '',
           )
           setAdminFuelConsumption(carResponse.data.fuel_consumption || '')
-          setAdminPriceRange(carResponse.data.price_range || '')
+          setAdminPriceMin(carResponse.data.price_min ? String(carResponse.data.price_min) : '')
+          setAdminPriceMax(carResponse.data.price_max ? String(carResponse.data.price_max) : '')
+          setAdminCurrency(carResponse.data.currency || 'CNY')
           setAdminProductionStatus(carResponse.data.production_status || 'active')
           setAdminFeatured(!!carResponse.data.is_featured)
         }
@@ -280,7 +284,9 @@ export default function CarDetailPage() {
       formData.append('acceleration', adminAcceleration)
       formData.append('top_speed', String(toIntOrNull(adminTopSpeed) ?? ''))
       formData.append('fuel_consumption', adminFuelConsumption)
-      formData.append('price_range', adminPriceRange)
+      formData.append('price_min', adminPriceMin ? parseFloat(adminPriceMin) : '')
+      formData.append('price_max', adminPriceMax ? parseFloat(adminPriceMax) : '')
+      formData.append('currency', adminCurrency)
       formData.append('production_status', adminProductionStatus)
       formData.append('is_featured', String(adminFeatured))
       if (adminImage) {
@@ -581,7 +587,7 @@ export default function CarDetailPage() {
           <div className="spec-item"><span>{t.pages.acceleration}</span><strong>{car.acceleration || '-'}</strong></div>
           <div className="spec-item"><span>{t.pages.topSpeed}</span><strong>{car.top_speed || '-'} km/h</strong></div>
           <div className="spec-item"><span>{t.pages.fuelConsumption}</span><strong>{car.fuel_consumption || '-'}</strong></div>
-          <div className="spec-item"><span>{t.pages.price}</span><strong>{car.price_range || '-'}</strong></div>
+          <div className="spec-item"><span>{t.pages.price}</span><strong>{car.price_range_display || '-'}</strong></div>
         </div>
       </section>
 
@@ -613,7 +619,7 @@ export default function CarDetailPage() {
           <div className="detail-kv-list">
             <div className="detail-kv-row">
               <span>{t.pages.price}</span>
-              <strong>{car.price_range || '-'}</strong>
+              <strong>{car.price_range_display || '-'}</strong>
             </div>
             <div className="detail-kv-row">
               <span>{t.pages.productionStatus}</span>
@@ -1146,13 +1152,47 @@ export default function CarDetailPage() {
               </div>
             </div>
 
-            <label className="form-label" htmlFor="admin-price">{t.adminPanel.priceRange}</label>
-            <input
-              id="admin-price"
-              className="form-input"
-              value={adminPriceRange}
-              onChange={(e) => setAdminPriceRange(e.target.value)}
-            />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+              <div>
+                <label className="form-label" htmlFor="admin-price-min">{t.adminPanel.priceMin || 'Min Price'}</label>
+                <input
+                  id="admin-price-min"
+                  type="number"
+                  className="form-input"
+                  placeholder="0"
+                  value={adminPriceMin}
+                  onChange={(e) => setAdminPriceMin(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="form-label" htmlFor="admin-price-max">{t.adminPanel.priceMax || 'Max Price'}</label>
+                <input
+                  id="admin-price-max"
+                  type="number"
+                  className="form-input"
+                  placeholder="0"
+                  value={adminPriceMax}
+                  onChange={(e) => setAdminPriceMax(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="form-label" htmlFor="admin-currency">{t.adminPanel.currency || 'Currency'}</label>
+                <select
+                  id="admin-currency"
+                  className="form-input"
+                  value={adminCurrency}
+                  onChange={(e) => setAdminCurrency(e.target.value)}
+                >
+                  <option value="CNY">¥ CNY</option>
+                  <option value="USD">$ USD</option>
+                  <option value="EUR">€ EUR</option>
+                  <option value="GBP">£ GBP</option>
+                  <option value="JPY">¥ JPY</option>
+                  <option value="PLN">zł PLN</option>
+                  <option value="INR">₹ INR</option>
+                </select>
+              </div>
+            </div>
 
             <label className="form-checkbox-row">
               <input

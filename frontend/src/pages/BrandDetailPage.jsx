@@ -141,15 +141,14 @@ export default function BrandDetailPage() {
 
         const initialDrafts = {}
         carList.forEach((car) => {
-          const parsedPrice = parsePriceRange(car.price_range)
           initialDrafts[car.id] = {
             name: car.name || '',
             year_introduced: car.year_introduced ? String(car.year_introduced) : '',
             vehicle_type: car.vehicle_type || 'sedan',
             engine_type: car.engine_type || '',
-            price_min_k: parsedPrice.minK,
-            price_max_k: parsedPrice.maxK,
-            price_currency: parsedPrice.currency,
+            price_min: car.price_min ? String(car.price_min) : '',
+            price_max: car.price_max ? String(car.price_max) : '',
+            currency: car.currency || 'CNY',
             production_status: car.production_status || 'active',
             is_featured: !!car.is_featured,
           }
@@ -321,15 +320,15 @@ export default function BrandDetailPage() {
 
   const handlePriceCurrencyChange = (carId, nextCurrency) => {
     const currentDraft = drafts[carId] || {}
-    const previousCurrency = currentDraft.price_currency || 'USD'
+    const previousCurrency = currentDraft.currency || 'CNY'
 
     setDrafts((prev) => ({
       ...prev,
       [carId]: {
         ...(prev[carId] || {}),
-        price_currency: nextCurrency,
-        price_min_k: convertPriceValue(prev[carId]?.price_min_k, previousCurrency, nextCurrency),
-        price_max_k: convertPriceValue(prev[carId]?.price_max_k, previousCurrency, nextCurrency),
+        currency: nextCurrency,
+        price_min: convertPriceValue(prev[carId]?.price_min, previousCurrency, nextCurrency),
+        price_max: convertPriceValue(prev[carId]?.price_max, previousCurrency, nextCurrency),
       },
     }))
   }
@@ -354,7 +353,9 @@ export default function BrandDetailPage() {
         year_introduced: parsedYear,
         vehicle_type: draft.vehicle_type,
         engine_type: draft.engine_type,
-        price_range: formatPriceRange(draft.price_min_k, draft.price_max_k, draft.price_currency),
+        price_min: draft.price_min ? parseFloat(draft.price_min) : null,
+        price_max: draft.price_max ? parseFloat(draft.price_max) : null,
+        currency: draft.currency,
         production_status: draft.production_status,
         is_featured: !!draft.is_featured,
       }
@@ -737,13 +738,16 @@ export default function BrandDetailPage() {
                                   <select
                                     id={`price-currency-${car.id}`}
                                     className="form-input"
-                                    value={drafts[car.id]?.price_currency || 'USD'}
+                                    value={drafts[car.id]?.currency || 'CNY'}
                                     onChange={(e) => handlePriceCurrencyChange(car.id, e.target.value)}
                                   >
-                                    <option value="USD">USD</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="PLN">PLN</option>
-                                    <option value="GBP">GBP</option>
+                                    <option value="CNY">¥ CNY</option>
+                                    <option value="USD">$ USD</option>
+                                    <option value="EUR">€ EUR</option>
+                                    <option value="GBP">£ GBP</option>
+                                    <option value="JPY">¥ JPY</option>
+                                    <option value="PLN">zł PLN</option>
+                                    <option value="INR">₹ INR</option>
                                   </select>
                                 </div>
 
@@ -751,10 +755,10 @@ export default function BrandDetailPage() {
                                   <label className="form-label" htmlFor={`price-min-${car.id}`}>{t.adminPanel.priceMinK}</label>
                                   <input
                                     id={`price-min-${car.id}`}
+                                    type="number"
                                     className="form-input"
-                                    inputMode="decimal"
-                                    value={drafts[car.id]?.price_min_k || ''}
-                                    onChange={(e) => handleDraftChange(car.id, 'price_min_k', e.target.value)}
+                                    value={drafts[car.id]?.price_min || ''}
+                                    onChange={(e) => handleDraftChange(car.id, 'price_min', e.target.value)}
                                   />
                                 </div>
 
@@ -762,10 +766,10 @@ export default function BrandDetailPage() {
                                   <label className="form-label" htmlFor={`price-max-${car.id}`}>{t.adminPanel.priceMaxK}</label>
                                   <input
                                     id={`price-max-${car.id}`}
+                                    type="number"
                                     className="form-input"
-                                    inputMode="decimal"
-                                    value={drafts[car.id]?.price_max_k || ''}
-                                    onChange={(e) => handleDraftChange(car.id, 'price_max_k', e.target.value)}
+                                    value={drafts[car.id]?.price_max || ''}
+                                    onChange={(e) => handleDraftChange(car.id, 'price_max', e.target.value)}
                                   />
                                 </div>
 

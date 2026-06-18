@@ -223,7 +223,9 @@ export default function AdminDashboard() {
   const [newModelYear, setNewModelYear] = useState('')
   const [newModelType, setNewModelType] = useState('sedan')
   const [newModelEngine, setNewModelEngine] = useState('')
-  const [newModelPriceRange, setNewModelPriceRange] = useState('')
+  const [newModelPriceMin, setNewModelPriceMin] = useState('')
+  const [newModelPriceMax, setNewModelPriceMax] = useState('')
+  const [newModelCurrency, setNewModelCurrency] = useState('CNY')
   const [newModelDescription, setNewModelDescription] = useState('')
   const [newModelStatus, setNewModelStatus] = useState('active')
   const [newModelFeatured, setNewModelFeatured] = useState(false)
@@ -903,11 +905,10 @@ export default function AdminDashboard() {
     setAcceleration(car.acceleration || '')
     setTopSpeed(car.top_speed !== null && car.top_speed !== undefined ? String(car.top_speed) : '')
     setFuelConsumption(car.fuel_consumption || '')
-    const parsedPrice = parsePriceRange(car.price_range)
-    setPriceMinK(parsedPrice.minK)
-    setPriceMaxK(parsedPrice.maxK)
-    setBaseCurrency(parsedPrice.base)
-    setSelectedCurrencies(parsedPrice.currencies)
+    setPriceMinK(car.price_min ? String(car.price_min) : '')
+    setPriceMaxK(car.price_max ? String(car.price_max) : '')
+    setBaseCurrency(car.currency || 'CNY')
+    setSelectedCurrencies([car.currency || 'CNY'])
     setProductionStatus(car.production_status || 'active')
     setIsFeatured(!!car.is_featured)
     setImagePreview(getCarImage(car))
@@ -925,10 +926,10 @@ export default function AdminDashboard() {
       acceleration: car.acceleration || '',
       topSpeed: car.top_speed !== null && car.top_speed !== undefined ? String(car.top_speed) : '',
       fuelConsumption: car.fuel_consumption || '',
-      priceMinK: parsedPrice.minK,
-      priceMaxK: parsedPrice.maxK,
-      baseCurrency: parsedPrice.base,
-      selectedCurrencies: parsedPrice.currencies,
+      priceMinK: car.price_min ? String(car.price_min) : '',
+      priceMaxK: car.price_max ? String(car.price_max) : '',
+      baseCurrency: car.currency || 'CNY',
+      selectedCurrencies: [car.currency || 'CNY'],
       productionStatus: car.production_status || 'active',
       isFeatured: !!car.is_featured,
       imagePreview: getCarImage(car),
@@ -1099,7 +1100,9 @@ export default function AdminDashboard() {
         vehicle_type: newModelType,
         description: newModelDescription,
         engine_type: newModelEngine,
-        price_range: newModelPriceRange,
+        price_min: newModelPriceMin ? parseFloat(newModelPriceMin) : null,
+        price_max: newModelPriceMax ? parseFloat(newModelPriceMax) : null,
+        currency: newModelCurrency,
         production_status: newModelStatus,
         is_featured: newModelFeatured,
       })
@@ -1109,7 +1112,9 @@ export default function AdminDashboard() {
       setNewModelYear('')
       setNewModelType('sedan')
       setNewModelEngine('')
-      setNewModelPriceRange('')
+      setNewModelPriceMin('')
+      setNewModelPriceMax('')
+      setNewModelCurrency('CNY')
       setNewModelDescription('')
       setNewModelStatus('active')
       setNewModelFeatured(false)
@@ -1436,7 +1441,9 @@ export default function AdminDashboard() {
       formData.append('acceleration', acceleration)
       formData.append('top_speed', String(toIntOrNull(topSpeed) ?? ''))
       formData.append('fuel_consumption', fuelConsumption)
-      formData.append('price_range', generatedPriceRange)
+      formData.append('price_min', priceMinK ? parseFloat(priceMinK) : '')
+      formData.append('price_max', priceMaxK ? parseFloat(priceMaxK) : '')
+      formData.append('currency', baseCurrency)
       formData.append('production_status', productionStatus)
       formData.append('is_featured', String(isFeatured))
       if (imageFile) {
@@ -3309,14 +3316,45 @@ export default function AdminDashboard() {
             </div>
 
             <div>
-              <label className="form-label" htmlFor="new-model-price">{t.adminInline.priceRange}</label>
+              <label className="form-label" htmlFor="new-model-price-min">{t.adminInline.priceMin || 'Min Price'}</label>
               <input
-                id="new-model-price"
+                id="new-model-price-min"
+                type="number"
                 className="form-input"
-                value={newModelPriceRange}
-                onChange={(e) => setNewModelPriceRange(e.target.value)}
-                placeholder="$20k-$35k"
+                value={newModelPriceMin}
+                onChange={(e) => setNewModelPriceMin(e.target.value)}
+                placeholder="20000"
               />
+            </div>
+
+            <div>
+              <label className="form-label" htmlFor="new-model-price-max">{t.adminInline.priceMax || 'Max Price'}</label>
+              <input
+                id="new-model-price-max"
+                type="number"
+                className="form-input"
+                value={newModelPriceMax}
+                onChange={(e) => setNewModelPriceMax(e.target.value)}
+                placeholder="35000"
+              />
+            </div>
+
+            <div>
+              <label className="form-label" htmlFor="new-model-currency">{t.adminInline.currency || 'Currency'}</label>
+              <select
+                id="new-model-currency"
+                className="form-input"
+                value={newModelCurrency}
+                onChange={(e) => setNewModelCurrency(e.target.value)}
+              >
+                <option value="CNY">¥ CNY</option>
+                <option value="USD">$ USD</option>
+                <option value="EUR">€ EUR</option>
+                <option value="GBP">£ GBP</option>
+                <option value="JPY">¥ JPY</option>
+                <option value="PLN">zł PLN</option>
+                <option value="INR">₹ INR</option>
+              </select>
             </div>
 
             <div>
