@@ -30,7 +30,7 @@ const WORD_LIKE_FORMATS = [
   'link',
 ]
 
-const INLINE_REVIEW_EDIT_FIELDS = new Set(['title', 'summary', 'content', 'publication_name', 'author_name', 'tags'])
+const INLINE_REVIEW_EDIT_FIELDS = new Set(['title', 'summary', 'content', 'publication_name', 'author_name', 'tags', 'overview', 'testResults', 'verdict', 'images'])
 
 function RichTextEditor({ id, label, value, onChange, placeholder }) {
   return (
@@ -288,6 +288,10 @@ export default function ReviewsPage() {
     if (field === 'publication_name') return t.adminPanel.reviewPublication
     if (field === 'author_name') return t.adminPanel.reviewAuthor
     if (field === 'tags') return t.adminPanel.reviewTags
+    if (field === 'overview') return t.pages.overview || 'Overview'
+    if (field === 'testResults') return t.pages.testResults || 'Test Results'
+    if (field === 'verdict') return t.pages.verdict || 'Verdict'
+    if (field === 'images') return t.pages.images || 'Images'
     return t.pages.editLabel
   }
 
@@ -303,7 +307,32 @@ export default function ReviewsPage() {
     if (!draft) return
 
     setSectionEditor({ reviewId, field })
-    setSectionValue(String(draft[field] || ''))
+
+    // Handle nested fields from content JSON
+    const nestedFields = ['overview', 'testResults', 'verdict', 'images']
+    if (nestedFields.includes(field)) {
+      try {
+        const parsedContent = JSON.parse(draft.content || '{}')
+        if (field === 'testResults') {
+          // Format testResults as "key:value\nkey:value"
+          const formatted = (parsedContent.testResults || [])
+            .map(item => `${item.key}:${item.value}`)
+            .join('\n')
+          setSectionValue(formatted)
+        } else if (field === 'images') {
+          // Format images as "url\nurl"
+          const formatted = (parsedContent.images || []).join('\n')
+          setSectionValue(formatted)
+        } else {
+          // overview, verdict
+          setSectionValue(String(parsedContent[field] || ''))
+        }
+      } catch {
+        setSectionValue('')
+      }
+    } else {
+      setSectionValue(String(draft[field] || ''))
+    }
   }
 
   const handleCloseSectionEditor = () => {
@@ -325,10 +354,48 @@ export default function ReviewsPage() {
     setReviewError('')
     setReviewMessage('')
     try {
-      await api.patch(`/reviews/${reviewId}/`, { [field]: normalizedValue })
+      // Handle nested fields (overview, testResults, verdict, images)
+      const nestedFields = ['overview', 'testResults', 'verdict', 'images']
+      let updatePayload = {}
+
+      if (nestedFields.includes(field)) {
+        // Parse existing content
+        const existingContent = reviewDraft?.content || '{}'
+        let parsedContent = {}
+        try {
+          parsedContent = JSON.parse(existingContent)
+        } catch {
+          parsedContent = {}
+        }
+
+        // Update specific nested field
+        if (field === 'testResults') {
+          // Parse testResults format: "key:value\nkey:value"
+          const lines = normalizedValue.split('\n').filter(line => line.trim())
+          parsedContent.testResults = lines.map(line => {
+            const [key, value] = line.split(':').map(s => s.trim())
+            return { key: key || '', value: value || '' }
+          })
+        } else if (field === 'images') {
+          // Parse images format: "url\nurl"
+          parsedContent.images = normalizedValue.split('\n').filter(url => url.trim())
+        } else {
+          // overview, verdict
+          parsedContent[field] = normalizedValue
+        }
+
+        updatePayload.content = JSON.stringify(parsedContent)
+      } else {
+        updatePayload[field] = normalizedValue
+      }
+
+      await api.patch(`/reviews/${reviewId}/`, updatePayload)
       await reloadReviews()
       setReviewDraft((prev) => {
         if (!prev || editingReviewId !== reviewId) return prev
+        if (nestedFields.includes(field)) {
+          return { ...prev, content: updatePayload.content }
+        }
         return { ...prev, [field]: normalizedValue }
       })
       setReviewMessage(t.pages.reviewUpdatedUser)
@@ -731,7 +798,11 @@ export default function ReviewsPage() {
 
                   {/* Image gallery (legacy content only) */}
                   {parsed && parsed.images.length > 0 && (
-                    <div className="review-gallery">
+                    <div className={`review-gallery ${canManageReview ? 'review-inline-editable-block' : ''}`}
+                      role={canManageReview ? 'button' : undefined}
+                      tabIndex={canManageReview ? 0 : undefined}
+                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'images') : undefined}
+                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'images')) : undefined}>
                       <img
                         src={parsed.images[0]}
                         alt={review.title}
@@ -769,14 +840,22 @@ export default function ReviewsPage() {
                   {/* Overview (legacy content only) */}
                   {parsed && parsed.overview && (
                     <p
-                      className="review-overview-text"
+                      className={`review-overview-text ${canManageReview ? 'review-inline-editable-block' : ''}`}
                       dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.overview) }}
+                      role={canManageReview ? 'button' : undefined}
+                      tabIndex={canManageReview ? 0 : undefined}
+                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'overview') : undefined}
+                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'overview')) : undefined}
                     />
                   )}
 
                   {/* Test results (legacy content only) */}
                   {parsed && parsed.testResults.length > 0 && (
-                    <div className="review-results">
+                    <div className={`review-results ${canManageReview ? 'review-inline-editable-block' : ''}`}
+                      role={canManageReview ? 'button' : undefined}
+                      tabIndex={canManageReview ? 0 : undefined}
+                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'testResults') : undefined}
+                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'testResults')) : undefined}>
                       <h4 className="review-results-title">{t.pages.testResults}</h4>
                       <div className="review-results-grid">
                         {parsed.testResults.map((result, i) => (
@@ -791,7 +870,11 @@ export default function ReviewsPage() {
 
                   {/* Verdict (legacy content only) */}
                   {parsed && parsed.verdict && (
-                    <div className="review-verdict">
+                    <div className={`review-verdict ${canManageReview ? 'review-inline-editable-block' : ''}`}
+                      role={canManageReview ? 'button' : undefined}
+                      tabIndex={canManageReview ? 0 : undefined}
+                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'verdict') : undefined}
+                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'verdict')) : undefined}>
                       <span className="review-verdict-label">{t.pages.verdict}</span>
                       <p className="review-verdict-text" dangerouslySetInnerHTML={{ __html: formatEditorialText(parsed.verdict) }} />
                     </div>
@@ -827,7 +910,7 @@ export default function ReviewsPage() {
         <div className="review-inline-editor-backdrop" onClick={handleCloseSectionEditor}>
           <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
             <h3 className="review-inline-editor-title">{t.pages.editLabel}: {getInlineFieldLabel(sectionEditor.field)}</h3>
-            {sectionEditor.field === 'content' ? (
+            {sectionEditor.field === 'content' || sectionEditor.field === 'overview' || sectionEditor.field === 'verdict' ? (
               <RichTextEditor
                 id={`review-inline-editor-${sectionEditor.reviewId}-${sectionEditor.field}`}
                 label={getInlineFieldLabel(sectionEditor.field)}
@@ -835,15 +918,16 @@ export default function ReviewsPage() {
                 onChange={setSectionValue}
                 placeholder={t.adminPanel.reviewEditorPlaceholder}
               />
-            ) : sectionEditor.field === 'summary' ? (
+            ) : sectionEditor.field === 'summary' || sectionEditor.field === 'testResults' || sectionEditor.field === 'images' ? (
               <div>
-                <label className="form-label" htmlFor="review-inline-summary">{getInlineFieldLabel(sectionEditor.field)}</label>
+                <label className="form-label" htmlFor="review-inline-textarea">{getInlineFieldLabel(sectionEditor.field)}</label>
                 <textarea
-                  id="review-inline-summary"
+                  id="review-inline-textarea"
                   className="form-input form-textarea"
-                  rows={4}
+                  rows={sectionEditor.field === 'testResults' || sectionEditor.field === 'images' ? 6 : 4}
                   value={sectionValue}
                   onChange={(event) => setSectionValue(event.target.value)}
+                  placeholder={sectionEditor.field === 'testResults' ? 'key:value\nkey:value' : sectionEditor.field === 'images' ? 'https://image.url\nhttps://image.url' : ''}
                 />
               </div>
             ) : (
