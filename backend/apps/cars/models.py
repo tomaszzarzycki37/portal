@@ -91,7 +91,7 @@ class CarModel(models.Model):
 
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE, related_name='models')
     name = models.CharField(max_length=150)
-    slug = models.SlugField()
+    slug = models.SlugField(unique=True, editable=False)
     vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPE_CHOICES)
     year_introduced = models.IntegerField()
     description = models.TextField()

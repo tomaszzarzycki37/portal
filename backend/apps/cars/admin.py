@@ -58,9 +58,8 @@ class CarModelAdmin(admin.ModelAdmin):
     list_display = ['name', 'brand', 'vehicle_type', 'year_introduced', 'price_display', 'avg_rating', 'opinions_count', 'is_featured']
     list_filter = ['brand', 'vehicle_type', 'year_introduced', 'production_status', 'is_featured', 'created_at']
     search_fields = ['name', 'brand__name', 'description']
-    prepopulated_fields = {'slug': ('name',)}
     inlines = [CarImageInline]
-    readonly_fields = ['created_at', 'updated_at', 'price_display']
+    readonly_fields = ['created_at', 'updated_at', 'price_display', 'slug']
     fieldsets = (
         ('Basic Information', {'fields': ('brand', 'name', 'slug', 'vehicle_type', 'year_introduced')}),
         ('Description & Images', {'fields': ('description', 'image')}),
