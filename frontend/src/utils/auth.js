@@ -17,7 +17,8 @@ export function isAdminUser() {
 
 export function canEditByAuthorId(authorId) {
   const user = getCurrentUser()
-  if (!user || !authorId) return false
+  if (!user) return false
   if (user.is_staff || user.is_superuser) return true
+  if (!authorId) return false
   return Number(user.id) === Number(authorId)
 }
