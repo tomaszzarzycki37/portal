@@ -6,6 +6,7 @@ import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { canEditByAuthorId, getCurrentUser, isAdminUser, isAuthenticatedUser } from '../utils/auth'
+import { getReviewCategoryLabel } from '../utils/reviewCategory'
 
 const WORD_LIKE_MODULES = {
   toolbar: [
@@ -519,10 +520,10 @@ export default function ReviewsPage() {
                 value={newReviewDraft.category}
                 onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, category: e.target.value }))}
               >
-                <option value="test">Test</option>
-                <option value="news">News</option>
-                <option value="guide">Guide</option>
-                <option value="opinion">Opinion</option>
+                <option value="test">{t.adminPanel.reviewCategoryTest}</option>
+                <option value="news">{t.adminPanel.reviewCategoryNews}</option>
+                <option value="guide">{t.adminPanel.reviewCategoryGuide}</option>
+                <option value="opinion">{t.adminPanel.reviewCategoryOpinion}</option>
               </select>
             </div>
             <div>
@@ -632,7 +633,7 @@ export default function ReviewsPage() {
                         dangerouslySetInnerHTML={{ __html: sanitizeEditorialHtml(review.summary) }}
                       />
                     )}
-                    {review.category && <p className="admin-meta">{String(review.category).toUpperCase()}</p>}
+                    {review.category && <p className="admin-meta">{getReviewCategoryLabel(review.category, t)}</p>}
                     {review.tags && <p className="admin-meta">{review.tags}</p>}
                     {(review.car_brand_name || review.car_name) && (
                       <div className="review-car-tag">
@@ -753,10 +754,10 @@ export default function ReviewsPage() {
                         <div>
                           <label className="form-label">{t.adminPanel.reviewCategory}</label>
                           <select className="form-input" value={reviewDraft.category} onChange={(e) => setReviewDraft((prev) => ({ ...prev, category: e.target.value }))}>
-                            <option value="test">Test</option>
-                            <option value="news">News</option>
-                            <option value="guide">Guide</option>
-                            <option value="opinion">Opinion</option>
+                            <option value="test">{t.adminPanel.reviewCategoryTest}</option>
+                            <option value="news">{t.adminPanel.reviewCategoryNews}</option>
+                            <option value="guide">{t.adminPanel.reviewCategoryGuide}</option>
+                            <option value="opinion">{t.adminPanel.reviewCategoryOpinion}</option>
                           </select>
                         </div>
                         <div>

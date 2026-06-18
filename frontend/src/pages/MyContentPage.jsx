@@ -5,6 +5,7 @@ import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCurrentUser, isAuthenticatedUser } from '../utils/auth'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
+import { getReviewCategoryLabel } from '../utils/reviewCategory'
 
 function sanitizeRichHtml(value) {
   return DOMPurify.sanitize(String(value || ''))
@@ -100,7 +101,7 @@ export default function MyContentPage() {
                   <article key={review.id} className="opinion-list-item">
                     <div className="opinion-list-header">
                       <h3 className="opinion-title">{review.title}</h3>
-                      <span className="opinion-rating">{String(review.category || 'test').toUpperCase()}</span>
+                      <span className="opinion-rating">{getReviewCategoryLabel(review.category, t)}</span>
                     </div>
                     <div className="opinion-list-meta">
                       <span>{review.publication_name}</span>

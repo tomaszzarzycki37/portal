@@ -7,6 +7,7 @@ import api from '../services/api'
 import { getCurrentUser, isAdminUser } from '../utils/auth'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { normalizeMediaUrl } from '../utils/mediaUrl'
+import { getReviewCategoryLabel } from '../utils/reviewCategory'
 
 const CURRENCY_CONFIG = {
   USD: { symbol: '$', rateToUsd: 1 },
@@ -2754,7 +2755,7 @@ export default function AdminDashboard() {
                   <div className="admin-review-card-head">
                     <div>
                       <h3 className="admin-review-title">{review.title}</h3>
-                      <p className="admin-meta">{review.car_brand_name} {review.car_name} • {review.publication_name} • {String(review.category || 'test').toUpperCase()} {review.is_pinned ? '• PINNED' : ''}</p>
+                      <p className="admin-meta">{review.car_brand_name} {review.car_name} • {review.publication_name} • {getReviewCategoryLabel(review.category, t)} {review.is_pinned ? '• PINNED' : ''}</p>
                     </div>
                     <div className="admin-actions-row">
                       <button
@@ -2840,10 +2841,10 @@ export default function AdminDashboard() {
                             value={reviewEditDraft.category}
                             onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, category: e.target.value }))}
                           >
-                            <option value="test">Test</option>
-                            <option value="news">News</option>
-                            <option value="guide">Guide</option>
-                            <option value="opinion">Opinion</option>
+                            <option value="test">{t.adminPanel.reviewCategoryTest}</option>
+                            <option value="news">{t.adminPanel.reviewCategoryNews}</option>
+                            <option value="guide">{t.adminPanel.reviewCategoryGuide}</option>
+                            <option value="opinion">{t.adminPanel.reviewCategoryOpinion}</option>
                           </select>
                         </div>
 
@@ -3072,10 +3073,10 @@ export default function AdminDashboard() {
                     value={newReviewCategory}
                     onChange={(e) => setNewReviewCategory(e.target.value)}
                   >
-                    <option value="test">Test</option>
-                    <option value="news">News</option>
-                    <option value="guide">Guide</option>
-                    <option value="opinion">Opinion</option>
+                    <option value="test">{t.adminPanel.reviewCategoryTest}</option>
+                    <option value="news">{t.adminPanel.reviewCategoryNews}</option>
+                    <option value="guide">{t.adminPanel.reviewCategoryGuide}</option>
+                    <option value="opinion">{t.adminPanel.reviewCategoryOpinion}</option>
                   </select>
                 </div>
 
