@@ -128,7 +128,7 @@ function parseReviewContent(content) {
 
     if (section === 'overview') overview.push(trimmed)
     else if (section === 'gallery') {
-      const match = trimmed.match(/^\d+\.\s+(https?:\/\/.+)/)
+      const match = trimmed.match(/^\d+\.\s+((?:https?:\/\/|\/media\/).+)/)
       if (match) images.push(match[1].trim())
     } else if (section === 'results') {
       const match = trimmed.match(/^-\s+(.+?):\s+(.+)/)
