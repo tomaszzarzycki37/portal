@@ -1204,7 +1204,6 @@ export default function AdminDashboard() {
       setReviewEditDraft({
         car_model: String(detail.car_id || ''),
         title: detail.title || '',
-        slug: detail.slug || '',
         summary: detail.summary || '',
         content: contentWithoutVerdict,
         verdict: extractedVerdict,
@@ -1250,7 +1249,6 @@ export default function AdminDashboard() {
       await api.patch(`/reviews/${reviewId}/`, {
         car_model: Number.parseInt(reviewEditDraft.car_model, 10),
         title: reviewEditDraft.title.trim(),
-        slug: reviewEditDraft.slug.trim(),
         summary: reviewEditDraft.summary.trim(),
         content: contentWithVerdict,
         category: reviewEditDraft.category,
@@ -2835,16 +2833,6 @@ export default function AdminDashboard() {
                         </div>
 
                         <div>
-                          <label className="form-label" htmlFor={`edit-review-slug-${review.id}`}>{t.adminPanel.reviewSlug}</label>
-                          <input
-                            id={`edit-review-slug-${review.id}`}
-                            className="form-input"
-                            value={reviewEditDraft.slug}
-                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, slug: e.target.value }))}
-                          />
-                        </div>
-
-                        <div>
                           <label className="form-label" htmlFor={`edit-review-category-${review.id}`}>{t.adminPanel.reviewCategory}</label>
                           <select
                             id={`edit-review-category-${review.id}`}
@@ -2930,7 +2918,6 @@ export default function AdminDashboard() {
                             setReviewEditDraft((prev) => ({
                               ...prev,
                               reading_time_minutes: String(estimateReadingTimeMinutes(`${prev.summary} ${prev.content || ''}`)),
-                              slug: prev.slug || toSlug(prev.title),
                             }))
                           }}
                         >
