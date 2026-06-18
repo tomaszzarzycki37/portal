@@ -88,6 +88,29 @@ function formatEditorialText(value) {
 }
 
 function parseReviewContent(content) {
+  const normalizedContent = String(content || '').trim()
+  if (!normalizedContent) {
+    return { overview: '', images: [], testResults: [], verdict: '' }
+  }
+
+  if (normalizedContent.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(normalizedContent)
+      return {
+        overview: String(parsed.overview || ''),
+        images: Array.isArray(parsed.images) ? parsed.images.filter(Boolean) : [],
+        testResults: Array.isArray(parsed.testResults)
+          ? parsed.testResults
+            .filter((item) => item && (item.key || item.value))
+            .map((item) => ({ key: String(item.key || ''), value: String(item.value || '') }))
+          : [],
+        verdict: String(parsed.verdict || ''),
+      }
+    } catch {
+      // Fall back to legacy section parsing.
+    }
+  }
+
   const lines = (content || '').split('\n')
   const overview = []
   const images = []
@@ -114,6 +137,45 @@ function parseReviewContent(content) {
   }
 
   return { overview: overview.join(' '), images, testResults, verdict: verdict.join(' ') }
+}
+
+function buildReviewContent({ overview, images, testResults, verdict }) {
+  const sections = []
+
+  if (overview && overview.trim()) {
+    sections.push('Overview')
+    sections.push(overview.trim())
+  }
+
+  if (Array.isArray(images) && images.length > 0) {
+    if (sections.length > 0) sections.push('')
+    sections.push('Example photo gallery')
+    images.forEach((image, index) => {
+      if (image && String(image).trim()) {
+        sections.push(`${index + 1}. ${String(image).trim()}`)
+      }
+    })
+  }
+
+  if (Array.isArray(testResults) && testResults.length > 0) {
+    if (sections.length > 0) sections.push('')
+    sections.push('Test results')
+    testResults.forEach((result) => {
+      const key = String(result?.key || '').trim()
+      const value = String(result?.value || '').trim()
+      if (key || value) {
+        sections.push(`- ${key}: ${value}`)
+      }
+    })
+  }
+
+  if (verdict && verdict.trim()) {
+    if (sections.length > 0) sections.push('')
+    sections.push('Verdict')
+    sections.push(verdict.trim())
+  }
+
+  return sections.join('\n')
 }
 
 export default function ReviewsPage() {
@@ -342,26 +404,17 @@ export default function ReviewsPage() {
     // Handle nested fields from content JSON
     const nestedFields = ['overview', 'testResults', 'verdict', 'images']
     if (nestedFields.includes(field)) {
-      try {
-        const parsedContent = JSON.parse(draft.content || '{}')
-        if (field === 'testResults') {
-          // Format testResults as "key:value\nkey:value"
-          const formatted = (parsedContent.testResults || [])
-            .map(item => `${item.key}:${item.value}`)
-            .join('\n')
-          setSectionValue(formatted)
-        } else if (field === 'images') {
-          // Load existing image URLs
-          const imageUrls = parsedContent.images || []
-          setSectionImagePreviews(imageUrls)
-          setSectionValue('')
-        } else {
-          // overview, verdict
-          setSectionValue(String(parsedContent[field] || ''))
-        }
-      } catch {
+      const parsedContent = parseReviewContent(draft.content)
+      if (field === 'testResults') {
+        const formatted = parsedContent.testResults
+          .map((item) => `${item.key}:${item.value}`)
+          .join('\n')
+        setSectionValue(formatted)
+      } else if (field === 'images') {
+        setSectionImagePreviews(parsedContent.images)
         setSectionValue('')
-        if (field === 'images') setSectionImagePreviews([])
+      } else {
+        setSectionValue(String(parsedContent[field] || ''))
       }
     } else {
       setSectionValue(String(draft[field] || ''))
@@ -394,32 +447,22 @@ export default function ReviewsPage() {
       let updatePayload = {}
 
       if (nestedFields.includes(field)) {
-        // Parse existing content
-        const existingContent = reviewDraft?.content || '{}'
-        let parsedContent = {}
-        try {
-          parsedContent = JSON.parse(existingContent)
-        } catch {
-          parsedContent = {}
-        }
+        const existingContent = reviewDraft?.content || ''
+        const parsedContent = parseReviewContent(existingContent)
 
-        // Update specific nested field
         if (field === 'testResults') {
-          // Parse testResults format: "key:value\nkey:value"
-          const lines = normalizedValue.split('\n').filter(line => line.trim())
-          parsedContent.testResults = lines.map(line => {
-            const [key, value] = line.split(':').map(s => s.trim())
-            return { key: key || '', value: value || '' }
+          const lines = normalizedValue.split('\n').filter((line) => line.trim())
+          parsedContent.testResults = lines.map((line) => {
+            const [key, ...valueParts] = line.split(':')
+            return { key: (key || '').trim(), value: valueParts.join(':').trim() }
           })
         } else if (field === 'images') {
-          // Use preview images array
           parsedContent.images = sectionImagePreviews
         } else {
-          // overview, verdict
           parsedContent[field] = normalizedValue
         }
 
-        updatePayload.content = JSON.stringify(parsedContent)
+        updatePayload.content = buildReviewContent(parsedContent)
       } else {
         updatePayload[field] = normalizedValue
       }
