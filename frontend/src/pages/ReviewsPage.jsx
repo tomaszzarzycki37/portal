@@ -1,9 +1,50 @@
 import { useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Link } from 'react-router-dom'
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { canEditByAuthorId, getCurrentUser, isAdminUser, isAuthenticatedUser } from '../utils/auth'
+
+const WORD_LIKE_MODULES = {
+  toolbar: [
+    [{ font: [] }, { size: ['small', false, 'large', 'huge'] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ color: [] }, { background: [] }],
+    [{ align: [] }],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ indent: '-1' }, { indent: '+1' }],
+    ['blockquote', 'code-block'],
+    ['link', 'clean'],
+  ],
+}
+
+const WORD_LIKE_FORMATS = [
+  'font', 'size',
+  'bold', 'italic', 'underline', 'strike',
+  'color', 'background',
+  'align', 'list', 'bullet', 'indent',
+  'blockquote', 'code-block',
+  'link',
+]
+
+function RichTextEditor({ id, label, value, onChange, placeholder }) {
+  return (
+    <div className="admin-rich-editor admin-rich-editor-compact">
+      <label className="form-label" htmlFor={id}>{label}</label>
+      <ReactQuill
+        id={id}
+        theme="snow"
+        value={value || ''}
+        onChange={onChange}
+        modules={WORD_LIKE_MODULES}
+        formats={WORD_LIKE_FORMATS}
+        placeholder={placeholder}
+      />
+    </div>
+  )
+}
 
 function decodeHtmlEntities(value) {
   if (!value) return ''
@@ -514,13 +555,12 @@ export default function ReviewsPage() {
               />
             </div>
             <div className="admin-form-grid-full">
-              <label className="form-label" htmlFor="user-review-content">{t.adminPanel.reviewContent}</label>
-              <textarea
+              <RichTextEditor
                 id="user-review-content"
-                className="form-input form-textarea"
-                rows={6}
+                label={t.adminPanel.reviewContent}
                 value={newReviewDraft.content}
-                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, content: e.target.value }))}
+                onChange={(val) => setNewReviewDraft((prev) => ({ ...prev, content: val }))}
+                placeholder={t.adminPanel.reviewEditorPlaceholder}
               />
             </div>
             <label className="form-checkbox-row admin-form-grid-full">
@@ -731,8 +771,13 @@ export default function ReviewsPage() {
                           <textarea className="form-input form-textarea" rows={3} value={reviewDraft.summary} onChange={(e) => setReviewDraft((prev) => ({ ...prev, summary: e.target.value }))} />
                         </div>
                         <div className="admin-form-grid-full">
-                          <label className="form-label">{t.adminPanel.reviewContent}</label>
-                          <textarea className="form-input form-textarea" rows={6} value={reviewDraft.content} onChange={(e) => setReviewDraft((prev) => ({ ...prev, content: e.target.value }))} />
+                          <RichTextEditor
+                            id="edit-review-content"
+                            label={t.adminPanel.reviewContent}
+                            value={reviewDraft.content}
+                            onChange={(val) => setReviewDraft((prev) => ({ ...prev, content: val }))}
+                            placeholder={t.adminPanel.reviewEditorPlaceholder}
+                          />
                         </div>
                         <div className="admin-form-grid-full">
                           <label className="form-label">{t.adminPanel.reviewInternalNotes}</label>
