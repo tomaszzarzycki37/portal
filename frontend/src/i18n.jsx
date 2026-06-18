@@ -1106,11 +1106,6 @@ function detectDefaultLanguage() {
     return 'en'
   }
 
-  const savedLanguage = window.localStorage.getItem('portal_lang')
-  if (savedLanguage === 'pl' || savedLanguage === 'en') {
-    return savedLanguage
-  }
-
   const browserLocales = [
     ...(Array.isArray(window.navigator.languages) ? window.navigator.languages : []),
     window.navigator.language,
@@ -1134,7 +1129,6 @@ export function LanguageProvider({ children }) {
   const [overrides, setOverrides] = useState([])
 
   useEffect(() => {
-    localStorage.setItem('portal_lang', lang)
     document.documentElement.lang = lang
   }, [lang])
 
