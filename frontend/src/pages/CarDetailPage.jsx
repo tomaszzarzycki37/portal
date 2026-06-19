@@ -521,7 +521,6 @@ export default function CarDetailPage() {
   const modelAge = car.year_introduced ? Math.max(currentYear - car.year_introduced, 0) : null
   const latestOpinions = opinions.slice(0, 10)
   const activeOpinion = latestOpinions[opinionSlideIndex] || null
-  const activeReview = reviewArticles[reviewSlideIndex] || null
 
   return (
     <div className="detail-wrap">
@@ -701,50 +700,55 @@ export default function CarDetailPage() {
         {reviewArticles.length === 0 ? (
           <div className="page-card">{t.pages.noReviewsYet}</div>
         ) : (
-          <div>
-            {activeReview && (
-              <article className="opinion-card-item" style={{ marginBottom: '0.75rem' }}>
-                {isAdmin && (
-                  <Link
-                    to={`/admin?section=manage-reviews&editReview=${activeReview.id}`}
-                    className="review-admin-quick-edit"
-                    aria-label={t.adminPanel.editReview || 'Edit review'}
-                    title={t.adminPanel.editReview || 'Edit review'}
-                  >
-                    <svg className="review-admin-quick-edit-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
-                    </svg>
-                  </Link>
-                )}
-                <h3 className="opinion-title">{activeReview.title}</h3>
-                <p className="opinion-meta">
-                  {activeReview.publication_name}
-                  {activeReview.author_name ? ` - ${activeReview.author_name}` : ''}
-                </p>
-                <div
-                  className="opinion-text"
-                  dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(decodeHtmlEntities(activeReview.summary || activeReview.content)) }}
-                />
-              </article>
-            )}
+          <div className="home-featured-reviews-slider" aria-live="polite">
+            <div
+              className="home-featured-reviews-track"
+              style={{ transform: `translateX(-${reviewSlideIndex * 100}%)` }}
+            >
+              {reviewArticles.map((review) => (
+                <article key={review.id} className="home-featured-review-card" style={{ borderColor: '#e2e8f0' }}>
+                  <div className="home-featured-review-main" style={{ gridTemplateColumns: '1fr' }}>
+                    <div className="home-featured-review-content">
+                      {isAdmin && (
+                        <Link
+                          to={`/admin?section=manage-reviews&editReview=${review.id}`}
+                          className="review-admin-quick-edit"
+                          aria-label={t.adminPanel.editReview || 'Edit review'}
+                          title={t.adminPanel.editReview || 'Edit review'}
+                        >
+                          <svg className="review-admin-quick-edit-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
+                          </svg>
+                        </Link>
+                      )}
+                      <div className="home-featured-review-heading">
+                        <h3>{review.title}</h3>
+                      </div>
+                      <p className="home-featured-review-meta">
+                        {review.publication_name}
+                        {review.author_name ? ` - ${review.author_name}` : ''}
+                      </p>
+                      <p className="home-featured-review-summary">
+                        {decodeHtmlEntities(review.summary || String(review.content || '').slice(0, 220))}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
 
             {reviewArticles.length > 1 && (
-              <div className="admin-actions-row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => setReviewSlideIndex((prev) => (prev - 1 + reviewArticles.length) % reviewArticles.length)}
-                >
-                  ‹
-                </button>
-                <span className="admin-meta">{reviewSlideIndex + 1}/{reviewArticles.length}</span>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => setReviewSlideIndex((prev) => (prev + 1) % reviewArticles.length)}
-                >
-                  ›
-                </button>
+              <div className="home-featured-reviews-dots" role="tablist" aria-label="Reviews slider">
+                {reviewArticles.map((review, index) => (
+                  <button
+                    key={review.id}
+                    type="button"
+                    className={`home-featured-reviews-dot${index === reviewSlideIndex ? ' active' : ''}`}
+                    aria-label={`Go to slide ${index + 1}`}
+                    aria-selected={index === reviewSlideIndex}
+                    onClick={() => setReviewSlideIndex(index)}
+                  />
+                ))}
               </div>
             )}
           </div>
