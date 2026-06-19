@@ -1504,9 +1504,10 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 .review-gallery-main {
 	width: 100%;
 	height: 280px;
-	object-fit: cover;
+	object-fit: contain;
 	border-radius: 0.6rem;
 	display: block;
+	background: #f8fafc;
 }
 
 .review-gallery-thumbs {
@@ -1517,10 +1518,11 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 .review-gallery-thumb {
 	flex: 1;
 	height: 90px;
-	object-fit: cover;
+	object-fit: contain;
 	border-radius: 0.45rem;
 	cursor: pointer;
 	transition: opacity 0.15s ease;
+	background: #f8fafc;
 }
 
 .review-gallery-thumb:hover {
@@ -1678,7 +1680,8 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 .review-image-gallery .review-gallery-thumb-wrapper img {
 	width: 100%;
 	height: 100%;
-	object-fit: cover;
+	object-fit: contain;
+	background: #f8fafc;
 }
 
 .review-image-remove-btn-thumb {
