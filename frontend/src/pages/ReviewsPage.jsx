@@ -698,6 +698,14 @@ export default function ReviewsPage() {
         }
 
         updatePayload.content = buildReviewContent(parsedContent)
+      } else if (field === 'car_model') {
+        const parsedModelId = Number.parseInt(normalizedValue, 10)
+        if (!Number.isInteger(parsedModelId) || parsedModelId <= 0) {
+          setReviewError(t.adminPanel.createReviewValidation)
+          setReviewSaving(false)
+          return
+        }
+        updatePayload[field] = parsedModelId
       } else {
         updatePayload[field] = normalizedValue
       }
