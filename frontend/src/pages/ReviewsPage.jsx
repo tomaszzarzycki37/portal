@@ -1370,7 +1370,7 @@ export default function ReviewsPage() {
                   onChange={(event) => setSectionValue(event.target.value)}
                 >
                   <option value="">{t.pages.selectLabel || 'Select'}</option>
-                  {carsList.map((car) => (
+                  {cars.map((car) => (
                     <option key={car.id} value={car.id}>{car.name}</option>
                   ))}
                 </select>
