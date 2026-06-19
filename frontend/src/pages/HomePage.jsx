@@ -9,6 +9,14 @@ import { normalizeMediaUrl } from '../utils/mediaUrl'
 const FALLBACK_HERO_IMAGE = 'https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&w=1800&q=80'
 const HERO_BACKGROUND_CONTENT_KEY = 'home.heroSearchBackgroundUrl'
 const HOME_CTA_TEXT_CONTENT_KEY = 'home.ctaText'
+const HOME_FEATURE_TEXT_KEYS = [
+  'home.feature1Title',
+  'home.feature1Text',
+  'home.feature2Title',
+  'home.feature2Text',
+  'home.feature3Title',
+  'home.feature3Text',
+]
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 const API_ORIGIN = import.meta.env.VITE_API_URL
   ? API_BASE_URL.replace(/\/api\/?$/, '')
@@ -66,6 +74,14 @@ export default function HomePage() {
   const [ctaTextSaving, setCtaTextSaving] = useState(false)
   const [ctaTextMessage, setCtaTextMessage] = useState('')
   const [ctaTextError, setCtaTextError] = useState('')
+  const [homeFeatureOverrides, setHomeFeatureOverrides] = useState({})
+  const [homeFeatureRecordIds, setHomeFeatureRecordIds] = useState({})
+  const [isHomeFeatureEditorOpen, setIsHomeFeatureEditorOpen] = useState(false)
+  const [homeFeatureEditorKey, setHomeFeatureEditorKey] = useState('')
+  const [homeFeatureEditorValue, setHomeFeatureEditorValue] = useState('')
+  const [homeFeatureEditorSaving, setHomeFeatureEditorSaving] = useState(false)
+  const [homeFeatureEditorMessage, setHomeFeatureEditorMessage] = useState('')
+  const [homeFeatureEditorError, setHomeFeatureEditorError] = useState('')
   const isAdmin = isAdminUser()
 
   useEffect(() => {
@@ -145,6 +161,36 @@ export default function HomePage() {
     }
 
     loadHomeCtaText()
+  }, [lang])
+
+  useEffect(() => {
+    const loadHomeFeatureTexts = async () => {
+      try {
+        const response = await api.get(`/common/content/?lang=${lang}`)
+        const records = response.data.results || response.data || []
+
+        const nextOverrides = {}
+        const nextIds = {}
+
+        HOME_FEATURE_TEXT_KEYS.forEach((key) => {
+          const row = records.find((record) => record.key === key)
+          if (row && String(row.value || '').trim()) {
+            nextOverrides[key] = String(row.value)
+          }
+          if (row?.id) {
+            nextIds[key] = row.id
+          }
+        })
+
+        setHomeFeatureOverrides(nextOverrides)
+        setHomeFeatureRecordIds(nextIds)
+      } catch {
+        setHomeFeatureOverrides({})
+        setHomeFeatureRecordIds({})
+      }
+    }
+
+    loadHomeFeatureTexts()
   }, [lang])
 
   const vehicleTypes = useMemo(() => {
@@ -275,6 +321,66 @@ export default function HomePage() {
   }
 
   const homeCtaText = homeCtaTextOverride || t.home.ctaText
+
+  const resolveHomeFeatureText = (key, fallbackValue) => homeFeatureOverrides[key] || fallbackValue
+
+  const openHomeFeatureEditor = (key, fallbackValue) => {
+    if (!isAdmin) return
+    setHomeFeatureEditorKey(key)
+    setHomeFeatureEditorValue(resolveHomeFeatureText(key, fallbackValue))
+    setHomeFeatureEditorMessage('')
+    setHomeFeatureEditorError('')
+    setIsHomeFeatureEditorOpen(true)
+  }
+
+  const closeHomeFeatureEditor = () => {
+    setIsHomeFeatureEditorOpen(false)
+    setHomeFeatureEditorKey('')
+    setHomeFeatureEditorValue('')
+    setHomeFeatureEditorMessage('')
+    setHomeFeatureEditorError('')
+  }
+
+  const handleSaveHomeFeatureText = async () => {
+    if (!isAdmin || !homeFeatureEditorKey) return
+
+    const normalizedText = String(homeFeatureEditorValue || '').trim()
+    if (!normalizedText) {
+      setHomeFeatureEditorError(t.adminInline.saveError)
+      return
+    }
+
+    try {
+      setHomeFeatureEditorSaving(true)
+      setHomeFeatureEditorMessage('')
+      setHomeFeatureEditorError('')
+
+      const payload = {
+        key: homeFeatureEditorKey,
+        lang,
+        value: normalizedText,
+      }
+
+      const existingId = homeFeatureRecordIds[homeFeatureEditorKey]
+      if (existingId) {
+        await api.patch(`/common/content/${existingId}/`, payload)
+      } else {
+        const createResponse = await api.post('/common/content/', payload)
+        const createdId = createResponse.data?.id
+        if (createdId) {
+          setHomeFeatureRecordIds((prev) => ({ ...prev, [homeFeatureEditorKey]: createdId }))
+        }
+      }
+
+      setHomeFeatureOverrides((prev) => ({ ...prev, [homeFeatureEditorKey]: normalizedText }))
+      setHomeFeatureEditorMessage(t.adminInline.saved)
+      closeHomeFeatureEditor()
+    } catch {
+      setHomeFeatureEditorError(t.adminInline.saveError)
+    } finally {
+      setHomeFeatureEditorSaving(false)
+    }
+  }
 
   const handleSaveHomeCtaText = async () => {
     if (!isAdmin) return
@@ -616,16 +722,100 @@ export default function HomePage() {
 
       <section className="features-grid">
         <article className="feature-tile feature-tile-red">
-          <h3>{t.home.feature1Title}</h3>
-          <p>{t.home.feature1Text}</p>
+          <h3
+            className={isAdmin ? 'review-inline-editable-block' : ''}
+            role={isAdmin ? 'button' : undefined}
+            tabIndex={isAdmin ? 0 : undefined}
+            onClick={isAdmin ? () => openHomeFeatureEditor('home.feature1Title', t.home.feature1Title) : undefined}
+            onKeyDown={isAdmin ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                openHomeFeatureEditor('home.feature1Title', t.home.feature1Title)
+              }
+            } : undefined}
+            title={isAdmin ? t.adminInline.quickEdit : undefined}
+          >
+            {resolveHomeFeatureText('home.feature1Title', t.home.feature1Title)}
+          </h3>
+          <p
+            className={isAdmin ? 'review-inline-editable-block' : ''}
+            role={isAdmin ? 'button' : undefined}
+            tabIndex={isAdmin ? 0 : undefined}
+            onClick={isAdmin ? () => openHomeFeatureEditor('home.feature1Text', t.home.feature1Text) : undefined}
+            onKeyDown={isAdmin ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                openHomeFeatureEditor('home.feature1Text', t.home.feature1Text)
+              }
+            } : undefined}
+            title={isAdmin ? t.adminInline.quickEdit : undefined}
+          >
+            {resolveHomeFeatureText('home.feature1Text', t.home.feature1Text)}
+          </p>
         </article>
         <article className="feature-tile feature-tile-amber">
-          <h3>{t.home.feature2Title}</h3>
-          <p>{t.home.feature2Text}</p>
+          <h3
+            className={isAdmin ? 'review-inline-editable-block' : ''}
+            role={isAdmin ? 'button' : undefined}
+            tabIndex={isAdmin ? 0 : undefined}
+            onClick={isAdmin ? () => openHomeFeatureEditor('home.feature2Title', t.home.feature2Title) : undefined}
+            onKeyDown={isAdmin ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                openHomeFeatureEditor('home.feature2Title', t.home.feature2Title)
+              }
+            } : undefined}
+            title={isAdmin ? t.adminInline.quickEdit : undefined}
+          >
+            {resolveHomeFeatureText('home.feature2Title', t.home.feature2Title)}
+          </h3>
+          <p
+            className={isAdmin ? 'review-inline-editable-block' : ''}
+            role={isAdmin ? 'button' : undefined}
+            tabIndex={isAdmin ? 0 : undefined}
+            onClick={isAdmin ? () => openHomeFeatureEditor('home.feature2Text', t.home.feature2Text) : undefined}
+            onKeyDown={isAdmin ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                openHomeFeatureEditor('home.feature2Text', t.home.feature2Text)
+              }
+            } : undefined}
+            title={isAdmin ? t.adminInline.quickEdit : undefined}
+          >
+            {resolveHomeFeatureText('home.feature2Text', t.home.feature2Text)}
+          </p>
         </article>
         <article className="feature-tile feature-tile-slate">
-          <h3>{t.home.feature3Title}</h3>
-          <p>{t.home.feature3Text}</p>
+          <h3
+            className={isAdmin ? 'review-inline-editable-block' : ''}
+            role={isAdmin ? 'button' : undefined}
+            tabIndex={isAdmin ? 0 : undefined}
+            onClick={isAdmin ? () => openHomeFeatureEditor('home.feature3Title', t.home.feature3Title) : undefined}
+            onKeyDown={isAdmin ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                openHomeFeatureEditor('home.feature3Title', t.home.feature3Title)
+              }
+            } : undefined}
+            title={isAdmin ? t.adminInline.quickEdit : undefined}
+          >
+            {resolveHomeFeatureText('home.feature3Title', t.home.feature3Title)}
+          </h3>
+          <p
+            className={isAdmin ? 'review-inline-editable-block' : ''}
+            role={isAdmin ? 'button' : undefined}
+            tabIndex={isAdmin ? 0 : undefined}
+            onClick={isAdmin ? () => openHomeFeatureEditor('home.feature3Text', t.home.feature3Text) : undefined}
+            onKeyDown={isAdmin ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                openHomeFeatureEditor('home.feature3Text', t.home.feature3Text)
+              }
+            } : undefined}
+            title={isAdmin ? t.adminInline.quickEdit : undefined}
+          >
+            {resolveHomeFeatureText('home.feature3Text', t.home.feature3Text)}
+          </p>
         </article>
       </section>
 
@@ -738,6 +928,30 @@ export default function HomePage() {
               <button type="button" className="btn btn-secondary" onClick={() => setIsCtaTextEditorOpen(false)}>{t.pages.cancelLabel}</button>
               <button type="button" className="btn btn-primary" disabled={ctaTextSaving} onClick={handleSaveHomeCtaText}>
                 {ctaTextSaving ? t.pages.loading : t.adminInline.save}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isAdmin && isHomeFeatureEditorOpen && (
+        <div className="review-inline-editor-backdrop" onClick={closeHomeFeatureEditor}>
+          <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
+            <h3 className="review-inline-editor-title">{t.adminInline.quickEdit}</h3>
+            <label className="form-label" htmlFor="home-feature-inline-editor">{homeFeatureEditorKey}</label>
+            <textarea
+              id="home-feature-inline-editor"
+              className="form-input form-textarea"
+              rows={4}
+              value={homeFeatureEditorValue}
+              onChange={(event) => setHomeFeatureEditorValue(event.target.value)}
+            />
+            {homeFeatureEditorMessage && <p className="form-success">{homeFeatureEditorMessage}</p>}
+            {homeFeatureEditorError && <p className="form-error">{homeFeatureEditorError}</p>}
+            <div className="admin-actions-row">
+              <button type="button" className="btn btn-secondary" onClick={closeHomeFeatureEditor}>{t.pages.cancelLabel}</button>
+              <button type="button" className="btn btn-primary" disabled={homeFeatureEditorSaving} onClick={handleSaveHomeFeatureText}>
+                {homeFeatureEditorSaving ? t.pages.loading : t.adminInline.save}
               </button>
             </div>
           </div>
