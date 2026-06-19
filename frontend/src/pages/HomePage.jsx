@@ -842,7 +842,7 @@ export default function HomePage() {
                         <h3>{review.title}</h3>
                       </div>
                       <p className="home-featured-review-description-label">{t.pages.description}</p>
-                      <p className="home-featured-review-summary">{review.summary || String(review.content || '').slice(0, 160)}</p>
+                      <p className="home-featured-review-summary">{review.summary}</p>
                       <span className="home-featured-review-source">{review.publication_name}</span>
                     </div>
                     <div className="home-featured-review-rail">

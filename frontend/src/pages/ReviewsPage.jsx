@@ -31,7 +31,7 @@ const WORD_LIKE_FORMATS = [
   'link',
 ]
 
-const INLINE_REVIEW_EDIT_FIELDS = new Set(['title', 'summary', 'content', 'publication_name', 'author_name', 'tags', 'overview', 'testResults', 'verdict', 'images', 'secondImages', 'car_model', 'category'])
+const INLINE_REVIEW_EDIT_FIELDS = new Set(['title', 'summary', 'overview', 'publication_name', 'author_name', 'tags', 'testResults', 'verdict', 'images', 'secondImages', 'car_model', 'category'])
 const IMAGE_LIMITS = {
   images: 12,
 }
@@ -520,7 +520,7 @@ export default function ReviewsPage() {
         car_model: String(detail.car_id || ''),
         title: detail.title || '',
         summary: detail.summary || '',
-        content: detail.content || '',
+        overview: detail.overview || '',
         category: detail.category || 'test',
         tags: detail.tags || '',
         reading_time_minutes: String(detail.reading_time_minutes || ''),
@@ -1263,28 +1263,19 @@ export default function ReviewsPage() {
                     />
                   )}
 
-                  {/* Rich HTML content */}
-                  {isHtmlContent && (
-                    <div
-                      className={`review-html-content ${canManageReview ? 'review-inline-editable-block' : ''}`}
-                      dangerouslySetInnerHTML={{ __html: sanitizeEditorialHtml(content) }}
-                      role={canManageReview ? 'button' : undefined}
-                      tabIndex={canManageReview ? 0 : undefined}
-                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'content') : undefined}
-                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'content')) : undefined}
-                    />
-                  )}
-
-                  {/* Overview (legacy content only) */}
+                  {/* Overview (main description) */}
                   {parsed && (
-                    <p
-                      className={`review-overview-text ${canManageReview ? 'review-inline-editable-block' : ''} ${parsed.overview ? '' : 'review-section-empty'}`}
-                      dangerouslySetInnerHTML={{ __html: parsed.overview ? formatEditorialText(parsed.overview) : escapeHtml(emptyOverviewLabel) }}
-                      role={canManageReview ? 'button' : undefined}
-                      tabIndex={canManageReview ? 0 : undefined}
-                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'overview') : undefined}
-                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'overview')) : undefined}
-                    />
+                    <>
+                      <h4 className="review-section-title">{t.pages.mainDescription || t.pages.overview || 'Główny opis'}</h4>
+                      <p
+                        className={`review-overview-text ${canManageReview ? 'review-inline-editable-block' : ''} ${parsed.overview ? '' : 'review-section-empty'}`}
+                        dangerouslySetInnerHTML={{ __html: parsed.overview ? formatEditorialText(parsed.overview) : escapeHtml(emptyOverviewLabel) }}
+                        role={canManageReview ? 'button' : undefined}
+                        tabIndex={canManageReview ? 0 : undefined}
+                        onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'overview') : undefined}
+                        onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'overview')) : undefined}
+                      />
+                    </>
                   )}
 
                   {/* Test results (legacy content only) */}
