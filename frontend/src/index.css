@@ -781,6 +781,22 @@ body.app-theme-dark .theme-toggle-btn.active {
   background: #fff;
 }
 
+select.form-input,
+input.form-input {
+  appearance: none;
+  background-color: white;
+}
+
+select.form-input::placeholder {
+  color: #94a3b8;
+}
+
+body.app-theme-dark select.form-input,
+body.app-theme-dark input.form-input {
+  background-color: #171b22;
+  color: #f3f4f6;
+}
+
 .form-textarea {
   resize: vertical;
 }
