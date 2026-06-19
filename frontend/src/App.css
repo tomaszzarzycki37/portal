@@ -2370,6 +2370,24 @@ body.app-theme-dark .review-inline-editor-modal .form-label {
 	color: #cbd5e1;
 }
 
+body.app-theme-dark .review-gallery-main {
+	background: #1e293b;
+}
+
+body.app-theme-dark .review-gallery-empty {
+	background: #1e293b;
+	border-color: #475569;
+	color: #cbd5e1;
+}
+
+body.app-theme-dark .review-slider-nav {
+	background: rgba(15, 23, 42, 0.85);
+}
+
+body.app-theme-dark .review-slider-nav:hover {
+	background: rgba(15, 23, 42, 0.95);
+}
+
 .admin-rich-editor-compact .ql-container.ql-snow {
 	min-height: 110px;
 }
