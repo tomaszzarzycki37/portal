@@ -1384,10 +1384,10 @@ export default function ReviewsPage() {
                   value={sectionValue}
                   onChange={(event) => setSectionValue(event.target.value)}
                 >
-                  <option value="test">{t.pages.categoryTest || 'Test'}</option>
-                  <option value="news">{t.pages.categoryNews || 'News'}</option>
-                  <option value="guide">{t.pages.categoryGuide || 'Guide'}</option>
-                  <option value="opinion">{t.pages.categoryOpinion || 'Opinion'}</option>
+                  <option value="test">{t.adminPanel.reviewCategoryTest}</option>
+                  <option value="news">{t.adminPanel.reviewCategoryNews}</option>
+                  <option value="guide">{t.adminPanel.reviewCategoryGuide}</option>
+                  <option value="opinion">{t.adminPanel.reviewCategoryOpinion}</option>
                 </select>
               </div>
             ) : sectionEditor.field === 'images' || sectionEditor.field === 'secondImages' ? (
