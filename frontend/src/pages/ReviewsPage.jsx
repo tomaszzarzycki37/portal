@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Link } from 'react-router-dom'
 import ReactQuill from 'react-quill'
@@ -382,6 +382,8 @@ export default function ReviewsPage() {
   const [isCreateReviewSectionOpen, setIsCreateReviewSectionOpen] = useState(false)
   const [newReviewFirstSliderFiles, setNewReviewFirstSliderFiles] = useState([])
   const [newReviewSecondSliderFiles, setNewReviewSecondSliderFiles] = useState([])
+  const firstSliderInputRef = useRef(null)
+  const secondSliderInputRef = useRef(null)
   const [newReviewDraft, setNewReviewDraft] = useState({
     car_model: '',
     title: '',
@@ -825,6 +827,8 @@ export default function ReviewsPage() {
       }))
       setNewReviewFirstSliderFiles([])
       setNewReviewSecondSliderFiles([])
+      if (firstSliderInputRef.current) firstSliderInputRef.current.value = ''
+      if (secondSliderInputRef.current) secondSliderInputRef.current.value = ''
       setReviewMessage(t.adminPanel.reviewCreated)
     } catch {
       setReviewError(t.adminPanel.reviewCreateError)
@@ -1019,43 +1023,65 @@ export default function ReviewsPage() {
               />
             </div>
             <div className="admin-form-grid-full">
-              <label className="form-label" htmlFor="user-review-first-slider">{lang === 'pl' ? 'Pierwszy slider (max 12 zdjec)' : 'First slider (max 12 images)'}</label>
+              <label className="form-label" htmlFor="user-review-first-slider">{t.adminPanel.reviewFirstSliderLabel}</label>
               <input
+                ref={firstSliderInputRef}
                 id="user-review-first-slider"
                 type="file"
                 multiple
                 accept="image/*"
                 className="form-input"
+                style={{ display: 'none' }}
                 onChange={(e) => {
                   const files = Array.from(e.target.files || [])
                   if (files.length > 12) {
-                    setReviewError(lang === 'pl' ? 'Mozesz dodac maksymalnie 12 zdjec do pierwszego slidera' : 'You can add up to 12 images to the first slider')
+                    setReviewError(t.adminPanel.reviewFirstSliderLimitError)
                     return
                   }
                   setReviewError('')
                   setNewReviewFirstSliderFiles(files)
                 }}
               />
-              {newReviewFirstSliderFiles.length > 0 && (
-                <p className="review-slider-limit-note">{lang === 'pl' ? `Wybrano zdjec: ${newReviewFirstSliderFiles.length}` : `Selected images: ${newReviewFirstSliderFiles.length}`}</p>
-              )}
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => firstSliderInputRef.current?.click()}
+              >
+                {t.adminPanel.chooseFile}
+              </button>
+              <p className="review-slider-limit-note">
+                {newReviewFirstSliderFiles.length > 0
+                  ? t.adminPanel.reviewFilesSelected.replace('{count}', String(newReviewFirstSliderFiles.length))
+                  : t.adminPanel.noFileSelected}
+              </p>
             </div>
             <div className="admin-form-grid-full">
-              <label className="form-label" htmlFor="user-review-second-slider">{lang === 'pl' ? 'Drugi slider' : 'Second slider'}</label>
+              <label className="form-label" htmlFor="user-review-second-slider">{t.adminPanel.reviewSecondSliderLabel}</label>
               <input
+                ref={secondSliderInputRef}
                 id="user-review-second-slider"
                 type="file"
                 multiple
                 accept="image/*"
                 className="form-input"
+                style={{ display: 'none' }}
                 onChange={(e) => {
                   const files = Array.from(e.target.files || [])
                   setNewReviewSecondSliderFiles(files)
                 }}
               />
-              {newReviewSecondSliderFiles.length > 0 && (
-                <p className="review-slider-limit-note">{lang === 'pl' ? `Wybrano zdjec: ${newReviewSecondSliderFiles.length}` : `Selected images: ${newReviewSecondSliderFiles.length}`}</p>
-              )}
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => secondSliderInputRef.current?.click()}
+              >
+                {t.adminPanel.chooseFile}
+              </button>
+              <p className="review-slider-limit-note">
+                {newReviewSecondSliderFiles.length > 0
+                  ? t.adminPanel.reviewFilesSelected.replace('{count}', String(newReviewSecondSliderFiles.length))
+                  : t.adminPanel.noFileSelected}
+              </p>
             </div>
             <label className="form-checkbox-row admin-form-grid-full">
               <input
