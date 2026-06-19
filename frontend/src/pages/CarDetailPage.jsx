@@ -551,7 +551,7 @@ export default function CarDetailPage() {
           </div>
 
           <div className="detail-shortcuts-row">
-            <Link to={`/cars/${car.id}/reviews`} className="btn btn-primary btn-sm">
+            <Link to={`/reviews?model=${car.id}`} className="btn btn-primary btn-sm">
               {t.pages.reviewsSectionTitle}
             </Link>
             {isAdmin && (
@@ -692,7 +692,7 @@ export default function CarDetailPage() {
             <h2 className="detail-section-title">{t.pages.reviewsSectionTitle}</h2>
             <p className="detail-section-subtitle">{t.pages.reviewsSectionIntro}</p>
           </div>
-          <Link to={`/cars/${car.id}/reviews`} className="btn btn-primary btn-sm">
+          <Link to={`/reviews?model=${car.id}`} className="btn btn-primary btn-sm">
             {t.pages.openReviewsPage}
           </Link>
         </div>
