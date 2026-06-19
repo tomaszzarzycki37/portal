@@ -252,6 +252,8 @@ export default function AdminDashboard() {
   const [newReviewFeatured, setNewReviewFeatured] = useState(false)
   const [newReviewPinned, setNewReviewPinned] = useState(false)
   const [newReviewPublished, setNewReviewPublished] = useState(true)
+  const [newReviewFirstSliderFiles, setNewReviewFirstSliderFiles] = useState([])
+  const [newReviewSecondSliderFiles, setNewReviewSecondSliderFiles] = useState([])
   const [creatingReview, setCreatingReview] = useState(false)
   const [createReviewMessage, setCreateReviewMessage] = useState('')
   const [createReviewError, setCreateReviewError] = useState('')
@@ -1128,6 +1130,53 @@ export default function AdminDashboard() {
     }
   }
 
+  const uploadImageFiles = async (files) => {
+    if (!files || files.length === 0) return []
+    const urls = await Promise.all(
+      files.map(async (file) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        let response
+        try {
+          response = await api.post('/common/content/upload/', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          })
+        } catch {
+          // Backward compatibility
+          response = await api.post('/common/upload/', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          })
+        }
+        return response.data.url
+      })
+    )
+    return urls
+  }
+
+  const buildContentWithImages = (baseContent, firstSliderUrls, secondSliderUrls) => {
+    let finalContent = baseContent || ''
+
+    if (firstSliderUrls && firstSliderUrls.length > 0) {
+      const galleryText = 'Example photo gallery\n' + firstSliderUrls.map((url, i) => `${i + 1}. ${url}`).join('\n')
+      if (finalContent.includes('Example photo gallery')) {
+        finalContent = finalContent.replace(/Example photo gallery[\s\S]*?(?=\n[A-Z]|\n\n[A-Z]|$)/, galleryText)
+      } else {
+        finalContent = finalContent.replace(/^Overview\n/, `Overview\n\n${galleryText}\n\n`)
+      }
+    }
+
+    if (secondSliderUrls && secondSliderUrls.length > 0) {
+      const secondGalleryText = 'Second photo gallery\n' + secondSliderUrls.map((url, i) => `${i + 1}. ${url}`).join('\n')
+      if (finalContent.includes('Second photo gallery')) {
+        finalContent = finalContent.replace(/Second photo gallery[\s\S]*?(?=\n[A-Z]|$)/, secondGalleryText)
+      } else {
+        finalContent = finalContent.replace(/Verdict\s*$/, `Second photo gallery\n${secondGalleryText}\n\nVerdict`)
+      }
+    }
+
+    return finalContent
+  }
+
   const handleCreateReview = async (e) => {
     e.preventDefault()
     setCreateReviewMessage('')
@@ -1149,7 +1198,15 @@ export default function AdminDashboard() {
 
     try {
       setCreatingReview(true)
-      const contentWithVerdict = appendVerdictToContent(normalizedContent, newReviewVerdict)
+
+      // Upload images for both sliders
+      const firstSliderUrls = await uploadImageFiles(newReviewFirstSliderFiles)
+      const secondSliderUrls = await uploadImageFiles(newReviewSecondSliderFiles)
+
+      // Build content with image URLs
+      let finalContent = buildContentWithImages(normalizedContent, firstSliderUrls, secondSliderUrls)
+      const contentWithVerdict = appendVerdictToContent(finalContent, newReviewVerdict)
+
       await api.post('/reviews/', {
         car_model: parsedCarId,
         title: newReviewTitle.trim(),
@@ -1183,6 +1240,8 @@ export default function AdminDashboard() {
       setNewReviewFeatured(false)
       setNewReviewPinned(false)
       setNewReviewPublished(true)
+      setNewReviewFirstSliderFiles([])
+      setNewReviewSecondSliderFiles([])
       setCreateReviewMessage(t.adminPanel.reviewCreated)
       await loadPressReviews()
     } catch {
@@ -3141,6 +3200,46 @@ export default function AdminDashboard() {
                     onChange={setNewReviewVerdict}
                     compact
                   />
+                </div>
+
+                <div className="admin-form-grid-full">
+                  <label className="form-label" htmlFor="new-review-first-slider">{t.adminPanel.reviewFirstSlider || 'Example photo gallery (max 12 images)'}</label>
+                  <input
+                    id="new-review-first-slider"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="form-input"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || [])
+                      if (files.length > 12) {
+                        alert('Maximum 12 images allowed for main gallery')
+                        return
+                      }
+                      setNewReviewFirstSliderFiles(files)
+                    }}
+                  />
+                  {newReviewFirstSliderFiles.length > 0 && (
+                    <p className="form-info">{newReviewFirstSliderFiles.length} image(s) selected</p>
+                  )}
+                </div>
+
+                <div className="admin-form-grid-full">
+                  <label className="form-label" htmlFor="new-review-second-slider">{t.adminPanel.reviewSecondSlider || 'Second photo gallery'}</label>
+                  <input
+                    id="new-review-second-slider"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="form-input"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || [])
+                      setNewReviewSecondSliderFiles(files)
+                    }}
+                  />
+                  {newReviewSecondSliderFiles.length > 0 && (
+                    <p className="form-info">{newReviewSecondSliderFiles.length} image(s) selected</p>
+                  )}
                 </div>
               </div>
 
