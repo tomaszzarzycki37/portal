@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Link } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
@@ -360,6 +361,7 @@ function buildReviewContent({ overview, images, secondImages, testResults, verdi
 
 export default function ReviewsPage() {
   const { t, lang } = useTranslation()
+  const location = useLocation()
   const currentUser = useMemo(() => getCurrentUser(), [])
   const isLoggedIn = useMemo(() => isAuthenticatedUser(), [])
   const [reviews, setReviews] = useState([])
@@ -453,6 +455,14 @@ export default function ReviewsPage() {
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name))
   }, [normalizedReviews, selectedBrand])
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const modelFromUrl = String(params.get('model') || '').trim()
+    if (modelFromUrl) {
+      setSelectedModel(modelFromUrl)
+    }
+  }, [location.search])
 
   useEffect(() => {
     if (selectedModel === 'all') return

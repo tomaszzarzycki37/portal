@@ -854,7 +854,7 @@ export default function HomePage() {
                         loading="lazy"
                         onError={handleCarImageError}
                       />
-                      <Link to={`/cars/${review.car_id}/reviews`} className="home-featured-review-open-link">{t.home.openFeaturedReview}</Link>
+                      <Link to={`/reviews?model=${review.car_id}`} className="home-featured-review-open-link">{t.home.openFeaturedReview}</Link>
                     </div>
                   </div>
                 </article>
