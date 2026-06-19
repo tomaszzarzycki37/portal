@@ -2388,6 +2388,14 @@ body.app-theme-dark .review-slider-nav:hover {
 	background: rgba(15, 23, 42, 0.95);
 }
 
+body.app-theme-dark .review-gallery-thumb {
+	background: #1e293b;
+}
+
+body.app-theme-dark .review-slider-thumb-btn:focus-visible {
+	outline: 2px solid #3b82f6;
+}
+
 .admin-rich-editor-compact .ql-container.ql-snow {
 	min-height: 110px;
 }
