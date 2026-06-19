@@ -1577,8 +1577,17 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 }
 
 /* Overview */
+.review-section-title {
+	margin: 1.25rem 1.5rem 0.5rem;
+	font-size: 0.75rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: #64748b;
+}
+
 .review-overview-text {
-	margin: 1rem 1.5rem 0;
+	margin: 0 1.5rem 0;
 	font-size: 0.95rem;
 	color: #374151;
 	line-height: 1.65;
@@ -2286,6 +2295,10 @@ body.app-theme-dark .review-admin-quick-edit:focus-visible {
 }
 
 /* Dark theme styles for review content, results and verdict */
+body.app-theme-dark .review-section-title {
+	color: #94a3b8;
+}
+
 body.app-theme-dark .review-overview-text {
 	color: #e5e7eb;
 }
