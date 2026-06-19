@@ -8,6 +8,7 @@ import { normalizeMediaUrl } from '../utils/mediaUrl'
 
 const FALLBACK_HERO_IMAGE = 'https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&w=1800&q=80'
 const HERO_BACKGROUND_CONTENT_KEY = 'home.heroSearchBackgroundUrl'
+const HOME_CTA_TEXT_CONTENT_KEY = 'home.ctaText'
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 const API_ORIGIN = import.meta.env.VITE_API_URL
   ? API_BASE_URL.replace(/\/api\/?$/, '')
@@ -58,6 +59,13 @@ export default function HomePage() {
   const [heroImageSaving, setHeroImageSaving] = useState(false)
   const [heroImageMessage, setHeroImageMessage] = useState('')
   const [heroImageError, setHeroImageError] = useState('')
+  const [homeCtaTextOverride, setHomeCtaTextOverride] = useState('')
+  const [homeCtaTextRecordId, setHomeCtaTextRecordId] = useState(null)
+  const [isCtaTextEditorOpen, setIsCtaTextEditorOpen] = useState(false)
+  const [ctaTextDraft, setCtaTextDraft] = useState('')
+  const [ctaTextSaving, setCtaTextSaving] = useState(false)
+  const [ctaTextMessage, setCtaTextMessage] = useState('')
+  const [ctaTextError, setCtaTextError] = useState('')
   const isAdmin = isAdminUser()
 
   useEffect(() => {
@@ -117,6 +125,26 @@ export default function HomePage() {
     }
 
     loadHeroBackgroundImage()
+  }, [lang])
+
+  useEffect(() => {
+    const loadHomeCtaText = async () => {
+      try {
+        const response = await api.get(`/common/content/?key=${encodeURIComponent(HOME_CTA_TEXT_CONTENT_KEY)}`)
+        const records = response.data.results || response.data || []
+        const langRecord = records.find((record) => record.lang === lang)
+        const fallbackRecord = records.find((record) => record.lang === 'en')
+        const preferredRecord = langRecord || fallbackRecord || records.find((record) => String(record.value || '').trim())
+
+        setHomeCtaTextRecordId(langRecord?.id || null)
+        setHomeCtaTextOverride(String(preferredRecord?.value || '').trim())
+      } catch {
+        setHomeCtaTextRecordId(null)
+        setHomeCtaTextOverride('')
+      }
+    }
+
+    loadHomeCtaText()
   }, [lang])
 
   const vehicleTypes = useMemo(() => {
@@ -243,6 +271,45 @@ export default function HomePage() {
       setHeroImageError(t.adminInline.saveError)
     } finally {
       setHeroImageSaving(false)
+    }
+  }
+
+  const homeCtaText = homeCtaTextOverride || t.home.ctaText
+
+  const handleSaveHomeCtaText = async () => {
+    if (!isAdmin) return
+
+    const normalizedText = String(ctaTextDraft || '').trim()
+    if (!normalizedText) {
+      setCtaTextError(t.adminInline.saveError)
+      return
+    }
+
+    try {
+      setCtaTextSaving(true)
+      setCtaTextMessage('')
+      setCtaTextError('')
+
+      const payload = {
+        key: HOME_CTA_TEXT_CONTENT_KEY,
+        lang,
+        value: normalizedText,
+      }
+
+      if (homeCtaTextRecordId) {
+        await api.patch(`/common/content/${homeCtaTextRecordId}/`, payload)
+      } else {
+        const createResponse = await api.post('/common/content/', payload)
+        setHomeCtaTextRecordId(createResponse.data?.id || null)
+      }
+
+      setHomeCtaTextOverride(normalizedText)
+      setCtaTextMessage(t.adminInline.saved)
+      setIsCtaTextEditorOpen(false)
+    } catch {
+      setCtaTextError(t.adminInline.saveError)
+    } finally {
+      setCtaTextSaving(false)
     }
   }
 
@@ -628,10 +695,54 @@ export default function HomePage() {
         <h2>
           {t.home.ctaTitle}
         </h2>
-        <p>
-          {t.home.ctaText}
+        <p
+          className={isAdmin ? 'review-inline-editable-block' : ''}
+          role={isAdmin ? 'button' : undefined}
+          tabIndex={isAdmin ? 0 : undefined}
+          onClick={isAdmin ? () => {
+            setCtaTextDraft(homeCtaText)
+            setCtaTextMessage('')
+            setCtaTextError('')
+            setIsCtaTextEditorOpen(true)
+          } : undefined}
+          onKeyDown={isAdmin ? (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              setCtaTextDraft(homeCtaText)
+              setCtaTextMessage('')
+              setCtaTextError('')
+              setIsCtaTextEditorOpen(true)
+            }
+          } : undefined}
+          title={isAdmin ? t.adminInline.quickEdit : undefined}
+        >
+          {homeCtaText}
         </p>
       </section>
+
+      {isAdmin && isCtaTextEditorOpen && (
+        <div className="review-inline-editor-backdrop" onClick={() => setIsCtaTextEditorOpen(false)}>
+          <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
+            <h3 className="review-inline-editor-title">{t.adminInline.quickEdit}</h3>
+            <label className="form-label" htmlFor="home-cta-text-editor">{t.home.ctaTitle}</label>
+            <textarea
+              id="home-cta-text-editor"
+              className="form-input form-textarea"
+              rows={5}
+              value={ctaTextDraft}
+              onChange={(event) => setCtaTextDraft(event.target.value)}
+            />
+            {ctaTextMessage && <p className="form-success">{ctaTextMessage}</p>}
+            {ctaTextError && <p className="form-error">{ctaTextError}</p>}
+            <div className="admin-actions-row">
+              <button type="button" className="btn btn-secondary" onClick={() => setIsCtaTextEditorOpen(false)}>{t.pages.cancelLabel}</button>
+              <button type="button" className="btn btn-primary" disabled={ctaTextSaving} onClick={handleSaveHomeCtaText}>
+                {ctaTextSaving ? t.pages.loading : t.adminInline.save}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
