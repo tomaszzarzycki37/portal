@@ -34,6 +34,13 @@ const INLINE_REVIEW_EDIT_FIELDS = new Set(['title', 'summary', 'content', 'publi
 const IMAGE_LIMITS = {
   images: 12,
 }
+const DEFAULT_TEST_RESULT_KEYS = [
+  '0-100 km/h (measured)',
+  'Slalom (18 m cones)',
+  'Real-world mixed consumption',
+  'Real-world range (mixed)',
+  'DC charging 10-80%',
+]
 
 function RichTextEditor({ id, label, value, onChange, placeholder }) {
   return (
@@ -303,6 +310,7 @@ export default function ReviewsPage() {
   const [sectionValue, setSectionValue] = useState('')
   const [sectionImagePreviews, setSectionImagePreviews] = useState([])
   const [sectionImageUploading, setSectionImageUploading] = useState(false)
+  const [sectionTestResultsValues, setSectionTestResultsValues] = useState([])
   const [reviewSaving, setReviewSaving] = useState(false)
   const [reviewMessage, setReviewMessage] = useState('')
   const [reviewError, setReviewError] = useState('')
@@ -540,10 +548,14 @@ export default function ReviewsPage() {
     if (nestedFields.includes(field)) {
       const parsedContent = parseReviewContent(draft.content)
       if (field === 'testResults') {
-        const formatted = parsedContent.testResults
-          .map((item) => `${item.key}:${item.value}`)
-          .join('\n')
-        setSectionValue(formatted)
+        const rows = (parsedContent.testResults && parsedContent.testResults.length > 0)
+          ? parsedContent.testResults.map((item) => ({
+            key: String(item.key || '').trim(),
+            value: String(item.value || ''),
+          }))
+          : DEFAULT_TEST_RESULT_KEYS.map((key) => ({ key, value: '' }))
+        setSectionTestResultsValues(rows)
+        setSectionValue('')
       } else if (field === 'images') {
         setSectionImagePreviews(parsedContent.images)
         setSectionValue('')
@@ -563,6 +575,7 @@ export default function ReviewsPage() {
     setSectionValue('')
     setSectionImagePreviews([])
     setSectionImageUploading(false)
+    setSectionTestResultsValues([])
   }
 
   const handleSaveSectionEditor = async () => {
@@ -588,11 +601,9 @@ export default function ReviewsPage() {
         const parsedContent = parseReviewContent(existingContent)
 
         if (field === 'testResults') {
-          const lines = normalizedValue.split('\n').filter((line) => line.trim())
-          parsedContent.testResults = lines.map((line) => {
-            const [key, ...valueParts] = line.split(':')
-            return { key: (key || '').trim(), value: valueParts.join(':').trim() }
-          })
+          parsedContent.testResults = sectionTestResultsValues
+            .map((item) => ({ key: String(item.key || '').trim(), value: String(item.value || '').trim() }))
+            .filter((item) => item.key)
         } else if (field === 'images') {
           parsedContent.images = sectionImagePreviews
         } else if (field === 'secondImages') {
@@ -1209,16 +1220,37 @@ export default function ReviewsPage() {
                   </div>
                 )}
               </div>
-            ) : sectionEditor.field === 'summary' || sectionEditor.field === 'testResults' ? (
+            ) : sectionEditor.field === 'testResults' ? (
+              <div className="review-test-results-editor">
+                <p className="review-test-results-note">Nazwy parametrow sa stale. Edytujesz tylko wartosci.</p>
+                <div className="review-test-results-editor-grid">
+                  {sectionTestResultsValues.map((item, index) => (
+                    <div key={`${item.key}-${index}`} className="review-test-results-editor-row">
+                      <label className="review-test-results-editor-key">{item.key}</label>
+                      <input
+                        className="form-input review-test-results-editor-value"
+                        value={item.value}
+                        onChange={(event) => {
+                          const next = [...sectionTestResultsValues]
+                          next[index] = { ...next[index], value: event.target.value }
+                          setSectionTestResultsValues(next)
+                        }}
+                        placeholder="Wartosc"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : sectionEditor.field === 'summary' ? (
               <div>
                 <label className="form-label" htmlFor="review-inline-textarea">{getInlineFieldLabel(sectionEditor.field)}</label>
                 <textarea
                   id="review-inline-textarea"
                   className="form-input form-textarea"
-                  rows={sectionEditor.field === 'testResults' ? 6 : 4}
+                  rows={4}
                   value={sectionValue}
                   onChange={(event) => setSectionValue(event.target.value)}
-                  placeholder={sectionEditor.field === 'testResults' ? 'key:value\nkey:value' : ''}
+                  placeholder=""
                 />
               </div>
             ) : (
