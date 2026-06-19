@@ -2059,6 +2059,16 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	color: #94a3b8;
 }
 
+.admin-wrap.admin-theme-dark .admin-rich-editor .ql-editor {
+	background: #161a20;
+	color: #f8fafc;
+}
+
+.admin-wrap.admin-theme-dark .admin-rich-editor .ql-editor::selection {
+	background: #3b82f6;
+	color: #ffffff;
+}
+
 .admin-wrap.admin-theme-dark .ql-snow .ql-stroke {
 	stroke: #cbd5e1;
 }
@@ -2346,12 +2356,37 @@ body.app-theme-dark .review-verdict-text {
 	color: #d1fae5;
 }
 
+body.app-theme-dark .review-inline-editor-modal {
+	background: #1e293b;
+	border-color: #475569;
+	color: #f8fafc;
+}
+
+body.app-theme-dark .review-inline-editor-title {
+	color: #f8fafc;
+}
+
+body.app-theme-dark .review-inline-editor-modal .form-label {
+	color: #cbd5e1;
+}
+
 .admin-rich-editor-compact .ql-container.ql-snow {
 	min-height: 110px;
 }
 
 .admin-rich-editor-compact .ql-editor {
 	min-height: 80px;
+}
+
+body.app-theme-dark .admin-rich-editor-compact .ql-container.ql-snow {
+	background: #161a20;
+	border-color: #525a67;
+	color: #f8fafc;
+}
+
+body.app-theme-dark .admin-rich-editor-compact .ql-editor {
+	background: #161a20;
+	color: #f8fafc;
 }
 
 .admin-rich-toolbar {
