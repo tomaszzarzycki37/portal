@@ -20,7 +20,7 @@ export default function Footer() {
       try {
         const response = await api.get(`/common/content/?lang=${lang}`)
         const rows = response.data.results || response.data || []
-        const keys = ['footer.about', 'footer.aboutText', 'footer.contact', 'footer.email', 'footer.phone']
+        const keys = ['footer.aboutText', 'footer.email', 'footer.phone']
 
         const nextOverrides = {}
         const nextIds = {}
@@ -103,9 +103,7 @@ export default function Footer() {
     }
   }
 
-  const aboutTitle = resolveText('footer.about', t.footer.about)
   const aboutText = resolveText('footer.aboutText', t.footer.aboutText)
-  const contactTitle = resolveText('footer.contact', t.footer.contact)
   const contactEmail = resolveText('footer.email', t.footer.email)
   const contactPhone = resolveText('footer.phone', t.footer.phone)
 
@@ -113,21 +111,7 @@ export default function Footer() {
     <footer className="site-footer">
       <div className="container footer-grid">
         <div>
-          <h3
-            className={`footer-title ${isAdmin ? 'review-inline-editable-block' : ''}`}
-            role={isAdmin ? 'button' : undefined}
-            tabIndex={isAdmin ? 0 : undefined}
-            onClick={isAdmin ? () => openEditor('footer.about', t.footer.about) : undefined}
-            onKeyDown={isAdmin ? (event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                openEditor('footer.about', t.footer.about)
-              }
-            } : undefined}
-            title={isAdmin ? t.adminInline.quickEdit : undefined}
-          >
-            {aboutTitle}
-          </h3>
+          <h3 className="footer-title">{t.footer.about}</h3>
           <p
             className={`footer-muted ${isAdmin ? 'review-inline-editable-block' : ''}`}
             role={isAdmin ? 'button' : undefined}
@@ -156,21 +140,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <h3
-            className={`footer-title ${isAdmin ? 'review-inline-editable-block' : ''}`}
-            role={isAdmin ? 'button' : undefined}
-            tabIndex={isAdmin ? 0 : undefined}
-            onClick={isAdmin ? () => openEditor('footer.contact', t.footer.contact) : undefined}
-            onKeyDown={isAdmin ? (event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                openEditor('footer.contact', t.footer.contact)
-              }
-            } : undefined}
-            title={isAdmin ? t.adminInline.quickEdit : undefined}
-          >
-            {contactTitle}
-          </h3>
+          <h3 className="footer-title">{t.footer.contact}</h3>
           <p className="footer-muted">
             <span
               className={isAdmin ? 'review-inline-editable-block' : ''}
