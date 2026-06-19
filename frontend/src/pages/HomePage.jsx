@@ -825,7 +825,6 @@ export default function HomePage() {
             <h2>{t.home.featuredReviewsTitle}</h2>
             <p>{t.home.featuredReviewsIntro}</p>
           </div>
-          <Link to="/reviews" className="home-featured-reviews-link">{t.home.readAllReviews}</Link>
         </div>
 
         {featuredReviews.length > 0 ? (
