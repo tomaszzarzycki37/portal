@@ -23,6 +23,12 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [themeMode, setThemeMode] = useState(() => localStorage.getItem('admin_theme_mode') || 'light')
   const [brandTagline, setBrandTagline] = useState('')
+  const [brandTaglineRecordId, setBrandTaglineRecordId] = useState(null)
+  const [isTaglineEditorOpen, setIsTaglineEditorOpen] = useState(false)
+  const [taglineDraft, setTaglineDraft] = useState('')
+  const [taglineSaving, setTaglineSaving] = useState(false)
+  const [taglineMessage, setTaglineMessage] = useState('')
+  const [taglineError, setTaglineError] = useState('')
   const [brandLogoUrl, setBrandLogoUrl] = useState('')
   const token = localStorage.getItem('access_token')
   const isAdmin = isAdminUser()
@@ -37,6 +43,7 @@ export default function Header() {
         const list = response.data.results || response.data || []
         const taglineRecord = list.find((item) => item.key === 'nav.brandTagline')
         const logoRecord = list.find((item) => item.key === 'nav.brandLogoUrl')
+        setBrandTaglineRecordId(taglineRecord?.id || null)
         if (taglineRecord && taglineRecord.value) {
           setBrandTagline(taglineRecord.value)
         } else {
@@ -48,6 +55,7 @@ export default function Header() {
           setBrandLogoUrl(t.nav.brandLogoUrl || '')
         }
       } catch {
+        setBrandTaglineRecordId(null)
         setBrandTagline(t.nav.brandTagline || '')
         setBrandLogoUrl(t.nav.brandLogoUrl || '')
       }
@@ -89,6 +97,43 @@ export default function Header() {
     document.body.classList.toggle('app-theme-dark', nextMode === 'dark')
     localStorage.setItem('admin_theme_mode', nextMode)
     window.dispatchEvent(new CustomEvent('theme-mode-changed', { detail: nextMode }))
+  }
+
+  const handleSaveTagline = async () => {
+    if (!isAdmin) return
+
+    const normalizedTagline = String(taglineDraft || '').trim()
+    if (!normalizedTagline) {
+      setTaglineError(t.adminInline.saveError)
+      return
+    }
+
+    try {
+      setTaglineSaving(true)
+      setTaglineMessage('')
+      setTaglineError('')
+
+      const payload = {
+        key: 'nav.brandTagline',
+        lang,
+        value: normalizedTagline,
+      }
+
+      if (brandTaglineRecordId) {
+        await api.patch(`/common/content/${brandTaglineRecordId}/`, payload)
+      } else {
+        const createResponse = await api.post('/common/content/', payload)
+        setBrandTaglineRecordId(createResponse.data?.id || null)
+      }
+
+      setBrandTagline(normalizedTagline)
+      setTaglineMessage(t.adminInline.saved)
+      setIsTaglineEditorOpen(false)
+    } catch {
+      setTaglineError(t.adminInline.saveError)
+    } finally {
+      setTaglineSaving(false)
+    }
   }
 
   return (
@@ -198,7 +243,73 @@ export default function Header() {
       {brandTagline && (
         <div className="header-tagline-section">
           <div className="container">
-            <p className="brand-tagline">{brandTagline}</p>
+            <div className="brand-tagline-wrap">
+              <p
+                className={`brand-tagline ${isAdmin ? 'review-inline-editable-block' : ''}`}
+                role={isAdmin ? 'button' : undefined}
+                tabIndex={isAdmin ? 0 : undefined}
+                onClick={isAdmin ? () => {
+                  setTaglineDraft(brandTagline)
+                  setTaglineMessage('')
+                  setTaglineError('')
+                  setIsTaglineEditorOpen(true)
+                } : undefined}
+                onKeyDown={isAdmin ? (event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    setTaglineDraft(brandTagline)
+                    setTaglineMessage('')
+                    setTaglineError('')
+                    setIsTaglineEditorOpen(true)
+                  }
+                } : undefined}
+                title={isAdmin ? t.adminInline.quickEdit : undefined}
+              >
+                {brandTagline}
+              </p>
+              {isAdmin && (
+                <button
+                  type="button"
+                  className={`admin-inline-toggle admin-inline-gear brand-tagline-gear ${isTaglineEditorOpen ? 'is-open' : ''}`}
+                  onClick={() => {
+                    setTaglineDraft(brandTagline)
+                    setTaglineMessage('')
+                    setTaglineError('')
+                    setIsTaglineEditorOpen(true)
+                  }}
+                  aria-label={t.adminInline.quickEdit}
+                  title={t.adminInline.quickEdit}
+                >
+                  <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isAdmin && isTaglineEditorOpen && (
+        <div className="review-inline-editor-backdrop" onClick={() => setIsTaglineEditorOpen(false)}>
+          <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
+            <h3 className="review-inline-editor-title">{t.adminInline.quickEdit}</h3>
+            <label className="form-label" htmlFor="header-brand-tagline-editor">Tagline</label>
+            <textarea
+              id="header-brand-tagline-editor"
+              className="form-input form-textarea"
+              rows={4}
+              value={taglineDraft}
+              onChange={(event) => setTaglineDraft(event.target.value)}
+            />
+            {taglineMessage && <p className="form-success">{taglineMessage}</p>}
+            {taglineError && <p className="form-error">{taglineError}</p>}
+            <div className="admin-actions-row">
+              <button type="button" className="btn btn-secondary" onClick={() => setIsTaglineEditorOpen(false)}>{t.pages.cancelLabel}</button>
+              <button type="button" className="btn btn-primary" disabled={taglineSaving} onClick={handleSaveTagline}>
+                {taglineSaving ? t.pages.loading : t.adminInline.save}
+              </button>
+            </div>
           </div>
         </div>
       )}

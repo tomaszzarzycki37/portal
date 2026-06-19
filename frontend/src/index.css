@@ -451,6 +451,17 @@ a {
   max-width: fit-content;
 }
 
+.brand-tagline-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.brand-tagline-gear {
+  width: 2rem;
+  height: 2rem;
+}
+
 body.app-theme-dark .brand-tagline {
   color: #e5e7eb;
   background: rgba(17, 24, 39, 0.5);
