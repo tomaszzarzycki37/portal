@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import DOMPurify from 'dompurify'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
@@ -23,6 +24,10 @@ const API_ORIGIN = import.meta.env.VITE_API_URL
   : import.meta.env.DEV
     ? 'http://localhost:8000'
     : ''
+
+function sanitizeHtml(value) {
+  return DOMPurify.sanitize(value)
+}
 
 function resolveMediaUrl(url) {
   if (!url) return ''
@@ -842,7 +847,10 @@ export default function HomePage() {
                         <h3>{review.title}</h3>
                       </div>
                       <p className="home-featured-review-description-label">{t.pages.description}</p>
-                      <p className="home-featured-review-summary">{review.summary}</p>
+                      <p
+                        className="home-featured-review-summary"
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(review.summary) }}
+                      />
                       <span className="home-featured-review-source">{review.publication_name}</span>
                     </div>
                     <div className="home-featured-review-rail">
