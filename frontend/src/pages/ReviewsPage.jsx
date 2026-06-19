@@ -364,20 +364,29 @@ export default function ReviewsPage() {
     if (!files.length) return
 
     setSectionImageUploading(true)
+    setReviewError('')
     try {
       const uploadedUrls = await Promise.all(
         files.map(async (file) => {
           const formData = new FormData()
           formData.append('file', file)
-          const response = await api.post('/common/upload/', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          })
+          let response
+          try {
+            response = await api.post('/common/content/upload/', formData, {
+              headers: { 'Content-Type': 'multipart/form-data' }
+            })
+          } catch {
+            // Backward compatibility for deployments that expose /common/upload/.
+            response = await api.post('/common/upload/', formData, {
+              headers: { 'Content-Type': 'multipart/form-data' }
+            })
+          }
           return response.data.url
         })
       )
       setSectionImagePreviews(prev => [...prev, ...uploadedUrls])
     } catch (error) {
-      setReviewError('Błąd przy uploadzeniu zdjęć')
+      setReviewError('Blad przy wysylaniu zdjec')
     } finally {
       setSectionImageUploading(false)
       e.target.value = ''

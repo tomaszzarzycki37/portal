@@ -6,7 +6,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .helpers import IsAdminOrReadOnly
+from .helpers import IsAdminOrReadOnly, IsAuthenticated
 from .models import SiteTextOverride
 from .serializers import SiteTextOverrideSerializer
 
@@ -28,7 +28,7 @@ class SiteTextOverrideViewSet(viewsets.ModelViewSet):
 
 		return queryset
 
-	@action(detail=False, methods=['post'], permission_classes=[IsAdminOrReadOnly])
+	@action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
 	def upload(self, request):
 		"""Upload a file and return relative media path"""
 		file = request.FILES.get('file')
