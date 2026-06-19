@@ -1122,14 +1122,9 @@ export default function ReviewsPage() {
                       </Link>
                     )}
                     {canManageReview && (
-                      <>
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleOpenSectionEditor(review.id, 'content')}>
-                          {t.pages.editLabel}
-                        </button>
-                        <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteReview(review.id)}>
-                          {t.pages.deleteLabel}
-                        </button>
-                      </>
+                      <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteReview(review.id)}>
+                        {t.pages.deleteLabel}
+                      </button>
                     )}
                   </div>
 
