@@ -34,13 +34,78 @@ const INLINE_REVIEW_EDIT_FIELDS = new Set(['title', 'summary', 'content', 'publi
 const IMAGE_LIMITS = {
   images: 12,
 }
-const DEFAULT_TEST_RESULT_KEYS = [
-  '0-100 km/h (measured)',
-  'Slalom (18 m cones)',
-  'Real-world mixed consumption',
-  'Real-world range (mixed)',
-  'DC charging 10-80%',
+const TEST_RESULT_FIELDS = [
+  {
+    key: '0-100 km/h (measured)',
+    unit: 's',
+    labels: { en: '0-100 km/h (measured)', pl: '0-100 km/h (pomiar)' },
+    aliases: ['0-100 km/h (measured)'],
+  },
+  {
+    key: '100-0 km/h braking distance',
+    unit: 'm',
+    labels: { en: '100-0 km/h braking distance', pl: 'Droga hamowania 100-0 km/h' },
+    aliases: ['100-0 km/h braking distance'],
+  },
+  {
+    key: 'Real-world mixed consumption',
+    unit: 'kWh/100 km',
+    labels: { en: 'Real-world mixed consumption', pl: 'Realne zuzycie mieszane' },
+    aliases: ['Real-world mixed consumption', 'Real-world motorway consumption (130 km/h)'],
+  },
+  {
+    key: 'Real-world range (mixed)',
+    unit: 'km',
+    labels: { en: 'Real-world range (mixed)', pl: 'Realny zasieg (mieszany)' },
+    aliases: ['Real-world range (mixed)'],
+  },
+  {
+    key: 'DC charging 10-80%',
+    unit: 'min',
+    labels: { en: 'DC charging 10-80%', pl: 'Ladowanie DC 10-80%' },
+    aliases: ['DC charging 10-80%', 'DC charging 20-80%'],
+  },
 ]
+
+function normalizeTestKey(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function getTestFieldByKey(key) {
+  const normalized = normalizeTestKey(key)
+  return TEST_RESULT_FIELDS.find((field) =>
+    field.aliases.some((alias) => normalizeTestKey(alias) === normalized)
+    || normalizeTestKey(field.key) === normalized,
+  ) || null
+}
+
+function stripKnownUnit(value, unit) {
+  const current = String(value || '').trim()
+  if (!current || !unit) return current
+  if (current.toLowerCase().endsWith(` ${unit.toLowerCase()}`)) {
+    return current.slice(0, -(unit.length + 1)).trim()
+  }
+  if (current.toLowerCase() === unit.toLowerCase()) {
+    return ''
+  }
+  return current
+}
+
+function appendUnit(value, unit) {
+  const base = String(value || '').trim()
+  if (!base) return ''
+  if (!unit) return base
+  if (base.toLowerCase().endsWith(` ${unit.toLowerCase()}`) || base.toLowerCase() === unit.toLowerCase()) {
+    return base
+  }
+  return `${base} ${unit}`
+}
+
+function getTestLabel(key, lang) {
+  const field = getTestFieldByKey(key)
+  if (!field) return key
+  return field.labels[lang] || field.labels.en || key
+}
 
 function RichTextEditor({ id, label, value, onChange, placeholder }) {
   return (
@@ -548,12 +613,18 @@ export default function ReviewsPage() {
     if (nestedFields.includes(field)) {
       const parsedContent = parseReviewContent(draft.content)
       if (field === 'testResults') {
-        const rows = (parsedContent.testResults && parsedContent.testResults.length > 0)
-          ? parsedContent.testResults.map((item) => ({
-            key: String(item.key || '').trim(),
-            value: String(item.value || ''),
-          }))
-          : DEFAULT_TEST_RESULT_KEYS.map((key) => ({ key, value: '' }))
+        const rows = TEST_RESULT_FIELDS.map((fieldDef) => {
+          const existing = (parsedContent.testResults || []).find((item) => {
+            const incomingKey = String(item?.key || '')
+            return !!fieldDef.aliases.find((alias) => normalizeTestKey(alias) === normalizeTestKey(incomingKey))
+              || normalizeTestKey(fieldDef.key) === normalizeTestKey(incomingKey)
+          })
+          return {
+            key: fieldDef.key,
+            unit: fieldDef.unit,
+            value: stripKnownUnit(existing?.value || '', fieldDef.unit),
+          }
+        })
         setSectionTestResultsValues(rows)
         setSectionValue('')
       } else if (field === 'images') {
@@ -602,7 +673,15 @@ export default function ReviewsPage() {
 
         if (field === 'testResults') {
           parsedContent.testResults = sectionTestResultsValues
-            .map((item) => ({ key: String(item.key || '').trim(), value: String(item.value || '').trim() }))
+            .map((item) => {
+              const key = String(item.key || '').trim()
+              const fieldDef = getTestFieldByKey(key)
+              const unit = fieldDef?.unit || String(item.unit || '').trim()
+              return {
+                key,
+                value: appendUnit(item.value, unit),
+              }
+            })
             .filter((item) => item.key)
         } else if (field === 'images') {
           parsedContent.images = sectionImagePreviews
@@ -1080,7 +1159,7 @@ export default function ReviewsPage() {
                               className="review-result-item"
                             >
                               <span className="review-result-value">{result.value}</span>
-                              <span className="review-result-key">{result.key}</span>
+                              <span className="review-result-key">{getTestLabel(result.key, lang)}</span>
                             </div>
                           ))}
                         </div>
@@ -1217,11 +1296,13 @@ export default function ReviewsPage() {
               </div>
             ) : sectionEditor.field === 'testResults' ? (
               <div className="review-test-results-editor">
-                <p className="review-test-results-note">Nazwy parametrow sa stale. Edytujesz tylko wartosci.</p>
+                <p className="review-test-results-note">
+                  {lang === 'pl' ? 'Nazwy parametrow sa stale. Edytujesz tylko wartosci.' : 'Field names are fixed. Edit values only.'}
+                </p>
                 <div className="review-test-results-editor-grid">
                   {sectionTestResultsValues.map((item, index) => (
                     <div key={`${item.key}-${index}`} className="review-test-results-editor-row">
-                      <label className="review-test-results-editor-key">{item.key}</label>
+                      <label className="review-test-results-editor-key">{getTestLabel(item.key, lang)}</label>
                       <input
                         className="form-input review-test-results-editor-value"
                         value={item.value}
@@ -1230,8 +1311,9 @@ export default function ReviewsPage() {
                           next[index] = { ...next[index], value: event.target.value }
                           setSectionTestResultsValues(next)
                         }}
-                        placeholder="Wartosc"
+                        placeholder={lang === 'pl' ? 'Wartosc' : 'Value'}
                       />
+                      <span className="review-test-results-editor-unit">{item.unit || '-'}</span>
                     </div>
                   ))}
                 </div>
