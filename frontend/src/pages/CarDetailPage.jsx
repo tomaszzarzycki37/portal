@@ -1128,7 +1128,7 @@ export default function CarDetailPage() {
 
       {isAdmin && (
         <section className="detail-admin-card">
-          <div className="detail-section-header detail-collapsible-header" style={{ marginBottom: '0.75rem' }}>
+          <div className="detail-section-header detail-collapsible-header" style={{ marginBottom: isAdminDetailEditorOpen ? '0.75rem' : 0 }}>
             <h2 className="detail-section-title">{t.adminInline.detailEditor}</h2>
             <button
               type="button"
