@@ -36,50 +36,8 @@ export default function CarsListPage() {
   const [productionStatusFilter, setProductionStatusFilter] = useState('all')
   const [driveTypeFilter, setDriveTypeFilter] = useState('all')
   const [expandedBrandDescriptions, setExpandedBrandDescriptions] = useState(() => new Set())
-  const [chipEditor, setChipEditor] = useState(null)
-  const [chipEditorSaving, setChipEditorSaving] = useState(false)
-  const [chipEditorError, setChipEditorError] = useState('')
   const { t, lang } = useTranslation()
   const isAdmin = isAdminUser()
-
-  const openChipEditor = (variant) => {
-    if (!variant?.id) return
-    setChipEditorError('')
-    setChipEditor({
-      id: variant.id,
-      name: variant.name || '',
-      year_introduced: String(variant.year_introduced || ''),
-      engine_type: String(variant.engine_type || ''),
-      production_status: String(variant.production_status || 'active'),
-      vehicle_type: String(variant.vehicle_type || ''),
-    })
-  }
-
-  const closeChipEditor = () => {
-    setChipEditor(null)
-    setChipEditorError('')
-  }
-
-  const saveChipEditor = async () => {
-    if (!chipEditor?.id) return
-    setChipEditorError('')
-    setChipEditorSaving(true)
-    try {
-      const parsedYear = Number.parseInt(String(chipEditor.year_introduced || '').trim(), 10)
-      await api.patch(`/cars/${chipEditor.id}/`, {
-        year_introduced: Number.isNaN(parsedYear) ? null : parsedYear,
-        engine_type: String(chipEditor.engine_type || '').trim(),
-        production_status: String(chipEditor.production_status || '').trim() || 'active',
-        vehicle_type: String(chipEditor.vehicle_type || '').trim(),
-      })
-      await fetchCatalog()
-      closeChipEditor()
-    } catch {
-      setChipEditorError(lang === 'pl' ? 'Nie udalo sie zapisac zmian modelu.' : 'Could not save model changes.')
-    } finally {
-      setChipEditorSaving(false)
-    }
-  }
 
   const toggleBrandDescription = (brandId) => {
     setExpandedBrandDescriptions((prev) => {
@@ -475,20 +433,6 @@ export default function CarsListPage() {
                                   <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 700, padding: '0.08rem 0.3rem' }}>{t.pages.year}: {variant.year_introduced || '-'}</span>
                                   <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 600, padding: '0.08rem 0.3rem' }}>{t.pages.engine}: {variant.engine_type || '-'}</span>
                                   <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 600, padding: '0.08rem 0.3rem' }}>{t.pages.productionStatus}: {variant.production_status || '-'}</span>
-                                  {isAdmin && (
-                                    <button
-                                      type="button"
-                                      className="admin-inline-toggle admin-inline-gear"
-                                      style={{ transform: 'scale(0.82)', marginLeft: '0.2rem' }}
-                                      onClick={() => openChipEditor(variant)}
-                                      title={lang === 'pl' ? 'Edytuj chmurki modelu' : 'Edit model pills'}
-                                      aria-label={lang === 'pl' ? 'Edytuj chmurki modelu' : 'Edit model pills'}
-                                    >
-                                      <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
-                                      </svg>
-                                    </button>
-                                  )}
                                 </div>
                               ))}
                             </div>
@@ -508,62 +452,6 @@ export default function CarsListPage() {
           })}
           </div>
         </>
-      )}
-
-      {chipEditor && (
-        <div className="review-inline-editor-backdrop" onClick={closeChipEditor}>
-          <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
-            <h3 className="review-inline-editor-title">{lang === 'pl' ? 'Edytuj chmurki modelu' : 'Edit model pills'}: {chipEditor.name}</h3>
-            <div style={{ display: 'grid', gap: '0.65rem' }}>
-              <div>
-                <label className="form-label" htmlFor="chip-editor-vehicle-type">{t.pages.type}</label>
-                <input
-                  id="chip-editor-vehicle-type"
-                  className="form-input"
-                  value={chipEditor.vehicle_type}
-                  onChange={(event) => setChipEditor((prev) => ({ ...prev, vehicle_type: event.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="form-label" htmlFor="chip-editor-year">{t.pages.year}</label>
-                <input
-                  id="chip-editor-year"
-                  className="form-input"
-                  type="number"
-                  value={chipEditor.year_introduced}
-                  onChange={(event) => setChipEditor((prev) => ({ ...prev, year_introduced: event.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="form-label" htmlFor="chip-editor-engine">{t.pages.engine}</label>
-                <input
-                  id="chip-editor-engine"
-                  className="form-input"
-                  value={chipEditor.engine_type}
-                  onChange={(event) => setChipEditor((prev) => ({ ...prev, engine_type: event.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="form-label" htmlFor="chip-editor-status">{t.pages.productionStatus}</label>
-                <select
-                  id="chip-editor-status"
-                  className="form-input"
-                  value={chipEditor.production_status}
-                  onChange={(event) => setChipEditor((prev) => ({ ...prev, production_status: event.target.value }))}
-                >
-                  <option value="active">{t.pages.statusActive}</option>
-                  <option value="discontinued">{t.pages.statusDiscontinued}</option>
-                  <option value="upcoming">{t.pages.statusUpcoming}</option>
-                </select>
-              </div>
-            </div>
-            {chipEditorError && <p className="form-error" style={{ marginTop: '0.65rem' }}>{chipEditorError}</p>}
-            <div className="admin-actions-row">
-              <button type="button" className="btn btn-secondary" onClick={closeChipEditor}>{t.pages.cancelLabel}</button>
-              <button type="button" className="btn btn-primary" onClick={saveChipEditor} disabled={chipEditorSaving}>{chipEditorSaving ? t.pages.loading : t.pages.saveLabel}</button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   )

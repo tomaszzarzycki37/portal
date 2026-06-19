@@ -158,6 +158,10 @@ export default function CarDetailPage() {
   const [commentTexts, setCommentTexts] = useState({})
   const [commentSaving, setCommentSaving] = useState({})
   const [voteSaving, setVoteSaving] = useState({})
+  const [reviewSlideIndex, setReviewSlideIndex] = useState(0)
+  const [opinionSlideIndex, setOpinionSlideIndex] = useState(0)
+  const [isAddOpinionOpen, setIsAddOpinionOpen] = useState(false)
+  const [isAdminDetailEditorOpen, setIsAdminDetailEditorOpen] = useState(false)
   const [adminSaving, setAdminSaving] = useState(false)
   const [adminMessage, setAdminMessage] = useState('')
   const [adminError, setAdminError] = useState('')
@@ -222,6 +226,27 @@ export default function CarDetailPage() {
 
     fetchData()
   }, [id, isAdmin])
+
+  useEffect(() => {
+    if (reviewArticles.length === 0) {
+      setReviewSlideIndex(0)
+      return
+    }
+    if (reviewSlideIndex >= reviewArticles.length) {
+      setReviewSlideIndex(0)
+    }
+  }, [reviewArticles, reviewSlideIndex])
+
+  useEffect(() => {
+    const visibleOpinionsCount = Math.min(opinions.length, 10)
+    if (visibleOpinionsCount === 0) {
+      setOpinionSlideIndex(0)
+      return
+    }
+    if (opinionSlideIndex >= visibleOpinionsCount) {
+      setOpinionSlideIndex(0)
+    }
+  }, [opinions, opinionSlideIndex])
 
   const handleToggleComments = async (opinionId) => {
     setExpandedOpinions((prev) => {
@@ -494,6 +519,9 @@ export default function CarDetailPage() {
 
   const currentYear = new Date().getFullYear()
   const modelAge = car.year_introduced ? Math.max(currentYear - car.year_introduced, 0) : null
+  const latestOpinions = opinions.slice(0, 10)
+  const activeOpinion = latestOpinions[opinionSlideIndex] || null
+  const activeReview = reviewArticles[reviewSlideIndex] || null
 
   return (
     <div className="detail-wrap">
@@ -673,12 +701,12 @@ export default function CarDetailPage() {
         {reviewArticles.length === 0 ? (
           <div className="page-card">{t.pages.noReviewsYet}</div>
         ) : (
-          <div className="detail-reviews-preview-grid">
-            {reviewArticles.map((review) => (
-              <article key={review.id} className="opinion-card-item">
+          <div>
+            {activeReview && (
+              <article className="opinion-card-item" style={{ marginBottom: '0.75rem' }}>
                 {isAdmin && (
                   <Link
-                    to={`/admin?section=manage-reviews&editReview=${review.id}`}
+                    to={`/admin?section=manage-reviews&editReview=${activeReview.id}`}
                     className="review-admin-quick-edit"
                     aria-label={t.adminPanel.editReview || 'Edit review'}
                     title={t.adminPanel.editReview || 'Edit review'}
@@ -688,146 +716,203 @@ export default function CarDetailPage() {
                     </svg>
                   </Link>
                 )}
-                <h3 className="opinion-title">{review.title}</h3>
+                <h3 className="opinion-title">{activeReview.title}</h3>
                 <p className="opinion-meta">
-                  {review.publication_name}
-                  {review.author_name ? ` - ${review.author_name}` : ''}
+                  {activeReview.publication_name}
+                  {activeReview.author_name ? ` - ${activeReview.author_name}` : ''}
                 </p>
                 <div
                   className="opinion-text"
-                  dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(decodeHtmlEntities(review.summary || review.content)) }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(decodeHtmlEntities(activeReview.summary || activeReview.content)) }}
                 />
               </article>
-            ))}
+            )}
+
+            {reviewArticles.length > 1 && (
+              <div className="admin-actions-row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setReviewSlideIndex((prev) => (prev - 1 + reviewArticles.length) % reviewArticles.length)}
+                >
+                  ‹
+                </button>
+                <span className="admin-meta">{reviewSlideIndex + 1}/{reviewArticles.length}</span>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setReviewSlideIndex((prev) => (prev + 1) % reviewArticles.length)}
+                >
+                  ›
+                </button>
+              </div>
+            )}
           </div>
         )}
       </section>
 
       <section className="detail-opinions">
-        <h2 className="detail-section-title">{t.pages.carOpinions}</h2>
-
-        {isLoggedIn && (
-          <form className="admin-form-card" style={{ marginBottom: '1.5rem' }} onSubmit={handleAdminOpinionCreate}>
-            <h3 className="detail-section-title">{t.pages.addOpinionTitle}</h3>
-
-            <label className="form-label" htmlFor="admin-opinion-title">{t.pages.opinionTitle}</label>
-            <input
-              id="admin-opinion-title"
-              className="form-input"
-              value={adminOpinionTitle}
-              onChange={(e) => setAdminOpinionTitle(e.target.value)}
-            />
-
-            <RichTextEditor
-              id="admin-opinion-content"
-              label={t.adminPanel.description}
-              value={adminOpinionContent}
-              onChange={setAdminOpinionContent}
-              placeholder={t.adminPanel.reviewEditorPlaceholder}
-            />
-
-            <label className="form-label" htmlFor="admin-opinion-rating">{t.pages.averageRating}</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <div>
-                <label className="form-label">{t.pages.ratingQuality}</label>
-                <select className="form-input" value={adminOpinionRatingQuality} onChange={(e) => setAdminOpinionRatingQuality(Number(e.target.value))}>
-                  <option value={5}>5</option>
-                  <option value={4}>4</option>
-                  <option value={3}>3</option>
-                  <option value={2}>2</option>
-                  <option value={1}>1</option>
-                </select>
-              </div>
-              <div>
-                <label className="form-label">{t.pages.ratingWorkmanship}</label>
-                <select className="form-input" value={adminOpinionRatingWorkmanship} onChange={(e) => setAdminOpinionRatingWorkmanship(Number(e.target.value))}>
-                  <option value={5}>5</option>
-                  <option value={4}>4</option>
-                  <option value={3}>3</option>
-                  <option value={2}>2</option>
-                  <option value={1}>1</option>
-                </select>
-              </div>
-              <div>
-                <label className="form-label">{t.pages.ratingEconomy}</label>
-                <select className="form-input" value={adminOpinionRatingEconomy} onChange={(e) => setAdminOpinionRatingEconomy(Number(e.target.value))}>
-                  <option value={5}>5</option>
-                  <option value={4}>4</option>
-                  <option value={3}>3</option>
-                  <option value={2}>2</option>
-                  <option value={1}>1</option>
-                </select>
-              </div>
-              <div>
-                <label className="form-label">{t.pages.ratingSafety}</label>
-                <select className="form-input" value={adminOpinionRatingSafety} onChange={(e) => setAdminOpinionRatingSafety(Number(e.target.value))}>
-                  <option value={5}>5</option>
-                  <option value={4}>4</option>
-                  <option value={3}>3</option>
-                  <option value={2}>2</option>
-                  <option value={1}>1</option>
-                </select>
-              </div>
-              <div>
-                <label className="form-label">{t.pages.ratingComfort}</label>
-                <select className="form-input" value={adminOpinionRatingComfort} onChange={(e) => setAdminOpinionRatingComfort(Number(e.target.value))}>
-                  <option value={5}>5</option>
-                  <option value={4}>4</option>
-                  <option value={3}>3</option>
-                  <option value={2}>2</option>
-                  <option value={1}>1</option>
-                </select>
-              </div>
-              <div>
-                <label className="form-label">{t.pages.ratingPerformance}</label>
-                <select className="form-input" value={adminOpinionRatingPerformance} onChange={(e) => setAdminOpinionRatingPerformance(Number(e.target.value))}>
-                  <option value={5}>5</option>
-                  <option value={4}>4</option>
-                  <option value={3}>3</option>
-                  <option value={2}>2</option>
-                  <option value={1}>1</option>
-                </select>
-              </div>
-              <div>
-                <label className="form-label">{t.pages.ratingDesign}</label>
-                <select className="form-input" value={adminOpinionRatingDesign} onChange={(e) => setAdminOpinionRatingDesign(Number(e.target.value))}>
-                  <option value={5}>5</option>
-                  <option value={4}>4</option>
-                  <option value={3}>3</option>
-                  <option value={2}>2</option>
-                  <option value={1}>1</option>
-                </select>
-              </div>
-              <div>
-                <label className="form-label">{t.pages.ratingReliability}</label>
-                <select className="form-input" value={adminOpinionRatingReliability} onChange={(e) => setAdminOpinionRatingReliability(Number(e.target.value))}>
-                  <option value={5}>5</option>
-                  <option value={4}>4</option>
-                  <option value={3}>3</option>
-                  <option value={2}>2</option>
-                  <option value={1}>1</option>
-                </select>
-              </div>
+        <div className="detail-section-header" style={{ marginBottom: '0.9rem' }}>
+          <h2 className="detail-section-title">{t.pages.carOpinions}</h2>
+          {latestOpinions.length > 1 && (
+            <div className="admin-actions-row" style={{ margin: 0 }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setOpinionSlideIndex((prev) => (prev - 1 + latestOpinions.length) % latestOpinions.length)}
+              >
+                ‹
+              </button>
+              <span className="admin-meta">{opinionSlideIndex + 1}/{latestOpinions.length}</span>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setOpinionSlideIndex((prev) => (prev + 1) % latestOpinions.length)}
+              >
+                ›
+              </button>
             </div>
+          )}
+        </div>
 
-            {adminOpinionMessage && <p className="form-success">{adminOpinionMessage}</p>}
-            {adminOpinionError && <p className="form-error">{adminOpinionError}</p>}
-
-            <button type="submit" className="btn btn-primary" disabled={adminOpinionSaving}>
-              {adminOpinionSaving ? t.pages.loading : t.pages.addOpinionSubmit}
+        {isLoggedIn ? (
+          <div className="admin-form-card" style={{ marginBottom: '1.1rem' }}>
+            <button
+              type="button"
+              className={`admin-inline-toggle admin-inline-gear ${isAddOpinionOpen ? 'is-open' : ''}`}
+              onClick={() => setIsAddOpinionOpen((prev) => !prev)}
+              aria-expanded={isAddOpinionOpen}
+              aria-label={t.pages.addOpinionTitle}
+              title={t.pages.addOpinionTitle}
+            >
+              <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
+              </svg>
             </button>
-          </form>
+            <span style={{ marginLeft: '0.5rem', fontWeight: 700 }}>{t.pages.addOpinionTitle}</span>
+
+            {isAddOpinionOpen && (
+              <form style={{ marginTop: '0.9rem' }} onSubmit={handleAdminOpinionCreate}>
+                <label className="form-label" htmlFor="admin-opinion-title">{t.pages.opinionTitle}</label>
+                <input
+                  id="admin-opinion-title"
+                  className="form-input"
+                  value={adminOpinionTitle}
+                  onChange={(e) => setAdminOpinionTitle(e.target.value)}
+                />
+
+                <RichTextEditor
+                  id="admin-opinion-content"
+                  label={t.adminPanel.description}
+                  value={adminOpinionContent}
+                  onChange={setAdminOpinionContent}
+                  placeholder={t.adminPanel.reviewEditorPlaceholder}
+                />
+
+                <label className="form-label" htmlFor="admin-opinion-rating">{t.pages.averageRating}</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label className="form-label">{t.pages.ratingQuality}</label>
+                    <select className="form-input" value={adminOpinionRatingQuality} onChange={(e) => setAdminOpinionRatingQuality(Number(e.target.value))}>
+                      <option value={5}>5</option>
+                      <option value={4}>4</option>
+                      <option value={3}>3</option>
+                      <option value={2}>2</option>
+                      <option value={1}>1</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">{t.pages.ratingWorkmanship}</label>
+                    <select className="form-input" value={adminOpinionRatingWorkmanship} onChange={(e) => setAdminOpinionRatingWorkmanship(Number(e.target.value))}>
+                      <option value={5}>5</option>
+                      <option value={4}>4</option>
+                      <option value={3}>3</option>
+                      <option value={2}>2</option>
+                      <option value={1}>1</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">{t.pages.ratingEconomy}</label>
+                    <select className="form-input" value={adminOpinionRatingEconomy} onChange={(e) => setAdminOpinionRatingEconomy(Number(e.target.value))}>
+                      <option value={5}>5</option>
+                      <option value={4}>4</option>
+                      <option value={3}>3</option>
+                      <option value={2}>2</option>
+                      <option value={1}>1</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">{t.pages.ratingSafety}</label>
+                    <select className="form-input" value={adminOpinionRatingSafety} onChange={(e) => setAdminOpinionRatingSafety(Number(e.target.value))}>
+                      <option value={5}>5</option>
+                      <option value={4}>4</option>
+                      <option value={3}>3</option>
+                      <option value={2}>2</option>
+                      <option value={1}>1</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">{t.pages.ratingComfort}</label>
+                    <select className="form-input" value={adminOpinionRatingComfort} onChange={(e) => setAdminOpinionRatingComfort(Number(e.target.value))}>
+                      <option value={5}>5</option>
+                      <option value={4}>4</option>
+                      <option value={3}>3</option>
+                      <option value={2}>2</option>
+                      <option value={1}>1</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">{t.pages.ratingPerformance}</label>
+                    <select className="form-input" value={adminOpinionRatingPerformance} onChange={(e) => setAdminOpinionRatingPerformance(Number(e.target.value))}>
+                      <option value={5}>5</option>
+                      <option value={4}>4</option>
+                      <option value={3}>3</option>
+                      <option value={2}>2</option>
+                      <option value={1}>1</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">{t.pages.ratingDesign}</label>
+                    <select className="form-input" value={adminOpinionRatingDesign} onChange={(e) => setAdminOpinionRatingDesign(Number(e.target.value))}>
+                      <option value={5}>5</option>
+                      <option value={4}>4</option>
+                      <option value={3}>3</option>
+                      <option value={2}>2</option>
+                      <option value={1}>1</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">{t.pages.ratingReliability}</label>
+                    <select className="form-input" value={adminOpinionRatingReliability} onChange={(e) => setAdminOpinionRatingReliability(Number(e.target.value))}>
+                      <option value={5}>5</option>
+                      <option value={4}>4</option>
+                      <option value={3}>3</option>
+                      <option value={2}>2</option>
+                      <option value={1}>1</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button type="submit" className="btn btn-primary" disabled={adminOpinionSaving}>
+                  {adminOpinionSaving ? t.pages.loading : t.pages.addOpinionSubmit}
+                </button>
+              </form>
+            )}
+          </div>
+        ) : (
+          <p className="admin-subtitle">{t.pages.loginToContribute}</p>
         )}
 
-        {!isLoggedIn && <p className="admin-subtitle">{t.pages.loginToContribute}</p>}
+        {adminOpinionMessage && <p className="form-success">{adminOpinionMessage}</p>}
+        {adminOpinionError && <p className="form-error">{adminOpinionError}</p>}
 
-        {opinions.length === 0 ? (
+        {latestOpinions.length === 0 ? (
           <div className="page-card">{t.pages.noOpinions}</div>
         ) : (
           <div className="opinions-grid">
-            {opinions.map((opinion) => (
-              <article key={opinion.id} className="opinion-card-item">
-                {editingOpinionId === opinion.id && editingOpinionDraft ? (
+            {activeOpinion && (
+              <article key={activeOpinion.id} className="opinion-card-item">
+                {editingOpinionId === activeOpinion.id && editingOpinionDraft ? (
                   <div className="admin-form-card" style={{ marginBottom: '0.5rem' }}>
                     <label className="form-label">{t.pages.opinionTitle}</label>
                     <input
@@ -936,17 +1021,17 @@ export default function CarDetailPage() {
                   </div>
                 ) : (
                   <>
-                    <h3 className="opinion-title">{opinion.title}</h3>
-                    <p className="opinion-meta">{opinion.author?.username || 'user'}</p>
+                    <h3 className="opinion-title">{activeOpinion.title}</h3>
+                    <p className="opinion-meta">{activeOpinion.author?.username || 'user'}</p>
                     <div
                       className="opinion-text"
-                      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(opinion.content) }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(activeOpinion.content) }}
                     />
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                       {opinionRatingCategories.map((category) => (
                         <div key={category.key} className="opinion-category-rating">
                           <span style={{ fontSize: '0.85rem', color: '#666' }}>{category.label}</span>
-                          <span className="rating" style={{ fontSize: '0.95rem' }}>{formatRatingDisplay(opinion[category.key])}</span>
+                          <span className="rating" style={{ fontSize: '0.95rem' }}>{formatRatingDisplay(activeOpinion[category.key])}</span>
                         </div>
                       ))}
                     </div>
@@ -955,49 +1040,49 @@ export default function CarDetailPage() {
                         <button
                           type="button"
                           className="opinion-vote-btn"
-                          disabled={!!voteSaving[opinion.id]}
-                          onClick={() => handleVoteOpinion(opinion.id, 'helpful')}
+                          disabled={!!voteSaving[activeOpinion.id]}
+                          onClick={() => handleVoteOpinion(activeOpinion.id, 'helpful')}
                           title="Helpful"
                         >
-                          👍 {opinion.helpful_count}
+                          👍 {activeOpinion.helpful_count}
                         </button>
                         <span className="opinion-vote-separator">|</span>
                         <button
                           type="button"
                           className="opinion-vote-btn"
-                          disabled={!!voteSaving[opinion.id]}
-                          onClick={() => handleVoteOpinion(opinion.id, 'unhelpful')}
+                          disabled={!!voteSaving[activeOpinion.id]}
+                          onClick={() => handleVoteOpinion(activeOpinion.id, 'unhelpful')}
                           title="Unhelpful"
                         >
-                          👎 {opinion.unhelpful_count}
+                          👎 {activeOpinion.unhelpful_count}
                         </button>
                       </div>
                       <button
                         type="button"
                         className="btn-comment-toggle"
-                        onClick={() => handleToggleComments(opinion.id)}
+                        onClick={() => handleToggleComments(activeOpinion.id)}
                       >
-                        {expandedOpinions.has(opinion.id) ? '−' : '+'} {opinion.comments_count || 0} {t.pages.showComments}
+                        {expandedOpinions.has(activeOpinion.id) ? '−' : '+'} {activeOpinion.comments_count || 0} {t.pages.showComments}
                       </button>
                     </div>
                   </>
                 )}
-                {canEditByAuthorId(opinion.author?.id) && editingOpinionId !== opinion.id && (
+                {canEditByAuthorId(activeOpinion.author?.id) && editingOpinionId !== activeOpinion.id && (
                   <div className="admin-actions-row" style={{ marginTop: '0.4rem' }}>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleStartOpinionEdit(opinion)}>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleStartOpinionEdit(activeOpinion)}>
                       {t.pages.editLabel}
                     </button>
-                    <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteOpinion(opinion.id)}>
+                    <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteOpinion(activeOpinion.id)}>
                       {t.pages.deleteLabel}
                     </button>
                   </div>
                 )}
-                {expandedOpinions.has(opinion.id) && (
+                {expandedOpinions.has(activeOpinion.id) && (
                   <div className="opinion-comments">
-                    {(opinionComments[opinion.id] || []).length === 0 ? (
+                    {(opinionComments[activeOpinion.id] || []).length === 0 ? (
                       <p className="opinion-no-comments">{t.pages.noComments}</p>
                     ) : (
-                      (opinionComments[opinion.id] || []).map((c) => (
+                      (opinionComments[activeOpinion.id] || []).map((c) => (
                         <div key={c.id} className="comment-item">
                           <span className="comment-author">{c.author?.username}</span>
                           <span className="comment-text">{c.content}</span>
@@ -1010,19 +1095,19 @@ export default function CarDetailPage() {
                           <input
                             className="form-input comment-input"
                             placeholder={t.pages.commentPlaceholder}
-                            value={commentTexts[opinion.id] || ''}
+                            value={commentTexts[activeOpinion.id] || ''}
                             onChange={(e) =>
-                              setCommentTexts((prev) => ({ ...prev, [opinion.id]: e.target.value }))
+                              setCommentTexts((prev) => ({ ...prev, [activeOpinion.id]: e.target.value }))
                             }
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleAddComment(opinion.id)
+                              if (e.key === 'Enter') handleAddComment(activeOpinion.id)
                             }}
                           />
                           <button
                             type="button"
                             className="btn btn-primary btn-sm"
-                            disabled={commentSaving[opinion.id]}
-                            onClick={() => handleAddComment(opinion.id)}
+                            disabled={commentSaving[activeOpinion.id]}
+                            onClick={() => handleAddComment(activeOpinion.id)}
                           >
                             {t.pages.commentSubmit}
                           </button>
@@ -1034,14 +1119,29 @@ export default function CarDetailPage() {
                   </div>
                 )}
               </article>
-            ))}
+            )}
           </div>
         )}
       </section>
 
       {isAdmin && (
         <section className="detail-admin-card">
-          <h2 className="detail-section-title">{t.adminInline.detailEditor}</h2>
+          <div className="detail-section-header" style={{ marginBottom: '0.75rem' }}>
+            <h2 className="detail-section-title">{t.adminInline.detailEditor}</h2>
+            <button
+              type="button"
+              className={`admin-inline-toggle admin-inline-gear ${isAdminDetailEditorOpen ? 'is-open' : ''}`}
+              onClick={() => setIsAdminDetailEditorOpen((prev) => !prev)}
+              aria-expanded={isAdminDetailEditorOpen}
+              aria-label={t.adminInline.detailEditor}
+              title={t.adminInline.detailEditor}
+            >
+              <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
+              </svg>
+            </button>
+          </div>
+          {isAdminDetailEditorOpen && (
           <form className="admin-form-card" onSubmit={handleAdminSave}>
             <div className="admin-fields-grid">
               <div>
@@ -1223,6 +1323,7 @@ export default function CarDetailPage() {
               {adminSaving ? t.pages.loading : t.adminInline.save}
             </button>
           </form>
+          )}
         </section>
       )}
     </div>
