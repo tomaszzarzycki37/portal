@@ -2317,6 +2317,16 @@ body.app-theme-dark .brand-anecdote-text {
   margin-bottom: 0.8rem;
 }
 
+.detail-collapsible-header {
+  align-items: center;
+  min-height: 2.2rem;
+}
+
+.detail-collapsible-header .detail-section-title {
+  margin: 0;
+  line-height: 1.2;
+}
+
 .detail-section-subtitle {
   margin: 0;
   color: #64748b;

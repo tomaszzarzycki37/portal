@@ -777,7 +777,7 @@ export default function CarDetailPage() {
 
         {isLoggedIn ? (
           <div className="admin-form-card" style={{ marginBottom: '1.1rem' }}>
-            <div className="detail-section-header" style={{ marginBottom: isAddOpinionOpen ? '0.9rem' : 0, alignItems: 'center' }}>
+            <div className="detail-section-header detail-collapsible-header" style={{ marginBottom: isAddOpinionOpen ? '0.9rem' : 0 }}>
               <span style={{ fontWeight: 700 }}>{t.pages.addOpinionTitle}</span>
               <button
                 type="button"
@@ -1128,7 +1128,7 @@ export default function CarDetailPage() {
 
       {isAdmin && (
         <section className="detail-admin-card">
-          <div className="detail-section-header" style={{ marginBottom: '0.75rem', alignItems: 'center' }}>
+          <div className="detail-section-header detail-collapsible-header" style={{ marginBottom: '0.75rem' }}>
             <h2 className="detail-section-title">{t.adminInline.detailEditor}</h2>
             <button
               type="button"
