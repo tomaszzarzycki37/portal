@@ -380,6 +380,8 @@ export default function ReviewsPage() {
   const [reviewMessage, setReviewMessage] = useState('')
   const [reviewError, setReviewError] = useState('')
   const [isCreateReviewSectionOpen, setIsCreateReviewSectionOpen] = useState(false)
+  const [newReviewFirstSliderFiles, setNewReviewFirstSliderFiles] = useState([])
+  const [newReviewSecondSliderFiles, setNewReviewSecondSliderFiles] = useState([])
   const [newReviewDraft, setNewReviewDraft] = useState({
     car_model: '',
     title: '',
@@ -744,6 +746,27 @@ export default function ReviewsPage() {
     }
   }
 
+  const uploadNewReviewImages = async (files) => {
+    if (!files || files.length === 0) return []
+    return Promise.all(
+      files.map(async (file) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        let response
+        try {
+          response = await api.post('/common/content/upload/', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          })
+        } catch {
+          response = await api.post('/common/upload/', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          })
+        }
+        return response?.data?.url || ''
+      }),
+    )
+  }
+
   const handleCreateReview = async (e) => {
     e.preventDefault()
     setReviewError('')
@@ -756,11 +779,27 @@ export default function ReviewsPage() {
 
     setReviewSaving(true)
     try {
+      const firstSliderUrls = (await uploadNewReviewImages(newReviewFirstSliderFiles)).filter(Boolean)
+      const secondSliderUrls = (await uploadNewReviewImages(newReviewSecondSliderFiles)).filter(Boolean)
+      const parsedContent = parseReviewContent(newReviewDraft.content.trim())
+      const hasStructuredContent = Boolean(
+        parsedContent.overview
+        || (parsedContent.images && parsedContent.images.length > 0)
+        || (parsedContent.secondImages && parsedContent.secondImages.length > 0)
+        || (parsedContent.testResults && parsedContent.testResults.length > 0)
+        || parsedContent.verdict,
+      )
+      const normalizedContent = hasStructuredContent ? buildReviewContent({
+        ...parsedContent,
+        images: firstSliderUrls.length > 0 ? firstSliderUrls : parsedContent.images,
+        secondImages: secondSliderUrls.length > 0 ? secondSliderUrls : parsedContent.secondImages,
+      }) : newReviewDraft.content.trim()
+
       await api.post('/reviews/', {
         car_model: Number.parseInt(newReviewDraft.car_model, 10),
         title: newReviewDraft.title.trim(),
         summary: newReviewDraft.summary.trim(),
-        content: newReviewDraft.content.trim(),
+        content: normalizedContent,
         category: newReviewDraft.category,
         tags: newReviewDraft.tags.trim(),
         reading_time_minutes: Number.parseInt(String(newReviewDraft.reading_time_minutes || '0'), 10) || 0,
@@ -784,6 +823,8 @@ export default function ReviewsPage() {
         published_at: '',
         is_published: true,
       }))
+      setNewReviewFirstSliderFiles([])
+      setNewReviewSecondSliderFiles([])
       setReviewMessage(t.adminPanel.reviewCreated)
     } catch {
       setReviewError(t.adminPanel.reviewCreateError)
@@ -976,6 +1017,45 @@ export default function ReviewsPage() {
                 onChange={(val) => setNewReviewDraft((prev) => ({ ...prev, content: val }))}
                 placeholder={t.adminPanel.reviewEditorPlaceholder}
               />
+            </div>
+            <div className="admin-form-grid-full">
+              <label className="form-label" htmlFor="user-review-first-slider">{lang === 'pl' ? 'Pierwszy slider (max 12 zdjec)' : 'First slider (max 12 images)'}</label>
+              <input
+                id="user-review-first-slider"
+                type="file"
+                multiple
+                accept="image/*"
+                className="form-input"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || [])
+                  if (files.length > 12) {
+                    setReviewError(lang === 'pl' ? 'Mozesz dodac maksymalnie 12 zdjec do pierwszego slidera' : 'You can add up to 12 images to the first slider')
+                    return
+                  }
+                  setReviewError('')
+                  setNewReviewFirstSliderFiles(files)
+                }}
+              />
+              {newReviewFirstSliderFiles.length > 0 && (
+                <p className="review-slider-limit-note">{lang === 'pl' ? `Wybrano zdjec: ${newReviewFirstSliderFiles.length}` : `Selected images: ${newReviewFirstSliderFiles.length}`}</p>
+              )}
+            </div>
+            <div className="admin-form-grid-full">
+              <label className="form-label" htmlFor="user-review-second-slider">{lang === 'pl' ? 'Drugi slider' : 'Second slider'}</label>
+              <input
+                id="user-review-second-slider"
+                type="file"
+                multiple
+                accept="image/*"
+                className="form-input"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || [])
+                  setNewReviewSecondSliderFiles(files)
+                }}
+              />
+              {newReviewSecondSliderFiles.length > 0 && (
+                <p className="review-slider-limit-note">{lang === 'pl' ? `Wybrano zdjec: ${newReviewSecondSliderFiles.length}` : `Selected images: ${newReviewSecondSliderFiles.length}`}</p>
+              )}
             </div>
             <label className="form-checkbox-row admin-form-grid-full">
               <input
