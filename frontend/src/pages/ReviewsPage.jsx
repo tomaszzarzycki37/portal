@@ -30,7 +30,10 @@ const WORD_LIKE_FORMATS = [
   'link',
 ]
 
-const INLINE_REVIEW_EDIT_FIELDS = new Set(['title', 'summary', 'content', 'publication_name', 'author_name', 'tags', 'overview', 'testResults', 'verdict', 'images'])
+const INLINE_REVIEW_EDIT_FIELDS = new Set(['title', 'summary', 'content', 'publication_name', 'author_name', 'tags', 'overview', 'testResults', 'verdict', 'images', 'secondImages'])
+const IMAGE_LIMITS = {
+  images: 12,
+}
 
 function RichTextEditor({ id, label, value, onChange, placeholder }) {
   return (
@@ -45,6 +48,91 @@ function RichTextEditor({ id, label, value, onChange, placeholder }) {
         formats={WORD_LIKE_FORMATS}
         placeholder={placeholder}
       />
+    </div>
+  )
+}
+
+function ImageSlider({ images, title, emptyLabel, onEdit, isEditable, className = 'review-gallery' }) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const hasImages = images.length > 0
+
+  useEffect(() => {
+    if (activeIndex >= images.length) {
+      setActiveIndex(0)
+    }
+  }, [images.length, activeIndex])
+
+  const handlePrev = (event) => {
+    event.stopPropagation()
+    if (!hasImages) return
+    setActiveIndex((prev) => (prev - 1 + images.length) % images.length)
+  }
+
+  const handleNext = (event) => {
+    event.stopPropagation()
+    if (!hasImages) return
+    setActiveIndex((prev) => (prev + 1) % images.length)
+  }
+
+  const handleThumbClick = (event, index) => {
+    event.stopPropagation()
+    setActiveIndex(index)
+  }
+
+  return (
+    <div
+      className={`${className} ${isEditable ? 'review-inline-editable-block' : ''}`}
+      role={isEditable ? 'button' : undefined}
+      tabIndex={isEditable ? 0 : undefined}
+      onClick={isEditable ? onEdit : undefined}
+      onKeyDown={isEditable ? (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onEdit()
+        }
+      } : undefined}
+      aria-label={title}
+    >
+      {hasImages ? (
+        <>
+          <div className="review-slider-main-wrapper">
+            <img
+              src={images[activeIndex]}
+              alt={`${title} ${activeIndex + 1}`}
+              className="review-gallery-main"
+              loading="lazy"
+            />
+            {images.length > 1 && (
+              <>
+                <button type="button" className="review-slider-nav review-slider-nav-prev" onClick={handlePrev} aria-label="Poprzednie zdjęcie">‹</button>
+                <button type="button" className="review-slider-nav review-slider-nav-next" onClick={handleNext} aria-label="Następne zdjęcie">›</button>
+              </>
+            )}
+          </div>
+          {images.length > 1 && (
+            <div className="review-gallery-thumbs">
+              {images.map((img, i) => (
+                <button
+                  key={`${img}-${i}`}
+                  type="button"
+                  className={`review-slider-thumb-btn ${i === activeIndex ? 'is-active' : ''}`}
+                  onClick={(event) => handleThumbClick(event, i)}
+                  aria-label={`Przejdz do zdjęcia ${i + 1}`}
+                >
+                  <img
+                    src={img}
+                    alt={`${title} miniatura ${i + 1}`}
+                    className="review-gallery-thumb"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="review-gallery-empty">{emptyLabel}</div>
+      )}
     </div>
   )
 }
@@ -90,7 +178,7 @@ function formatEditorialText(value) {
 function parseReviewContent(content) {
   const normalizedContent = String(content || '').trim()
   if (!normalizedContent) {
-    return { overview: '', images: [], testResults: [], verdict: '' }
+    return { overview: '', images: [], secondImages: [], testResults: [], verdict: '' }
   }
 
   if (normalizedContent.startsWith('{')) {
@@ -99,6 +187,11 @@ function parseReviewContent(content) {
       return {
         overview: String(parsed.overview || ''),
         images: Array.isArray(parsed.images) ? parsed.images.filter(Boolean) : [],
+        secondImages: Array.isArray(parsed.secondImages)
+          ? parsed.secondImages.filter(Boolean)
+          : Array.isArray(parsed.imagesAfterTests)
+            ? parsed.imagesAfterTests.filter(Boolean)
+            : [],
         testResults: Array.isArray(parsed.testResults)
           ? parsed.testResults
             .filter((item) => item && (item.key || item.value))
@@ -114,6 +207,7 @@ function parseReviewContent(content) {
   const lines = (content || '').split('\n')
   const overview = []
   const images = []
+  const secondImages = []
   const testResults = []
   const verdict = []
   let section = null
@@ -123,6 +217,7 @@ function parseReviewContent(content) {
     if (trimmed === 'Overview') { section = 'overview'; continue }
     if (trimmed === 'Example photo gallery') { section = 'gallery'; continue }
     if (trimmed === 'Test results') { section = 'results'; continue }
+    if (trimmed === 'Second photo gallery') { section = 'gallery2'; continue }
     if (trimmed === 'Verdict') { section = 'verdict'; continue }
     if (!trimmed) continue
 
@@ -130,16 +225,19 @@ function parseReviewContent(content) {
     else if (section === 'gallery') {
       const match = trimmed.match(/^\d+\.\s+((?:https?:\/\/|\/media\/).+)/)
       if (match) images.push(match[1].trim())
+    } else if (section === 'gallery2') {
+      const match = trimmed.match(/^\d+\.\s+((?:https?:\/\/|\/media\/).+)/)
+      if (match) secondImages.push(match[1].trim())
     } else if (section === 'results') {
       const match = trimmed.match(/^-\s+(.+?):\s+(.+)/)
       if (match) testResults.push({ key: match[1].trim(), value: match[2].trim() })
     } else if (section === 'verdict') verdict.push(trimmed)
   }
 
-  return { overview: overview.join(' '), images, testResults, verdict: verdict.join(' ') }
+  return { overview: overview.join(' '), images, secondImages, testResults, verdict: verdict.join(' ') }
 }
 
-function buildReviewContent({ overview, images, testResults, verdict }) {
+function buildReviewContent({ overview, images, secondImages, testResults, verdict }) {
   const sections = []
 
   if (overview && overview.trim()) {
@@ -165,6 +263,16 @@ function buildReviewContent({ overview, images, testResults, verdict }) {
       const value = String(result?.value || '').trim()
       if (key || value) {
         sections.push(`- ${key}: ${value}`)
+      }
+    })
+  }
+
+  if (Array.isArray(secondImages) && secondImages.length > 0) {
+    if (sections.length > 0) sections.push('')
+    sections.push('Second photo gallery')
+    secondImages.forEach((image, index) => {
+      if (image && String(image).trim()) {
+        sections.push(`${index + 1}. ${String(image).trim()}`)
       }
     })
   }
@@ -356,6 +464,7 @@ export default function ReviewsPage() {
     if (field === 'testResults') return t.pages.testResults || 'Test Results'
     if (field === 'verdict') return t.pages.verdict || 'Verdict'
     if (field === 'images') return t.pages.images || 'Images'
+    if (field === 'secondImages') return t.pages.secondImages || 'Second Slider Images'
     return t.pages.editLabel
   }
 
@@ -366,8 +475,24 @@ export default function ReviewsPage() {
     setSectionImageUploading(true)
     setReviewError('')
     try {
+      const field = sectionEditor?.field || 'images'
+      const maxForField = IMAGE_LIMITS[field] || null
+      let filesToUpload = files
+
+      if (maxForField !== null) {
+        const remainingSlots = maxForField - sectionImagePreviews.length
+        if (remainingSlots <= 0) {
+          setReviewError(`Mozesz dodac maksymalnie ${maxForField} zdjec do tego slidera`)
+          return
+        }
+        if (files.length > remainingSlots) {
+          filesToUpload = files.slice(0, remainingSlots)
+          setReviewMessage(`Dodano ${remainingSlots} z ${files.length} wybranych zdjec (limit ${maxForField})`)
+        }
+      }
+
       const uploadedUrls = await Promise.all(
-        files.map(async (file) => {
+        filesToUpload.map(async (file) => {
           const formData = new FormData()
           formData.append('file', file)
           let response
@@ -411,7 +536,7 @@ export default function ReviewsPage() {
     setSectionEditor({ reviewId, field })
 
     // Handle nested fields from content JSON
-    const nestedFields = ['overview', 'testResults', 'verdict', 'images']
+    const nestedFields = ['overview', 'testResults', 'verdict', 'images', 'secondImages']
     if (nestedFields.includes(field)) {
       const parsedContent = parseReviewContent(draft.content)
       if (field === 'testResults') {
@@ -421,6 +546,9 @@ export default function ReviewsPage() {
         setSectionValue(formatted)
       } else if (field === 'images') {
         setSectionImagePreviews(parsedContent.images)
+        setSectionValue('')
+      } else if (field === 'secondImages') {
+        setSectionImagePreviews(parsedContent.secondImages || [])
         setSectionValue('')
       } else {
         setSectionValue(String(parsedContent[field] || ''))
@@ -452,7 +580,7 @@ export default function ReviewsPage() {
     setReviewMessage('')
     try {
       // Handle nested fields (overview, testResults, verdict, images)
-      const nestedFields = ['overview', 'testResults', 'verdict', 'images']
+      const nestedFields = ['overview', 'testResults', 'verdict', 'images', 'secondImages']
       let updatePayload = {}
 
       if (nestedFields.includes(field)) {
@@ -467,6 +595,8 @@ export default function ReviewsPage() {
           })
         } else if (field === 'images') {
           parsedContent.images = sectionImagePreviews
+        } else if (field === 'secondImages') {
+          parsedContent.secondImages = sectionImagePreviews
         } else {
           parsedContent[field] = normalizedValue
         }
@@ -796,6 +926,7 @@ export default function ReviewsPage() {
               const parsed = isHtmlContent ? null : parseReviewContent(content)
               const canManageReview = canEditByAuthorId(review.author_id)
               const emptyGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia' : 'Brak zdjęć'
+              const emptySecondGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia do drugiego slidera' : 'Brak zdjęć w drugim sliderze'
               const emptyOverviewLabel = canManageReview ? 'Kliknij, aby dodać opis testu' : 'Brak opisu testu'
               const emptyResultsLabel = canManageReview ? 'Kliknij, aby dodać wyniki testu' : 'Brak wyników testu'
               const emptyVerdictLabel = canManageReview ? 'Kliknij, aby dodać werdykt' : 'Brak werdyktu'
@@ -889,37 +1020,13 @@ export default function ReviewsPage() {
 
                   {/* Image gallery (legacy content only) */}
                   {parsed && (
-                    <div className={`review-gallery ${canManageReview ? 'review-inline-editable-block' : ''}`}
-                      role={canManageReview ? 'button' : undefined}
-                      tabIndex={canManageReview ? 0 : undefined}
-                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'images') : undefined}
-                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'images')) : undefined}>
-                      {parsed.images.length > 0 ? (
-                        <>
-                          <img
-                            src={parsed.images[0]}
-                            alt={review.title}
-                            className="review-gallery-main"
-                            loading="lazy"
-                          />
-                          {parsed.images.length > 1 && (
-                            <div className="review-gallery-thumbs">
-                              {parsed.images.slice(1).map((img, i) => (
-                                <img
-                                  key={i}
-                                  src={img}
-                                  alt={`${review.title} ${i + 2}`}
-                                  className="review-gallery-thumb"
-                                  loading="lazy"
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="review-gallery-empty">{emptyGalleryLabel}</div>
-                      )}
-                    </div>
+                    <ImageSlider
+                      images={parsed.images}
+                      title={`${review.title} - slider 1`}
+                      emptyLabel={emptyGalleryLabel}
+                      isEditable={canManageReview}
+                      onEdit={() => handleOpenSectionEditor(review.id, 'images')}
+                    />
                   )}
 
                   {/* Rich HTML content */}
@@ -972,6 +1079,18 @@ export default function ReviewsPage() {
                     </div>
                   )}
 
+                  {/* Second slider (below test results) */}
+                  {parsed && (
+                    <ImageSlider
+                      images={parsed.secondImages || []}
+                      title={`${review.title} - slider 2`}
+                      emptyLabel={emptySecondGalleryLabel}
+                      isEditable={canManageReview}
+                      onEdit={() => handleOpenSectionEditor(review.id, 'secondImages')}
+                      className="review-gallery review-gallery-secondary"
+                    />
+                  )}
+
                   {/* Verdict (legacy content only) */}
                   {parsed && (
                     <div className={`review-verdict ${canManageReview ? 'review-inline-editable-block' : ''}`}
@@ -1022,9 +1141,12 @@ export default function ReviewsPage() {
                 onChange={setSectionValue}
                 placeholder={t.adminPanel.reviewEditorPlaceholder}
               />
-            ) : sectionEditor.field === 'images' ? (
+            ) : sectionEditor.field === 'images' || sectionEditor.field === 'secondImages' ? (
               <div className="review-image-editor">
                 <label className="form-label" htmlFor="review-image-input">Zdjęcia</label>
+                {sectionEditor.field === 'images' && (
+                  <p className="review-slider-limit-note">Maksymalnie 12 zdjęć w pierwszym sliderze</p>
+                )}
                 <div className="review-image-upload-area">
                   <input
                     id="review-image-input"
