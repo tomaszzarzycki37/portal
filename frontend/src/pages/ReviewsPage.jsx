@@ -30,7 +30,7 @@ const WORD_LIKE_FORMATS = [
   'link',
 ]
 
-const INLINE_REVIEW_EDIT_FIELDS = new Set(['title', 'summary', 'content', 'publication_name', 'author_name', 'tags', 'overview', 'testResults', 'verdict', 'images', 'secondImages'])
+const INLINE_REVIEW_EDIT_FIELDS = new Set(['title', 'summary', 'content', 'publication_name', 'author_name', 'tags', 'overview', 'testResults', 'verdict', 'images', 'secondImages', 'car_model', 'category'])
 const IMAGE_LIMITS = {
   images: 12,
 }
@@ -542,6 +542,8 @@ export default function ReviewsPage() {
     if (field === 'verdict') return t.pages.verdict || 'Verdict'
     if (field === 'images') return t.pages.images || 'Images'
     if (field === 'secondImages') return t.pages.secondImages || 'Second Slider Images'
+    if (field === 'car_model') return t.pages.modelFilterLabel || 'Model'
+    if (field === 'category') return t.pages.reviewCategory || 'Typ'
     return t.pages.editLabel
   }
 
@@ -1332,6 +1334,36 @@ export default function ReviewsPage() {
                 onChange={setSectionValue}
                 placeholder={t.adminPanel.reviewEditorPlaceholder}
               />
+            ) : sectionEditor.field === 'car_model' ? (
+              <div>
+                <label className="form-label" htmlFor="review-car-model-select">{getInlineFieldLabel(sectionEditor.field)}</label>
+                <select
+                  id="review-car-model-select"
+                  className="form-input"
+                  value={sectionValue}
+                  onChange={(event) => setSectionValue(event.target.value)}
+                >
+                  <option value="">{t.pages.selectLabel || 'Select'}</option>
+                  {carsList.map((car) => (
+                    <option key={car.id} value={car.id}>{car.name}</option>
+                  ))}
+                </select>
+              </div>
+            ) : sectionEditor.field === 'category' ? (
+              <div>
+                <label className="form-label" htmlFor="review-category-select">{getInlineFieldLabel(sectionEditor.field)}</label>
+                <select
+                  id="review-category-select"
+                  className="form-input"
+                  value={sectionValue}
+                  onChange={(event) => setSectionValue(event.target.value)}
+                >
+                  <option value="test">{t.pages.categoryTest || 'Test'}</option>
+                  <option value="news">{t.pages.categoryNews || 'News'}</option>
+                  <option value="guide">{t.pages.categoryGuide || 'Guide'}</option>
+                  <option value="opinion">{t.pages.categoryOpinion || 'Opinion'}</option>
+                </select>
+              </div>
             ) : sectionEditor.field === 'images' || sectionEditor.field === 'secondImages' ? (
               <div className="review-image-editor">
                 <label className="form-label" htmlFor="review-image-input">Zdjęcia</label>
