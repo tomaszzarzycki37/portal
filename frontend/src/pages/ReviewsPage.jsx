@@ -433,6 +433,17 @@ function hasStructuredReviewContent(content) {
   return /(\n|^)(Overview|Example photo gallery|Test results|Second photo gallery|Verdict)(\n|$)/.test(normalized)
 }
 
+function hasParsedStructuredData(parsed) {
+  if (!parsed) return false
+  return Boolean(
+    String(parsed.overview || '').trim()
+    || String(parsed.verdict || '').trim()
+    || (Array.isArray(parsed.images) && parsed.images.length > 0)
+    || (Array.isArray(parsed.secondImages) && parsed.secondImages.length > 0)
+    || (Array.isArray(parsed.testResults) && parsed.testResults.length > 0),
+  )
+}
+
 export default function ReviewsPage() {
   const { t, lang } = useTranslation()
   const location = useLocation()
@@ -701,7 +712,17 @@ export default function ReviewsPage() {
     // Handle nested fields from content JSON
     const nestedFields = ['overview', 'testResults', 'verdict', 'images', 'secondImages']
     if (nestedFields.includes(field)) {
-      const parsedContent = parseReviewContent(draft.content)
+      const existingContent = String(draft.content || '')
+      const isStructuredSource = hasStructuredReviewContent(existingContent)
+      if (!isStructuredSource) {
+        setSectionEditor({ reviewId, field: 'content' })
+        setSectionValue(existingContent)
+        setSectionImagePreviews([])
+        setSectionTestResultsValues([])
+        return
+      }
+
+      const parsedContent = parseReviewContent(existingContent)
       if (field === 'testResults') {
         const rows = TEST_RESULT_FIELDS.map((fieldDef) => {
           const existing = (parsedContent.testResults || []).find((item) => {
@@ -759,6 +780,12 @@ export default function ReviewsPage() {
 
       if (nestedFields.includes(field)) {
         const existingContent = reviewDraft?.content || ''
+        if (!hasStructuredReviewContent(existingContent)) {
+          setReviewError(lang === 'pl' ? 'Ta recenzja ma format HTML. Edytuj pole Tresc.' : 'This review uses HTML format. Edit the Content field instead.')
+          setReviewSaving(false)
+          return
+        }
+
         const parsedContent = parseReviewContent(existingContent)
 
         if (field === 'testResults') {
@@ -1214,6 +1241,7 @@ export default function ReviewsPage() {
               const content = decodeHtmlEntities(review.content)
               const parsed = parseReviewContent(content)
               const isStructuredContent = hasStructuredReviewContent(content)
+              const shouldRenderStructured = isStructuredContent && hasParsedStructuredData(parsed)
               const canManageReview = canEditByAuthorId(review.author_id)
               const emptyGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia' : 'Brak zdjęć'
               const emptySecondGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia do drugiego slidera' : 'Brak zdjęć w drugim sliderze'
@@ -1327,7 +1355,7 @@ export default function ReviewsPage() {
                   </div>
 
                   {/* Image gallery (legacy content only) */}
-                  {isStructuredContent && parsed && (
+                  {shouldRenderStructured && parsed && (
                     <ImageSlider
                       images={parsed.images}
                       title={`${review.title} - slider 1`}
@@ -1338,7 +1366,7 @@ export default function ReviewsPage() {
                   )}
 
                   {/* Overview (main description) */}
-                  {isStructuredContent && parsed && (
+                  {shouldRenderStructured && parsed && (
                     <>
                       <h4 className="review-section-title">{t.pages.mainDescription || t.pages.overview || 'Główny opis'}</h4>
                       <p
@@ -1353,7 +1381,7 @@ export default function ReviewsPage() {
                   )}
 
                   {/* Test results (legacy content only) */}
-                  {isStructuredContent && parsed && (
+                  {shouldRenderStructured && parsed && (
                     <div className={`review-results ${canManageReview ? 'review-inline-editable-block' : ''}`}
                       role={canManageReview ? 'button' : undefined}
                       tabIndex={canManageReview ? 0 : undefined}
@@ -1379,7 +1407,7 @@ export default function ReviewsPage() {
                   )}
 
                   {/* Second slider (below test results) */}
-                  {isStructuredContent && parsed && (
+                  {shouldRenderStructured && parsed && (
                     <ImageSlider
                       images={parsed.secondImages || []}
                       title={`${review.title} - slider 2`}
@@ -1391,7 +1419,7 @@ export default function ReviewsPage() {
                   )}
 
                   {/* Verdict (legacy content only) */}
-                  {isStructuredContent && parsed && (
+                  {shouldRenderStructured && parsed && (
                     <div className={`review-verdict ${canManageReview ? 'review-inline-editable-block' : ''}`}
                       role={canManageReview ? 'button' : undefined}
                       tabIndex={canManageReview ? 0 : undefined}
@@ -1402,7 +1430,7 @@ export default function ReviewsPage() {
                     </div>
                   )}
 
-                  {!isStructuredContent && content && (
+                  {!shouldRenderStructured && content && (
                     <div
                       className={`review-html-content ${canManageReview ? 'review-inline-editable-block' : ''}`}
                       dangerouslySetInnerHTML={{ __html: sanitizeEditorialHtml(content) }}
