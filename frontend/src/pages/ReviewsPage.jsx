@@ -416,6 +416,23 @@ function buildReviewContent({ overview, images, secondImages, testResults, verdi
   return sections.join('\n')
 }
 
+function hasStructuredReviewContent(content) {
+  const normalized = String(content || '').trim()
+  if (!normalized) return false
+
+  if (normalized.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(normalized)
+      return ['overview', 'images', 'secondImages', 'imagesAfterTests', 'testResults', 'verdict']
+        .some((key) => Object.prototype.hasOwnProperty.call(parsed, key))
+    } catch {
+      // Continue to legacy marker detection.
+    }
+  }
+
+  return /(\n|^)(Overview|Example photo gallery|Test results|Second photo gallery|Verdict)(\n|$)/.test(normalized)
+}
+
 export default function ReviewsPage() {
   const { t, lang } = useTranslation()
   const location = useLocation()
@@ -1196,6 +1213,7 @@ export default function ReviewsPage() {
             {filteredAndSortedReviews.map((review) => {
               const content = decodeHtmlEntities(review.content)
               const parsed = parseReviewContent(content)
+              const isStructuredContent = hasStructuredReviewContent(content)
               const canManageReview = canEditByAuthorId(review.author_id)
               const emptyGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia' : 'Brak zdjęć'
               const emptySecondGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia do drugiego slidera' : 'Brak zdjęć w drugim sliderze'
@@ -1309,7 +1327,7 @@ export default function ReviewsPage() {
                   </div>
 
                   {/* Image gallery (legacy content only) */}
-                  {parsed && (
+                  {isStructuredContent && parsed && (
                     <ImageSlider
                       images={parsed.images}
                       title={`${review.title} - slider 1`}
@@ -1320,7 +1338,7 @@ export default function ReviewsPage() {
                   )}
 
                   {/* Overview (main description) */}
-                  {parsed && (
+                  {isStructuredContent && parsed && (
                     <>
                       <h4 className="review-section-title">{t.pages.mainDescription || t.pages.overview || 'Główny opis'}</h4>
                       <p
@@ -1335,7 +1353,7 @@ export default function ReviewsPage() {
                   )}
 
                   {/* Test results (legacy content only) */}
-                  {parsed && (
+                  {isStructuredContent && parsed && (
                     <div className={`review-results ${canManageReview ? 'review-inline-editable-block' : ''}`}
                       role={canManageReview ? 'button' : undefined}
                       tabIndex={canManageReview ? 0 : undefined}
@@ -1361,7 +1379,7 @@ export default function ReviewsPage() {
                   )}
 
                   {/* Second slider (below test results) */}
-                  {parsed && (
+                  {isStructuredContent && parsed && (
                     <ImageSlider
                       images={parsed.secondImages || []}
                       title={`${review.title} - slider 2`}
@@ -1373,7 +1391,7 @@ export default function ReviewsPage() {
                   )}
 
                   {/* Verdict (legacy content only) */}
-                  {parsed && (
+                  {isStructuredContent && parsed && (
                     <div className={`review-verdict ${canManageReview ? 'review-inline-editable-block' : ''}`}
                       role={canManageReview ? 'button' : undefined}
                       tabIndex={canManageReview ? 0 : undefined}
@@ -1382,6 +1400,17 @@ export default function ReviewsPage() {
                       <span className="review-verdict-label">{t.pages.verdict}</span>
                       <p className={`review-verdict-text ${parsed.verdict ? '' : 'review-section-empty'}`} dangerouslySetInnerHTML={{ __html: parsed.verdict ? formatEditorialText(parsed.verdict) : escapeHtml(emptyVerdictLabel) }} />
                     </div>
+                  )}
+
+                  {!isStructuredContent && content && (
+                    <div
+                      className={`review-html-content ${canManageReview ? 'review-inline-editable-block' : ''}`}
+                      dangerouslySetInnerHTML={{ __html: sanitizeEditorialHtml(content) }}
+                      role={canManageReview ? 'button' : undefined}
+                      tabIndex={canManageReview ? 0 : undefined}
+                      onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'content') : undefined}
+                      onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'content')) : undefined}
+                    />
                   )}
 
                   {/* Footer links */}
