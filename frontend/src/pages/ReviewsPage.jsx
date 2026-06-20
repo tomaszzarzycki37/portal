@@ -57,7 +57,7 @@ const TEST_RESULT_FIELDS = [
   {
     key: 'Top speed',
     unit: 'km/h',
-    labels: { en: 'Top speed', pl: 'Predkosc maksymalna' },
+    labels: { en: 'Top speed', pl: 'Prędkość maksymalna' },
     aliases: ['Top speed'],
   },
   {
@@ -69,7 +69,7 @@ const TEST_RESULT_FIELDS = [
   {
     key: 'Real-world motorway consumption (130 km/h)',
     unit: 'kWh/100 km',
-    labels: { en: 'Real-world motorway consumption (130 km/h)', pl: 'Realne zużycie autostrada (130 km/h)' },
+    labels: { en: 'Real-world motorway consumption (130 km/h)', pl: 'Realne zużycie na autostradzie (130 km/h)' },
     aliases: ['Real-world motorway consumption (130 km/h)', 'Real-world motorway consumption'],
   },
   {
@@ -81,8 +81,14 @@ const TEST_RESULT_FIELDS = [
   {
     key: 'Real-world motorway range (120 km/h)',
     unit: 'km',
-    labels: { en: 'Real-world motorway range (120 km/h)', pl: 'Realny zasięg autostrada (120 km/h)' },
+    labels: { en: 'Real-world motorway range (120 km/h)', pl: 'Realny zasięg na autostradzie (120 km/h)' },
     aliases: ['Real-world motorway range (120 km/h)', 'Real-world motorway range'],
+  },
+  {
+    key: 'Battery-swap station total stop time',
+    unit: 'min',
+    labels: { en: 'Battery-swap station total stop time', pl: 'Łączny postój na stacji wymiany baterii' },
+    aliases: ['Battery-swap station total stop time', 'Battery swap station total stop time'],
   },
   {
     key: 'WLTP range',
