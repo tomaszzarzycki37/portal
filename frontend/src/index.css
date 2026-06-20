@@ -2496,10 +2496,54 @@ body.app-theme-dark .brand-anecdote-text {
   gap: 0.8rem;
 }
 
+.detail-review-shortcut {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+  color: inherit;
+  text-decoration: none;
+}
+
+.detail-review-shortcut-media {
+  width: 132px;
+  height: 84px;
+  border-radius: 0.65rem;
+  overflow: hidden;
+  border: 1px solid #dbe4f0;
+  background: #f8fafc;
+}
+
+.detail-review-shortcut-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.detail-review-shortcut-content {
+  min-width: 0;
+}
+
+.detail-review-shortcut:hover .home-featured-review-heading h3 {
+  color: #1d4ed8;
+}
+
 .detail-section-title {
   margin: 0 0 0.8rem;
   color: #0f172a;
   font-size: 1.2rem;
+}
+
+@media (max-width: 640px) {
+  .detail-review-shortcut {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-review-shortcut-media {
+    width: 100%;
+    height: 150px;
+  }
 }
 
 .detail-admin-card {

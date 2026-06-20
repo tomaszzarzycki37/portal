@@ -49,6 +49,26 @@ function getMeaningfulRichText(value) {
     .trim()
 }
 
+function getReviewPreviewImage(review) {
+  const rawContent = String(review?.content || '').trim()
+  if (rawContent.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(rawContent)
+      const fromJson = [
+        ...(Array.isArray(parsed?.images) ? parsed.images : []),
+        ...(Array.isArray(parsed?.secondImages) ? parsed.secondImages : []),
+        ...(Array.isArray(parsed?.imagesAfterTests) ? parsed.imagesAfterTests : []),
+      ].find((url) => String(url || '').trim())
+      if (fromJson) return String(fromJson).trim()
+    } catch {
+      // Fall through to line-based extraction.
+    }
+  }
+
+  const match = rawContent.match(/(?:https?:\/\/[^\s]+|\/media\/[^\s]+)/i)
+  return match ? String(match[0]).trim() : ''
+}
+
 function RichTextEditor({ id, label, value, onChange, placeholder }) {
   return (
     <div className="admin-rich-editor admin-rich-editor-compact">
@@ -721,16 +741,33 @@ export default function CarDetailPage() {
                           </svg>
                         </Link>
                       )}
-                      <div className="home-featured-review-heading">
-                        <h3>{review.title}</h3>
-                      </div>
-                      <p className="home-featured-review-meta">
-                        {review.publication_name}
-                        {review.author_name ? ` - ${review.author_name}` : ''}
-                      </p>
-                      <p className="home-featured-review-summary">
-                        {decodeHtmlEntities(review.summary || String(review.content || '').slice(0, 220))}
-                      </p>
+                      <Link
+                        to={`/reviews?model=${car.id}&review=${review.id}`}
+                        className="detail-review-shortcut"
+                        aria-label={review.title}
+                      >
+                        <div className="detail-review-shortcut-media">
+                          <img
+                            src={getReviewPreviewImage(review) || getCarImage(car)}
+                            alt={review.title}
+                            className="detail-review-shortcut-thumb"
+                            loading="lazy"
+                            onError={handleCarImageError}
+                          />
+                        </div>
+                        <div className="detail-review-shortcut-content">
+                          <div className="home-featured-review-heading">
+                            <h3>{review.title}</h3>
+                          </div>
+                          <p className="home-featured-review-meta">
+                            {review.publication_name}
+                            {review.author_name ? ` - ${review.author_name}` : ''}
+                          </p>
+                          <p className="home-featured-review-summary">
+                            {decodeHtmlEntities(review.summary || String(review.content || '').slice(0, 220))}
+                          </p>
+                        </div>
+                      </Link>
                     </div>
                   </div>
                 </article>
