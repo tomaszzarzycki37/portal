@@ -343,21 +343,24 @@ function parseReviewContent(content) {
     }
   }
 
-  const lines = (content || '').split('\n')
+  const lines = String(content || '').split(/\r?\n/)
   const overview = []
   const images = []
   const secondImages = []
   const testResults = []
   const verdict = []
   let section = null
+  let hasExplicitSections = false
 
   for (const line of lines) {
     const trimmed = line.trim()
-    if (trimmed === 'Overview') { section = 'overview'; continue }
-    if (trimmed === 'Example photo gallery') { section = 'gallery'; continue }
-    if (trimmed === 'Test results') { section = 'results'; continue }
-    if (trimmed === 'Second photo gallery') { section = 'gallery2'; continue }
-    if (trimmed === 'Verdict') { section = 'verdict'; continue }
+    const normalizedHeading = trimmed.toLowerCase().replace(/:$/, '')
+
+    if (normalizedHeading === 'overview') { section = 'overview'; hasExplicitSections = true; continue }
+    if (normalizedHeading === 'example photo gallery') { section = 'gallery'; hasExplicitSections = true; continue }
+    if (normalizedHeading === 'test results') { section = 'results'; hasExplicitSections = true; continue }
+    if (normalizedHeading === 'second photo gallery') { section = 'gallery2'; hasExplicitSections = true; continue }
+    if (normalizedHeading === 'verdict') { section = 'verdict'; hasExplicitSections = true; continue }
     if (!trimmed) continue
 
     if (section === 'overview') overview.push(trimmed)
@@ -371,6 +374,10 @@ function parseReviewContent(content) {
       const match = trimmed.match(/^-\s+(.+?):\s+(.+)/)
       if (match) testResults.push({ key: match[1].trim(), value: match[2].trim() })
     } else if (section === 'verdict') verdict.push(trimmed)
+  }
+
+  if (!hasExplicitSections) {
+    return { overview: normalizedContent, images: [], secondImages: [], testResults: [], verdict: '' }
   }
 
   return { overview: overview.join(' '), images, secondImages, testResults, verdict: verdict.join(' ') }
@@ -439,7 +446,18 @@ function hasStructuredReviewContent(content) {
     }
   }
 
-  return /(\n|^)(Overview|Example photo gallery|Test results|Second photo gallery|Verdict)(\n|$)/.test(normalized)
+  const markers = [
+    'overview',
+    'example photo gallery',
+    'test results',
+    'second photo gallery',
+    'verdict',
+  ]
+
+  return normalized
+    .split(/\r?\n/)
+    .map((line) => String(line || '').trim().toLowerCase().replace(/:$/, ''))
+    .some((line) => markers.includes(line))
 }
 
 export default function ReviewsPage() {
