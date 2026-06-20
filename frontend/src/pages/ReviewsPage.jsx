@@ -1195,8 +1195,7 @@ export default function ReviewsPage() {
           <div className="opinions-list">
             {filteredAndSortedReviews.map((review) => {
               const content = decodeHtmlEntities(review.content)
-              const isHtmlContent = /<\/?[a-z][\s\S]*>/i.test(content)
-              const parsed = isHtmlContent ? null : parseReviewContent(content)
+              const parsed = parseReviewContent(content)
               const canManageReview = canEditByAuthorId(review.author_id)
               const emptyGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia' : 'Brak zdjęć'
               const emptySecondGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia do drugiego slidera' : 'Brak zdjęć w drugim sliderze'
