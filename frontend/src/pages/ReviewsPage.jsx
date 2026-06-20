@@ -1240,8 +1240,7 @@ export default function ReviewsPage() {
             {filteredAndSortedReviews.map((review) => {
               const content = decodeHtmlEntities(review.content)
               const parsed = parseReviewContent(content)
-              const isStructuredContent = hasStructuredReviewContent(content)
-              const shouldRenderStructured = isStructuredContent
+              const shouldRenderStructured = true
               const canManageReview = canEditByAuthorId(review.author_id)
               const emptyGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia' : 'Brak zdjęć'
               const emptySecondGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia do drugiego slidera' : 'Brak zdjęć w drugim sliderze'
