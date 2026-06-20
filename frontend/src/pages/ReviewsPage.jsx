@@ -750,6 +750,8 @@ export default function ReviewsPage() {
       } else if (field === 'secondImages') {
         setSectionImagePreviews(parsedContent.secondImages || [])
         setSectionValue('')
+      } else if (field === 'overview') {
+        setSectionValue(String(parsedContent.overview || draft.content || draft.summary || ''))
       } else {
         setSectionValue(String(parsedContent[field] || ''))
       }
