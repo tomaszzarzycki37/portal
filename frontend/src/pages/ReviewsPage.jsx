@@ -305,6 +305,15 @@ function formatEditorialText(value) {
   return html
 }
 
+function renderReviewText(value) {
+  const raw = String(value || '')
+  if (!raw.trim()) return ''
+  if (/<\/?[a-z][\s\S]*>/i.test(raw)) {
+    return sanitizeEditorialHtml(raw)
+  }
+  return formatEditorialText(raw)
+}
+
 function parseReviewContent(content) {
   const normalizedContent = String(content || '').trim()
   if (!normalizedContent) {
@@ -1371,7 +1380,7 @@ export default function ReviewsPage() {
                       <h4 className="review-section-title">{t.pages.mainDescription || t.pages.overview || 'Główny opis'}</h4>
                       <p
                         className={`review-overview-text ${canManageReview ? 'review-inline-editable-block' : ''} ${parsed.overview ? '' : 'review-section-empty'}`}
-                        dangerouslySetInnerHTML={{ __html: parsed.overview ? formatEditorialText(parsed.overview) : escapeHtml(emptyOverviewLabel) }}
+                        dangerouslySetInnerHTML={{ __html: parsed.overview ? renderReviewText(parsed.overview) : escapeHtml(emptyOverviewLabel) }}
                         role={canManageReview ? 'button' : undefined}
                         tabIndex={canManageReview ? 0 : undefined}
                         onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'overview') : undefined}
@@ -1426,7 +1435,7 @@ export default function ReviewsPage() {
                       onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'verdict') : undefined}
                       onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'verdict')) : undefined}>
                       <span className="review-verdict-label">{t.pages.verdict}</span>
-                      <p className={`review-verdict-text ${parsed.verdict ? '' : 'review-section-empty'}`} dangerouslySetInnerHTML={{ __html: parsed.verdict ? formatEditorialText(parsed.verdict) : escapeHtml(emptyVerdictLabel) }} />
+                      <p className={`review-verdict-text ${parsed.verdict ? '' : 'review-section-empty'}`} dangerouslySetInnerHTML={{ __html: parsed.verdict ? renderReviewText(parsed.verdict) : escapeHtml(emptyVerdictLabel) }} />
                     </div>
                   )}
 
