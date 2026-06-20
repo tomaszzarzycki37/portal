@@ -383,7 +383,7 @@ export default function CarsListPage() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: '0.5rem', display: 'grid', gap: '0.5rem', padding: '0 0.75rem 0.75rem' }}>
+                <div style={{ marginTop: '0.65rem', display: 'grid', gap: '0.75rem', padding: '0 0.9rem 0.9rem' }}>
                   {brandCars.length === 0 ? (
                     <div className="page-card">
                       <div className="brand-empty-models-content">
@@ -411,28 +411,28 @@ export default function CarsListPage() {
                         .join(' / ')
 
                       return (
-                      <article key={family.key} className="brand-catalog-card" style={{ margin: 0, boxShadow: 'none', borderRadius: '0.6rem', background: '#f8fafc' }}>
-                        <div className="brand-catalog-header brand-catalog-header-static" style={{ padding: '0.4rem 0.65rem' }}>
-                          <div className="brand-catalog-identity" style={{ gridTemplateColumns: '76px 1fr' }}>
+                      <article key={family.key} className="brand-catalog-card" style={{ margin: 0, boxShadow: 'none', borderRadius: '0.7rem', background: '#f8fafc' }}>
+                        <div className="brand-catalog-header brand-catalog-header-static" style={{ padding: '0.55rem 0.8rem' }}>
+                          <div className="brand-catalog-identity" style={{ gridTemplateColumns: '106px 1fr', gap: '0.8rem' }}>
                             <img
                               src={getCarImage(primaryVariant)}
                               alt={family.name}
                               onError={handleCarImageError}
-                              style={{ width: '76px', height: '48px', objectFit: 'cover', borderRadius: '0.4rem', border: '1px solid #dbe4f0', flexShrink: 0 }}
+                              style={{ width: '106px', height: '66px', objectFit: 'cover', borderRadius: '0.5rem', border: '1px solid #dbe4f0', flexShrink: 0 }}
                             />
                             <div>
                               <div className="brand-catalog-title-row">
-                                <h3 className="brand-catalog-title" style={{ fontSize: '0.88rem' }}>{family.name}</h3>
-                                <span className="brand-catalog-badge" style={{ fontSize: '0.63rem', padding: '0.1rem 0.35rem' }}>{primaryVariant.vehicle_type || '-'}</span>
+                                <h3 className="brand-catalog-title" style={{ fontSize: '1rem' }}>{family.name}</h3>
+                                <span className="brand-catalog-badge" style={{ fontSize: '0.72rem', padding: '0.14rem 0.42rem' }}>{primaryVariant.vehicle_type || '-'}</span>
                                 {familyYears && (
-                                  <span className="brand-catalog-badge" style={{ fontSize: '0.63rem', padding: '0.1rem 0.35rem' }}>{familyYears}</span>
+                                  <span className="brand-catalog-badge" style={{ fontSize: '0.72rem', padding: '0.14rem 0.42rem' }}>{familyYears}</span>
                                 )}
                               </div>
                               {family.variants.map((variant) => (
-                                <div key={variant.id} className="brand-catalog-meta-row" style={{ marginTop: '0.2rem', gap: '0.2rem' }}>
-                                  <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 700, padding: '0.08rem 0.3rem' }}>{t.pages.year}: {variant.year_introduced || '-'}</span>
-                                  <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 600, padding: '0.08rem 0.3rem' }}>{t.pages.engine}: {variant.engine_type || '-'}</span>
-                                  <span className="brand-catalog-meta-pill" style={{ fontSize: '0.63rem', fontWeight: 600, padding: '0.08rem 0.3rem' }}>{t.pages.productionStatus}: {variant.production_status || '-'}</span>
+                                <div key={variant.id} className="brand-catalog-meta-row" style={{ marginTop: '0.26rem', gap: '0.28rem' }}>
+                                  <span className="brand-catalog-meta-pill" style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.12rem 0.34rem' }}>{t.pages.year}: {variant.year_introduced || '-'}</span>
+                                  <span className="brand-catalog-meta-pill" style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.12rem 0.34rem' }}>{t.pages.engine}: {variant.engine_type || '-'}</span>
+                                  <span className="brand-catalog-meta-pill" style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.12rem 0.34rem' }}>{t.pages.productionStatus}: {variant.production_status || '-'}</span>
                                 </div>
                               ))}
                             </div>
