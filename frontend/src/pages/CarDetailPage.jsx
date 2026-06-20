@@ -712,9 +712,6 @@ export default function CarDetailPage() {
             <h2 className="detail-section-title">{t.pages.reviewsSectionTitle}</h2>
             <p className="detail-section-subtitle">{t.pages.reviewsSectionIntro}</p>
           </div>
-          <Link to={`/reviews?model=${car.id}`} className="btn btn-primary btn-sm">
-            {t.pages.openReviewsPage}
-          </Link>
         </div>
 
         {reviewArticles.length === 0 ? (
