@@ -383,6 +383,19 @@ function parseReviewContent(content) {
   return { overview: overview.join(' '), images, secondImages, testResults, verdict: verdict.join(' ') }
 }
 
+function getSafeOverviewValue(parsedOverview, fallbackSummary = '') {
+  const candidate = String(parsedOverview || '').replace(/\s+/g, ' ').trim()
+  if (!candidate) return String(fallbackSummary || '').trim()
+
+  // Guard against malformed legacy content where the whole article leaks into Overview.
+  const looksLikeWholeArticle = /(example photo gallery|test results|second photo gallery|verdict|\/media\/)/i.test(candidate)
+  if (looksLikeWholeArticle) {
+    return String(fallbackSummary || '').trim()
+  }
+
+  return candidate
+}
+
 function buildReviewContent({ overview, images, secondImages, testResults, verdict }) {
   const sections = []
 
@@ -752,7 +765,7 @@ export default function ReviewsPage() {
         setSectionImagePreviews(parsedContent.secondImages || [])
         setSectionValue('')
       } else if (field === 'overview') {
-        setSectionValue(String(parsedContent.overview || ''))
+        setSectionValue(getSafeOverviewValue(parsedContent.overview, draft.summary))
       } else {
         setSectionValue(String(parsedContent[field] || ''))
       }
