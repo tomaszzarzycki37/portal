@@ -40,7 +40,13 @@ const TEST_RESULT_FIELDS = [
     key: '0-100 km/h (measured)',
     unit: 's',
     labels: { en: '0-100 km/h (measured)', pl: '0-100 km/h (pomiar)' },
-    aliases: ['0-100 km/h (measured)'],
+    aliases: ['0-100 km/h (measured)', '0-100 km/h'],
+  },
+  {
+    key: '80-120 km/h',
+    unit: 's',
+    labels: { en: '80-120 km/h', pl: '80-120 km/h' },
+    aliases: ['80-120 km/h'],
   },
   {
     key: '100-0 km/h braking distance',
@@ -49,22 +55,82 @@ const TEST_RESULT_FIELDS = [
     aliases: ['100-0 km/h braking distance'],
   },
   {
+    key: 'Top speed',
+    unit: 'km/h',
+    labels: { en: 'Top speed', pl: 'Predkosc maksymalna' },
+    aliases: ['Top speed'],
+  },
+  {
     key: 'Real-world mixed consumption',
     unit: 'kWh/100 km',
     labels: { en: 'Real-world mixed consumption', pl: 'Realne zuzycie mieszane' },
-    aliases: ['Real-world mixed consumption', 'Real-world motorway consumption (130 km/h)'],
+    aliases: ['Real-world mixed consumption', 'Real-world consumption (mixed)'],
+  },
+  {
+    key: 'Real-world motorway consumption (130 km/h)',
+    unit: 'kWh/100 km',
+    labels: { en: 'Real-world motorway consumption (130 km/h)', pl: 'Realne zuzycie autostrada (130 km/h)' },
+    aliases: ['Real-world motorway consumption (130 km/h)', 'Real-world motorway consumption'],
   },
   {
     key: 'Real-world range (mixed)',
     unit: 'km',
     labels: { en: 'Real-world range (mixed)', pl: 'Realny zasieg (mieszany)' },
-    aliases: ['Real-world range (mixed)'],
+    aliases: ['Real-world range (mixed)', 'Real-world mixed range'],
+  },
+  {
+    key: 'Real-world motorway range (120 km/h)',
+    unit: 'km',
+    labels: { en: 'Real-world motorway range (120 km/h)', pl: 'Realny zasieg autostrada (120 km/h)' },
+    aliases: ['Real-world motorway range (120 km/h)', 'Real-world motorway range'],
+  },
+  {
+    key: 'WLTP range',
+    unit: 'km',
+    labels: { en: 'WLTP range', pl: 'Zasieg WLTP' },
+    aliases: ['WLTP range'],
   },
   {
     key: 'DC charging 10-80%',
     unit: 'min',
     labels: { en: 'DC charging 10-80%', pl: 'Ladowanie DC 10-80%' },
     aliases: ['DC charging 10-80%', 'DC charging 20-80%'],
+  },
+  {
+    key: 'AC charging 0-100%',
+    unit: 'h',
+    labels: { en: 'AC charging 0-100%', pl: 'Ladowanie AC 0-100%' },
+    aliases: ['AC charging 0-100%', 'AC charging 10-100%'],
+  },
+  {
+    key: 'Battery capacity (net)',
+    unit: 'kWh',
+    labels: { en: 'Battery capacity (net)', pl: 'Pojemnosc baterii (netto)' },
+    aliases: ['Battery capacity (net)', 'Net battery capacity'],
+  },
+  {
+    key: 'System power',
+    unit: 'kW',
+    labels: { en: 'System power', pl: 'Moc systemowa' },
+    aliases: ['System power', 'Power'],
+  },
+  {
+    key: 'Torque',
+    unit: 'Nm',
+    labels: { en: 'Torque', pl: 'Moment obrotowy' },
+    aliases: ['Torque'],
+  },
+  {
+    key: 'Curb weight',
+    unit: 'kg',
+    labels: { en: 'Curb weight', pl: 'Masa wlasna' },
+    aliases: ['Curb weight'],
+  },
+  {
+    key: 'Boot capacity',
+    unit: 'L',
+    labels: { en: 'Boot capacity', pl: 'Pojemnosc bagaznika' },
+    aliases: ['Boot capacity'],
   },
 ]
 
@@ -106,6 +172,38 @@ function getTestLabel(key, lang) {
   const field = getTestFieldByKey(key)
   if (!field) return key
   return field.labels[lang] || field.labels.en || key
+}
+
+function buildTestResultRows(existingResults = []) {
+  const normalizedExisting = Array.isArray(existingResults) ? existingResults : []
+
+  const predefinedRows = TEST_RESULT_FIELDS.map((fieldDef) => {
+    const existing = normalizedExisting.find((item) => {
+      const incomingKey = String(item?.key || '')
+      return !!fieldDef.aliases.find((alias) => normalizeTestKey(alias) === normalizeTestKey(incomingKey))
+        || normalizeTestKey(fieldDef.key) === normalizeTestKey(incomingKey)
+    })
+
+    return {
+      key: fieldDef.key,
+      unit: fieldDef.unit,
+      value: stripKnownUnit(existing?.value || '', fieldDef.unit),
+    }
+  })
+
+  const customRows = normalizedExisting
+    .filter((item) => {
+      const key = String(item?.key || '').trim()
+      if (!key) return false
+      return !getTestFieldByKey(key)
+    })
+    .map((item) => ({
+      key: String(item.key || '').trim(),
+      unit: '',
+      value: String(item.value || '').trim(),
+    }))
+
+  return [...predefinedRows, ...customRows]
 }
 
 function RichTextEditor({ id, label, value, onChange, placeholder }) {
@@ -420,7 +518,7 @@ function buildReviewContent({ overview, images, secondImages, testResults, verdi
     testResults.forEach((result) => {
       const key = String(result?.key || '').trim()
       const value = String(result?.value || '').trim()
-      if (key || value) {
+      if (key && value) {
         sections.push(`- ${key}: ${value}`)
       }
     })
@@ -744,18 +842,7 @@ export default function ReviewsPage() {
     if (nestedFields.includes(field)) {
       const parsedContent = parseReviewContent(draft.content)
       if (field === 'testResults') {
-        const rows = TEST_RESULT_FIELDS.map((fieldDef) => {
-          const existing = (parsedContent.testResults || []).find((item) => {
-            const incomingKey = String(item?.key || '')
-            return !!fieldDef.aliases.find((alias) => normalizeTestKey(alias) === normalizeTestKey(incomingKey))
-              || normalizeTestKey(fieldDef.key) === normalizeTestKey(incomingKey)
-          })
-          return {
-            key: fieldDef.key,
-            unit: fieldDef.unit,
-            value: stripKnownUnit(existing?.value || '', fieldDef.unit),
-          }
-        })
+        const rows = buildTestResultRows(parsedContent.testResults)
         setSectionTestResultsValues(rows)
         setSectionValue('')
       } else if (field === 'images') {
@@ -810,12 +897,13 @@ export default function ReviewsPage() {
               const key = String(item.key || '').trim()
               const fieldDef = getTestFieldByKey(key)
               const unit = fieldDef?.unit || String(item.unit || '').trim()
+              const value = String(item.value || '').trim()
               return {
                 key,
-                value: appendUnit(item.value, unit),
+                value: appendUnit(value, unit),
               }
             })
-            .filter((item) => item.key)
+            .filter((item) => item.key && item.value)
         } else if (field === 'images') {
           parsedContent.images = sectionImagePreviews
         } else if (field === 'secondImages') {
@@ -1590,7 +1678,9 @@ export default function ReviewsPage() {
             ) : sectionEditor.field === 'testResults' ? (
               <div className="review-test-results-editor">
                 <p className="review-test-results-note">
-                  {lang === 'pl' ? 'Nazwy parametrow sa stale. Edytujesz tylko wartosci.' : 'Field names are fixed. Edit values only.'}
+                  {lang === 'pl'
+                    ? 'Wypelnij dowolne pomiary. Puste wartosci nie beda wyswietlane.'
+                    : 'Fill any metrics you need. Empty values are not displayed.'}
                 </p>
                 <div className="review-test-results-editor-grid">
                   {sectionTestResultsValues.map((item, index) => (
