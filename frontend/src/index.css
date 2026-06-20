@@ -2672,9 +2672,9 @@ body.app-theme-dark .brand-anecdote-text {
   }
 
   .brand-catalog-model-family-actions .catalog-action-btn {
-    min-height: 42px;
-    font-size: 0.9rem;
-    padding: 0.5rem 0.98rem;
+    min-height: 38px;
+    font-size: 0.83rem;
+    padding: 0.45rem 0.85rem;
   }
 
   .brand-detail-hero {
@@ -2760,9 +2760,9 @@ body.app-theme-dark .brand-anecdote-text {
   }
 
   .brand-catalog-model-family-actions .catalog-action-btn {
-    min-height: 44px;
-    font-size: 0.94rem;
-    padding: 0.54rem 1.05rem;
+    min-height: 38px;
+    font-size: 0.83rem;
+    padding: 0.45rem 0.85rem;
   }
 }
 
