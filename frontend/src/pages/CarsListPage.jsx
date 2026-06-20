@@ -383,7 +383,7 @@ export default function CarsListPage() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: '0.7rem', display: 'grid', gap: '0.85rem', padding: '0 1rem 1rem' }}>
+                <div className="brand-catalog-models-list">
                   {brandCars.length === 0 ? (
                     <div className="page-card">
                       <div className="brand-empty-models-content">
@@ -411,33 +411,33 @@ export default function CarsListPage() {
                         .join(' / ')
 
                       return (
-                      <article key={family.key} className="brand-catalog-card" style={{ margin: 0, boxShadow: 'none', borderRadius: '0.78rem', background: '#f8fafc' }}>
-                        <div className="brand-catalog-header brand-catalog-header-static" style={{ padding: '0.68rem 0.92rem' }}>
-                          <div className="brand-catalog-identity" style={{ gridTemplateColumns: '132px 1fr', gap: '0.95rem' }}>
+                      <article key={family.key} className="brand-catalog-card brand-catalog-model-family-card">
+                        <div className="brand-catalog-header brand-catalog-header-static brand-catalog-model-family-header">
+                          <div className="brand-catalog-identity brand-catalog-model-family-identity">
                             <img
                               src={getCarImage(primaryVariant)}
                               alt={family.name}
                               onError={handleCarImageError}
-                              style={{ width: '132px', height: '84px', objectFit: 'cover', borderRadius: '0.6rem', border: '1px solid #dbe4f0', flexShrink: 0 }}
+                              className="brand-catalog-model-family-image"
                             />
                             <div>
                               <div className="brand-catalog-title-row">
-                                <h3 className="brand-catalog-title" style={{ fontSize: '1.12rem' }}>{family.name}</h3>
-                                <span className="brand-catalog-badge" style={{ fontSize: '0.8rem', padding: '0.18rem 0.46rem' }}>{primaryVariant.vehicle_type || '-'}</span>
+                                <h3 className="brand-catalog-title brand-catalog-model-family-title">{family.name}</h3>
+                                <span className="brand-catalog-badge brand-catalog-model-family-badge">{primaryVariant.vehicle_type || '-'}</span>
                                 {familyYears && (
-                                  <span className="brand-catalog-badge" style={{ fontSize: '0.8rem', padding: '0.18rem 0.46rem' }}>{familyYears}</span>
+                                  <span className="brand-catalog-badge brand-catalog-model-family-badge">{familyYears}</span>
                                 )}
                               </div>
                               {family.variants.map((variant) => (
-                                <div key={variant.id} className="brand-catalog-meta-row" style={{ marginTop: '0.35rem', gap: '0.34rem' }}>
-                                  <span className="brand-catalog-meta-pill" style={{ fontSize: '0.76rem', fontWeight: 700, padding: '0.16rem 0.4rem' }}>{t.pages.year}: {variant.year_introduced || '-'}</span>
-                                  <span className="brand-catalog-meta-pill" style={{ fontSize: '0.76rem', fontWeight: 600, padding: '0.16rem 0.4rem' }}>{t.pages.engine}: {variant.engine_type || '-'}</span>
-                                  <span className="brand-catalog-meta-pill" style={{ fontSize: '0.76rem', fontWeight: 600, padding: '0.16rem 0.4rem' }}>{t.pages.productionStatus}: {variant.production_status || '-'}</span>
+                                <div key={variant.id} className="brand-catalog-meta-row brand-catalog-model-family-meta-row">
+                                  <span className="brand-catalog-meta-pill brand-catalog-model-family-pill">{t.pages.year}: {variant.year_introduced || '-'}</span>
+                                  <span className="brand-catalog-meta-pill brand-catalog-model-family-pill">{t.pages.engine}: {variant.engine_type || '-'}</span>
+                                  <span className="brand-catalog-meta-pill brand-catalog-model-family-pill">{t.pages.productionStatus}: {variant.production_status || '-'}</span>
                                 </div>
                               ))}
                             </div>
                           </div>
-                          <div className="brand-catalog-actions" style={{ alignSelf: 'center' }}>
+                          <div className="brand-catalog-actions brand-catalog-model-family-actions">
                             <Link to={`/cars/${primaryVariant.id}`} className="catalog-action-btn">
                               {t.pages.readMore}
                             </Link>
