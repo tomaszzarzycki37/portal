@@ -63,49 +63,49 @@ const TEST_RESULT_FIELDS = [
   {
     key: 'Real-world mixed consumption',
     unit: 'kWh/100 km',
-    labels: { en: 'Real-world mixed consumption', pl: 'Realne zuzycie mieszane' },
+    labels: { en: 'Real-world mixed consumption', pl: 'Realne zużycie mieszane' },
     aliases: ['Real-world mixed consumption', 'Real-world consumption (mixed)'],
   },
   {
     key: 'Real-world motorway consumption (130 km/h)',
     unit: 'kWh/100 km',
-    labels: { en: 'Real-world motorway consumption (130 km/h)', pl: 'Realne zuzycie autostrada (130 km/h)' },
+    labels: { en: 'Real-world motorway consumption (130 km/h)', pl: 'Realne zużycie autostrada (130 km/h)' },
     aliases: ['Real-world motorway consumption (130 km/h)', 'Real-world motorway consumption'],
   },
   {
     key: 'Real-world range (mixed)',
     unit: 'km',
-    labels: { en: 'Real-world range (mixed)', pl: 'Realny zasieg (mieszany)' },
+    labels: { en: 'Real-world range (mixed)', pl: 'Realny zasięg (mieszany)' },
     aliases: ['Real-world range (mixed)', 'Real-world mixed range'],
   },
   {
     key: 'Real-world motorway range (120 km/h)',
     unit: 'km',
-    labels: { en: 'Real-world motorway range (120 km/h)', pl: 'Realny zasieg autostrada (120 km/h)' },
+    labels: { en: 'Real-world motorway range (120 km/h)', pl: 'Realny zasięg autostrada (120 km/h)' },
     aliases: ['Real-world motorway range (120 km/h)', 'Real-world motorway range'],
   },
   {
     key: 'WLTP range',
     unit: 'km',
-    labels: { en: 'WLTP range', pl: 'Zasieg WLTP' },
+    labels: { en: 'WLTP range', pl: 'Zasięg WLTP' },
     aliases: ['WLTP range'],
   },
   {
     key: 'DC charging 10-80%',
     unit: 'min',
-    labels: { en: 'DC charging 10-80%', pl: 'Ladowanie DC 10-80%' },
+    labels: { en: 'DC charging 10-80%', pl: 'Ładowanie DC 10-80%' },
     aliases: ['DC charging 10-80%', 'DC charging 20-80%'],
   },
   {
     key: 'AC charging 0-100%',
     unit: 'h',
-    labels: { en: 'AC charging 0-100%', pl: 'Ladowanie AC 0-100%' },
+    labels: { en: 'AC charging 0-100%', pl: 'Ładowanie AC 0-100%' },
     aliases: ['AC charging 0-100%', 'AC charging 10-100%'],
   },
   {
     key: 'Battery capacity (net)',
     unit: 'kWh',
-    labels: { en: 'Battery capacity (net)', pl: 'Pojemnosc baterii (netto)' },
+    labels: { en: 'Battery capacity (net)', pl: 'Pojemność baterii (netto)' },
     aliases: ['Battery capacity (net)', 'Net battery capacity'],
   },
   {
@@ -123,13 +123,13 @@ const TEST_RESULT_FIELDS = [
   {
     key: 'Curb weight',
     unit: 'kg',
-    labels: { en: 'Curb weight', pl: 'Masa wlasna' },
+    labels: { en: 'Curb weight', pl: 'Masa własna' },
     aliases: ['Curb weight'],
   },
   {
     key: 'Boot capacity',
     unit: 'L',
-    labels: { en: 'Boot capacity', pl: 'Pojemnosc bagaznika' },
+    labels: { en: 'Boot capacity', pl: 'Pojemność bagażnika' },
     aliases: ['Boot capacity'],
   },
 ]
