@@ -442,17 +442,6 @@ function hasStructuredReviewContent(content) {
   return /(\n|^)(Overview|Example photo gallery|Test results|Second photo gallery|Verdict)(\n|$)/.test(normalized)
 }
 
-function hasParsedStructuredData(parsed) {
-  if (!parsed) return false
-  return Boolean(
-    String(parsed.overview || '').trim()
-    || String(parsed.verdict || '').trim()
-    || (Array.isArray(parsed.images) && parsed.images.length > 0)
-    || (Array.isArray(parsed.secondImages) && parsed.secondImages.length > 0)
-    || (Array.isArray(parsed.testResults) && parsed.testResults.length > 0),
-  )
-}
-
 export default function ReviewsPage() {
   const { t, lang } = useTranslation()
   const location = useLocation()
@@ -1250,7 +1239,7 @@ export default function ReviewsPage() {
               const content = decodeHtmlEntities(review.content)
               const parsed = parseReviewContent(content)
               const isStructuredContent = hasStructuredReviewContent(content)
-              const shouldRenderStructured = isStructuredContent && hasParsedStructuredData(parsed)
+              const shouldRenderStructured = isStructuredContent
               const canManageReview = canEditByAuthorId(review.author_id)
               const emptyGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia' : 'Brak zdjęć'
               const emptySecondGalleryLabel = canManageReview ? 'Kliknij, aby dodać zdjęcia do drugiego slidera' : 'Brak zdjęć w drugim sliderze'
