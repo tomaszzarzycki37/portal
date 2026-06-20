@@ -1991,6 +1991,20 @@ body.app-theme-dark .brand-description-toggle:hover {
   color: #fbbf24;
 }
 
+.review-gallery-main-btn {
+  display: block;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.review-gallery-main-btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
 .brand-catalog-model-family-title {
   font-size: 1.12rem;
 }

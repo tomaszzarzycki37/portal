@@ -127,7 +127,9 @@ function RichTextEditor({ id, label, value, onChange, placeholder }) {
 
 function ImageSlider({ images, title, emptyLabel, onEdit, isEditable, className = 'review-gallery' }) {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [previewImageUrl, setPreviewImageUrl] = useState('')
   const hasImages = images.length > 0
+  const isPreviewOpen = Boolean(previewImageUrl)
 
   useEffect(() => {
     if (activeIndex >= images.length) {
@@ -152,6 +154,29 @@ function ImageSlider({ images, title, emptyLabel, onEdit, isEditable, className 
     setActiveIndex(index)
   }
 
+  const handleOpenPreview = (event) => {
+    event.stopPropagation()
+    if (isEditable || !hasImages) return
+    setPreviewImageUrl(images[activeIndex])
+  }
+
+  const handleClosePreview = () => {
+    setPreviewImageUrl('')
+  }
+
+  useEffect(() => {
+    if (!isPreviewOpen) return undefined
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        handleClosePreview()
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [isPreviewOpen])
+
   return (
     <div
       className={`${className} ${isEditable ? 'review-inline-editable-block' : ''}`}
@@ -169,12 +194,28 @@ function ImageSlider({ images, title, emptyLabel, onEdit, isEditable, className 
       {hasImages ? (
         <>
           <div className="review-slider-main-wrapper">
-            <img
-              src={images[activeIndex]}
-              alt={`${title} ${activeIndex + 1}`}
-              className="review-gallery-main"
-              loading="lazy"
-            />
+            {isEditable ? (
+              <img
+                src={images[activeIndex]}
+                alt={`${title} ${activeIndex + 1}`}
+                className="review-gallery-main"
+                loading="lazy"
+              />
+            ) : (
+              <button
+                type="button"
+                className="review-gallery-main-btn"
+                onClick={handleOpenPreview}
+                aria-label={`Powieksz zdjęcie ${activeIndex + 1}`}
+              >
+                <img
+                  src={images[activeIndex]}
+                  alt={`${title} ${activeIndex + 1}`}
+                  className="review-gallery-main"
+                  loading="lazy"
+                />
+              </button>
+            )}
             {images.length > 1 && (
               <>
                 <button type="button" className="review-slider-nav review-slider-nav-prev" onClick={handlePrev} aria-label="Poprzednie zdjęcie">‹</button>
@@ -205,6 +246,22 @@ function ImageSlider({ images, title, emptyLabel, onEdit, isEditable, className 
         </>
       ) : (
         <div className="review-gallery-empty">{emptyLabel}</div>
+      )}
+
+      {isPreviewOpen && (
+        <div className="image-preview-overlay" onClick={handleClosePreview} role="presentation">
+          <div className="image-preview-modal" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              className="image-preview-close"
+              onClick={handleClosePreview}
+              aria-label="Zamknij podgląd zdjęcia"
+            >
+              ×
+            </button>
+            <img src={previewImageUrl} alt={`${title} podgląd`} className="image-preview-full" />
+          </div>
+        </div>
       )}
     </div>
   )
