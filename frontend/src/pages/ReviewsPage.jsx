@@ -751,7 +751,7 @@ export default function ReviewsPage() {
         setSectionImagePreviews(parsedContent.secondImages || [])
         setSectionValue('')
       } else if (field === 'overview') {
-        setSectionValue(String(parsedContent.overview || draft.content || draft.summary || ''))
+        setSectionValue(String(parsedContent.overview || ''))
       } else {
         setSectionValue(String(parsedContent[field] || ''))
       }
