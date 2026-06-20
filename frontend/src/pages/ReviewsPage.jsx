@@ -710,17 +710,7 @@ export default function ReviewsPage() {
     // Handle nested fields from content JSON
     const nestedFields = ['overview', 'testResults', 'verdict', 'images', 'secondImages']
     if (nestedFields.includes(field)) {
-      const existingContent = String(draft.content || '')
-      const isStructuredSource = hasStructuredReviewContent(existingContent)
-      if (!isStructuredSource) {
-        setSectionEditor({ reviewId, field: 'content' })
-        setSectionValue(existingContent)
-        setSectionImagePreviews([])
-        setSectionTestResultsValues([])
-        return
-      }
-
-      const parsedContent = parseReviewContent(existingContent)
+      const parsedContent = parseReviewContent(draft.content)
       if (field === 'testResults') {
         const rows = TEST_RESULT_FIELDS.map((fieldDef) => {
           const existing = (parsedContent.testResults || []).find((item) => {
@@ -778,12 +768,6 @@ export default function ReviewsPage() {
 
       if (nestedFields.includes(field)) {
         const existingContent = reviewDraft?.content || ''
-        if (!hasStructuredReviewContent(existingContent)) {
-          setReviewError(lang === 'pl' ? 'Ta recenzja ma format HTML. Edytuj pole Tresc.' : 'This review uses HTML format. Edit the Content field instead.')
-          setReviewSaving(false)
-          return
-        }
-
         const parsedContent = parseReviewContent(existingContent)
 
         if (field === 'testResults') {
