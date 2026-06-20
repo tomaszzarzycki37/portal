@@ -4,7 +4,7 @@ import api from '../services/api'
 import { useTranslation } from '../i18n'
 import { createBrandPlaceholderUrl, getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
-import { isAdminUser } from '../utils/auth'
+import { isAdminUser, isAuthenticatedUser } from '../utils/auth'
 
 function detectDriveType(engineType) {
   const text = String(engineType || '').toLowerCase()
@@ -36,8 +36,24 @@ export default function CarsListPage() {
   const [productionStatusFilter, setProductionStatusFilter] = useState('all')
   const [driveTypeFilter, setDriveTypeFilter] = useState('all')
   const [expandedBrandDescriptions, setExpandedBrandDescriptions] = useState(() => new Set())
+  const [previewImageUrl, setPreviewImageUrl] = useState('')
+  const [previewImageAlt, setPreviewImageAlt] = useState('')
   const { t, lang } = useTranslation()
   const isAdmin = isAdminUser()
+  const isLoggedIn = isAuthenticatedUser()
+
+  const isImagePreviewOpen = Boolean(previewImageUrl)
+
+  const openGuestImagePreview = (imageUrl, imageAlt) => {
+    if (isLoggedIn || !imageUrl) return
+    setPreviewImageUrl(imageUrl)
+    setPreviewImageAlt(imageAlt || 'Car model image')
+  }
+
+  const closeGuestImagePreview = () => {
+    setPreviewImageUrl('')
+    setPreviewImageAlt('')
+  }
 
   const toggleBrandDescription = (brandId) => {
     setExpandedBrandDescriptions((prev) => {
@@ -54,6 +70,19 @@ export default function CarsListPage() {
   useEffect(() => {
     fetchCatalog()
   }, [])
+
+  useEffect(() => {
+    if (!isImagePreviewOpen) return undefined
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        closeGuestImagePreview()
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [isImagePreviewOpen])
 
   const fetchCatalog = async () => {
     setLoading(true)
@@ -414,12 +443,28 @@ export default function CarsListPage() {
                       <article key={family.key} className="brand-catalog-card brand-catalog-model-family-card">
                         <div className="brand-catalog-header brand-catalog-header-static brand-catalog-model-family-header">
                           <div className="brand-catalog-identity brand-catalog-model-family-identity">
-                            <img
-                              src={getCarImage(primaryVariant)}
-                              alt={family.name}
-                              onError={handleCarImageError}
-                              className="brand-catalog-model-family-image"
-                            />
+                            {isLoggedIn ? (
+                              <img
+                                src={getCarImage(primaryVariant)}
+                                alt={family.name}
+                                onError={handleCarImageError}
+                                className="brand-catalog-model-family-image"
+                              />
+                            ) : (
+                              <button
+                                type="button"
+                                className="brand-catalog-model-family-image-btn"
+                                onClick={() => openGuestImagePreview(getCarImage(primaryVariant), family.name)}
+                                aria-label={lang === 'pl' ? `Powieksz zdjecie modelu ${family.name}` : `Enlarge model image ${family.name}`}
+                              >
+                                <img
+                                  src={getCarImage(primaryVariant)}
+                                  alt={family.name}
+                                  onError={handleCarImageError}
+                                  className="brand-catalog-model-family-image"
+                                />
+                              </button>
+                            )}
                             <div>
                               <div className="brand-catalog-title-row">
                                 <h3 className="brand-catalog-title brand-catalog-model-family-title">{family.name}</h3>
@@ -452,6 +497,22 @@ export default function CarsListPage() {
           })}
           </div>
         </>
+      )}
+
+      {isImagePreviewOpen && (
+        <div className="image-preview-overlay" onClick={closeGuestImagePreview} role="presentation">
+          <div className="image-preview-modal" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              className="image-preview-close"
+              onClick={closeGuestImagePreview}
+              aria-label={lang === 'pl' ? 'Zamknij podglad zdjecia' : 'Close image preview'}
+            >
+              ×
+            </button>
+            <img src={previewImageUrl} alt={previewImageAlt} className="image-preview-full" />
+          </div>
+        </div>
       )}
     </div>
   )
