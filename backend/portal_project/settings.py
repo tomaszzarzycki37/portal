@@ -173,4 +173,5 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_SECURITY_POLICY = {
         "default-src": ("'self'",),
+        "img-src": ("'self'", "https:", "data:", "blob:"),
     }

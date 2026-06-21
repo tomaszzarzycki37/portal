@@ -6,6 +6,7 @@ import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
+import { normalizeMediaUrl } from '../utils/mediaUrl'
 import { canEditByAuthorId, isAdminUser, isAuthenticatedUser } from '../utils/auth'
 
 const WORD_LIKE_MODULES = {
@@ -51,6 +52,14 @@ function getMeaningfulRichText(value) {
 
 function getReviewPreviewImage(review) {
   const rawContent = String(review?.content || '').trim()
+  const normalizeExtractedUrl = (value) => {
+    const cleaned = String(value || '')
+      .trim()
+      .replace(/^['"(<\[]+/, '')
+      .replace(/[)'"\],.;!?]+$/, '')
+    return cleaned ? normalizeMediaUrl(cleaned) : ''
+  }
+
   if (rawContent.startsWith('{')) {
     try {
       const parsed = JSON.parse(rawContent)
@@ -59,14 +68,14 @@ function getReviewPreviewImage(review) {
         ...(Array.isArray(parsed?.secondImages) ? parsed.secondImages : []),
         ...(Array.isArray(parsed?.imagesAfterTests) ? parsed.imagesAfterTests : []),
       ].find((url) => String(url || '').trim())
-      if (fromJson) return String(fromJson).trim()
+      if (fromJson) return normalizeExtractedUrl(fromJson)
     } catch {
       // Fall through to line-based extraction.
     }
   }
 
   const match = rawContent.match(/(?:https?:\/\/[^\s]+|\/media\/[^\s]+)/i)
-  return match ? String(match[0]).trim() : ''
+  return match ? normalizeExtractedUrl(match[0]) : ''
 }
 
 function RichTextEditor({ id, label, value, onChange, placeholder }) {
