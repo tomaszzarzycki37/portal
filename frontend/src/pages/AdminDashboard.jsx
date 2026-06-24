@@ -146,6 +146,9 @@ export default function AdminDashboard() {
   const [horsepower, setHorsepower] = useState('')
   const [acceleration, setAcceleration] = useState('')
   const [topSpeed, setTopSpeed] = useState('')
+  const [lengthMm, setLengthMm] = useState('')
+  const [widthMm, setWidthMm] = useState('')
+  const [heightMm, setHeightMm] = useState('')
   const [fuelConsumption, setFuelConsumption] = useState('')
   const [priceMinK, setPriceMinK] = useState('')
   const [priceMaxK, setPriceMaxK] = useState('')
@@ -907,6 +910,9 @@ export default function AdminDashboard() {
     setHorsepower(car.horsepower !== null && car.horsepower !== undefined ? String(car.horsepower) : '')
     setAcceleration(car.acceleration || '')
     setTopSpeed(car.top_speed !== null && car.top_speed !== undefined ? String(car.top_speed) : '')
+    setLengthMm(car.length_mm !== null && car.length_mm !== undefined ? String(car.length_mm) : '')
+    setWidthMm(car.width_mm !== null && car.width_mm !== undefined ? String(car.width_mm) : '')
+    setHeightMm(car.height_mm !== null && car.height_mm !== undefined ? String(car.height_mm) : '')
     setFuelConsumption(car.fuel_consumption || '')
     setPriceMinK(car.price_min ? String(car.price_min) : '')
     setPriceMaxK(car.price_max ? String(car.price_max) : '')
@@ -928,6 +934,9 @@ export default function AdminDashboard() {
       horsepower: car.horsepower !== null && car.horsepower !== undefined ? String(car.horsepower) : '',
       acceleration: car.acceleration || '',
       topSpeed: car.top_speed !== null && car.top_speed !== undefined ? String(car.top_speed) : '',
+      lengthMm: car.length_mm !== null && car.length_mm !== undefined ? String(car.length_mm) : '',
+      widthMm: car.width_mm !== null && car.width_mm !== undefined ? String(car.width_mm) : '',
+      heightMm: car.height_mm !== null && car.height_mm !== undefined ? String(car.height_mm) : '',
       fuelConsumption: car.fuel_consumption || '',
       priceMinK: car.price_min ? String(car.price_min) : '',
       priceMaxK: car.price_max ? String(car.price_max) : '',
@@ -1439,6 +1448,9 @@ export default function AdminDashboard() {
     setHorsepower(originalValues.horsepower)
     setAcceleration(originalValues.acceleration)
     setTopSpeed(originalValues.topSpeed)
+    setLengthMm(originalValues.lengthMm)
+    setWidthMm(originalValues.widthMm)
+    setHeightMm(originalValues.heightMm)
     setFuelConsumption(originalValues.fuelConsumption)
     setPriceMinK(originalValues.priceMinK)
     setPriceMaxK(originalValues.priceMaxK)
@@ -1498,6 +1510,9 @@ export default function AdminDashboard() {
       formData.append('horsepower', String(toIntOrNull(horsepower) ?? ''))
       formData.append('acceleration', acceleration)
       formData.append('top_speed', String(toIntOrNull(topSpeed) ?? ''))
+      formData.append('length_mm', String(toIntOrNull(lengthMm) ?? ''))
+      formData.append('width_mm', String(toIntOrNull(widthMm) ?? ''))
+      formData.append('height_mm', String(toIntOrNull(heightMm) ?? ''))
       formData.append('fuel_consumption', fuelConsumption)
       formData.append('price_min', priceMinK ? parseFloat(priceMinK) : '')
       formData.append('price_max', priceMaxK ? parseFloat(priceMaxK) : '')
@@ -2094,6 +2109,18 @@ export default function AdminDashboard() {
               <div>
                 <label className="form-label" htmlFor="top">{t.pages.topSpeed}</label>
                 <input id="top" type="number" className="form-input" value={topSpeed} onChange={(e) => setTopSpeed(e.target.value)} />
+              </div>
+              <div>
+                <label className="form-label" htmlFor="length">{t.pages.length}</label>
+                <input id="length" type="number" className="form-input" value={lengthMm} onChange={(e) => setLengthMm(e.target.value)} placeholder="mm" />
+              </div>
+              <div>
+                <label className="form-label" htmlFor="width">{t.pages.width}</label>
+                <input id="width" type="number" className="form-input" value={widthMm} onChange={(e) => setWidthMm(e.target.value)} placeholder="mm" />
+              </div>
+              <div>
+                <label className="form-label" htmlFor="height">{t.pages.height}</label>
+                <input id="height" type="number" className="form-input" value={heightMm} onChange={(e) => setHeightMm(e.target.value)} placeholder="mm" />
               </div>
               <div>
                 <label className="form-label" htmlFor="fuel">{t.pages.fuelConsumption}</label>

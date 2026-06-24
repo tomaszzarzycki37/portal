@@ -155,6 +155,9 @@ export default function CarDetailPage() {
   const [adminHorsepower, setAdminHorsepower] = useState('')
   const [adminAcceleration, setAdminAcceleration] = useState('')
   const [adminTopSpeed, setAdminTopSpeed] = useState('')
+  const [adminLengthMm, setAdminLengthMm] = useState('')
+  const [adminWidthMm, setAdminWidthMm] = useState('')
+  const [adminHeightMm, setAdminHeightMm] = useState('')
   const [adminFuelConsumption, setAdminFuelConsumption] = useState('')
   const [adminPriceMin, setAdminPriceMin] = useState('')
   const [adminPriceMax, setAdminPriceMax] = useState('')
@@ -236,6 +239,21 @@ export default function CarDetailPage() {
           setAdminTopSpeed(
             carResponse.data.top_speed !== null && carResponse.data.top_speed !== undefined
               ? String(carResponse.data.top_speed)
+              : '',
+          )
+          setAdminLengthMm(
+            carResponse.data.length_mm !== null && carResponse.data.length_mm !== undefined
+              ? String(carResponse.data.length_mm)
+              : '',
+          )
+          setAdminWidthMm(
+            carResponse.data.width_mm !== null && carResponse.data.width_mm !== undefined
+              ? String(carResponse.data.width_mm)
+              : '',
+          )
+          setAdminHeightMm(
+            carResponse.data.height_mm !== null && carResponse.data.height_mm !== undefined
+              ? String(carResponse.data.height_mm)
               : '',
           )
           setAdminFuelConsumption(carResponse.data.fuel_consumption || '')
@@ -337,6 +355,9 @@ export default function CarDetailPage() {
       formData.append('horsepower', String(toIntOrNull(adminHorsepower) ?? ''))
       formData.append('acceleration', adminAcceleration)
       formData.append('top_speed', String(toIntOrNull(adminTopSpeed) ?? ''))
+      formData.append('length_mm', String(toIntOrNull(adminLengthMm) ?? ''))
+      formData.append('width_mm', String(toIntOrNull(adminWidthMm) ?? ''))
+      formData.append('height_mm', String(toIntOrNull(adminHeightMm) ?? ''))
       formData.append('fuel_consumption', adminFuelConsumption)
       formData.append('price_min', adminPriceMin ? parseFloat(adminPriceMin) : '')
       formData.append('price_max', adminPriceMax ? parseFloat(adminPriceMax) : '')
@@ -642,6 +663,9 @@ export default function CarDetailPage() {
           <div className="spec-item"><span>{t.pages.horsepower}</span><strong>{car.horsepower || '-'} hp</strong></div>
           <div className="spec-item"><span>{t.pages.acceleration}</span><strong>{car.acceleration || '-'}</strong></div>
           <div className="spec-item"><span>{t.pages.topSpeed}</span><strong>{car.top_speed || '-'} km/h</strong></div>
+          <div className="spec-item"><span>{t.pages.length}</span><strong>{car.length_mm ? `${car.length_mm} mm` : '-'}</strong></div>
+          <div className="spec-item"><span>{t.pages.width}</span><strong>{car.width_mm ? `${car.width_mm} mm` : '-'}</strong></div>
+          <div className="spec-item"><span>{t.pages.height}</span><strong>{car.height_mm ? `${car.height_mm} mm` : '-'}</strong></div>
           <div className="spec-item"><span>{t.pages.fuelConsumption}</span><strong>{car.fuel_consumption || '-'}</strong></div>
           <div className="spec-item"><span>{t.pages.price}</span><strong>{car.price_range_display || '-'}</strong></div>
         </div>
@@ -666,6 +690,32 @@ export default function CarDetailPage() {
             <div className="detail-kv-row">
               <span>{t.pages.fuelConsumption}</span>
               <strong>{car.fuel_consumption || '-'}</strong>
+            </div>
+          </div>
+        </article>
+
+        <article className="detail-extra-card">
+          <h3 className="detail-extra-title">{t.pages.sectionDimensions}</h3>
+          <div className="detail-kv-list">
+            <div className="detail-kv-row">
+              <span>{t.pages.length}</span>
+              <strong>{car.length_mm ? `${car.length_mm} mm` : '-'}</strong>
+            </div>
+            <div className="detail-kv-row">
+              <span>{t.pages.width}</span>
+              <strong>{car.width_mm ? `${car.width_mm} mm` : '-'}</strong>
+            </div>
+            <div className="detail-kv-row">
+              <span>{t.pages.height}</span>
+              <strong>{car.height_mm ? `${car.height_mm} mm` : '-'}</strong>
+            </div>
+            <div className="detail-kv-row">
+              <span>{t.pages.dimensionsSummary}</span>
+              <strong>
+                {car.length_mm && car.width_mm && car.height_mm
+                  ? `${car.length_mm} × ${car.width_mm} × ${car.height_mm} mm`
+                  : '-'}
+              </strong>
             </div>
           </div>
         </article>
@@ -1273,6 +1323,42 @@ export default function CarDetailPage() {
                   className="form-input"
                   value={adminTopSpeed}
                   onChange={(e) => setAdminTopSpeed(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="form-label" htmlFor="admin-length">{t.pages.length}</label>
+                <input
+                  id="admin-length"
+                  type="number"
+                  className="form-input"
+                  value={adminLengthMm}
+                  onChange={(e) => setAdminLengthMm(e.target.value)}
+                  placeholder="mm"
+                />
+              </div>
+
+              <div>
+                <label className="form-label" htmlFor="admin-width">{t.pages.width}</label>
+                <input
+                  id="admin-width"
+                  type="number"
+                  className="form-input"
+                  value={adminWidthMm}
+                  onChange={(e) => setAdminWidthMm(e.target.value)}
+                  placeholder="mm"
+                />
+              </div>
+
+              <div>
+                <label className="form-label" htmlFor="admin-height">{t.pages.height}</label>
+                <input
+                  id="admin-height"
+                  type="number"
+                  className="form-input"
+                  value={adminHeightMm}
+                  onChange={(e) => setAdminHeightMm(e.target.value)}
+                  placeholder="mm"
                 />
               </div>
 

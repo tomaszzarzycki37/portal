@@ -20,6 +20,7 @@ except ImportError:
     PILLOW_OK = False
 
 from apps.cars.models import Brand, CarModel
+from apps.cars.dimension_data import get_dimensions_for_model
 
 
 # ---------------------------------------------------------------------------
@@ -672,12 +673,33 @@ class Command(BaseCommand):
 
             for m in models_data:
                 is_featured = m.pop("is_featured", False)
-                _, model_created = CarModel.objects.get_or_create(
+                slug = m.get("slug")
+                dimensions = get_dimensions_for_model(slug=slug or '', name=m.get('name', ''))
+                if dimensions:
+                    length_mm, width_mm, height_mm = dimensions
+                    m.setdefault("length_mm", length_mm)
+                    m.setdefault("width_mm", width_mm)
+                    m.setdefault("height_mm", height_mm)
+                car_model, model_created = CarModel.objects.get_or_create(
                     brand=brand,
                     name=m["name"],
                     year_introduced=m["year_introduced"],
                     defaults={**m, "is_featured": is_featured},
                 )
+                if not model_created and dimensions:
+                    length_mm, width_mm, height_mm = dimensions
+                    update_fields = []
+                    if car_model.length_mm is None:
+                        car_model.length_mm = length_mm
+                        update_fields.append("length_mm")
+                    if car_model.width_mm is None:
+                        car_model.width_mm = width_mm
+                        update_fields.append("width_mm")
+                    if car_model.height_mm is None:
+                        car_model.height_mm = height_mm
+                        update_fields.append("height_mm")
+                    if update_fields:
+                        car_model.save(update_fields=update_fields + ["updated_at"])
                 if model_created:
                     created_models += 1
                     self.stdout.write(

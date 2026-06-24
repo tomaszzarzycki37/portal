@@ -60,7 +60,8 @@ class CarModelDetailSerializer(serializers.ModelSerializer):
         model = CarModel
         fields = ['id', 'brand', 'brand_id', 'name', 'slug', 'vehicle_type', 'year_introduced', 
                   'description', 'image', 'images', 'engine_type', 'horsepower', 
-                  'acceleration', 'top_speed', 'fuel_consumption', 'price_min', 'price_max', 
+                  'acceleration', 'top_speed', 'length_mm', 'width_mm', 'height_mm',
+                  'fuel_consumption', 'price_min', 'price_max', 
                   'currency', 'price_range_display', 'production_status', 'is_featured', 
                   'avg_rating', 'opinions_count', 'created_at', 'updated_at']
         read_only_fields = ['slug']

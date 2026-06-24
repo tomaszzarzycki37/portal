@@ -64,7 +64,10 @@ class CarModelAdmin(admin.ModelAdmin):
         ('Basic Information', {'fields': ('brand', 'name', 'slug', 'vehicle_type', 'year_introduced')}),
         ('Description & Images', {'fields': ('description', 'image')}),
         ('Specifications', {
-            'fields': ('engine_type', 'horsepower', 'acceleration', 'top_speed', 'fuel_consumption'),
+            'fields': (
+                'engine_type', 'horsepower', 'acceleration', 'top_speed',
+                'length_mm', 'width_mm', 'height_mm', 'fuel_consumption',
+            ),
             'classes': ('collapse',)
         }),
         ('Pricing', {
