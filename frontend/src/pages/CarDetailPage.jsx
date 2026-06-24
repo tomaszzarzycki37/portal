@@ -627,12 +627,6 @@ export default function CarDetailPage() {
             <span className="detail-badge">{car.year_introduced}</span>
             <span className="detail-badge">{car.production_status}</span>
           </div>
-
-          <div className="detail-shortcuts-row">
-            <Link to={`/reviews?model=${car.id}`} className="btn btn-primary btn-sm">
-              {t.pages.reviewsSectionTitle}
-            </Link>
-          </div>
         </div>
 
         {isAdmin ? (
