@@ -116,6 +116,8 @@ export default function BrandDetailPage() {
   const [brandSaving, setBrandSaving] = useState(false)
   const [brandMessage, setBrandMessage] = useState('')
   const [brandError, setBrandError] = useState('')
+  const [deployLoading, setDeployLoading] = useState(false)
+  const [deployMessage, setDeployMessage] = useState('')
   const isDarkTheme = themeMode === 'dark' || (typeof document !== 'undefined' && document.body.classList.contains('app-theme-dark'))
 
   useEffect(() => {
@@ -250,6 +252,24 @@ export default function BrandDetailPage() {
     } catch {
       setBrandError(t.pages.brandDeleteError)
       setBrandSaving(false)
+    }
+  }
+
+  const handleDeployToProd = async () => {
+    if (!isAdmin) return
+    if (!window.confirm(t.pages.deployToProdConfirm)) return
+
+    try {
+      setDeployLoading(true)
+      setDeployMessage('')
+      setBrandError('')
+      await api.post('/common/content/deploy/')
+      setDeployMessage(t.pages.deployToProdSuccess)
+    } catch (error) {
+      const apiError = error?.response?.data?.error
+      setBrandError(apiError || t.pages.deployToProdError)
+    } finally {
+      setDeployLoading(false)
     }
   }
 
@@ -569,14 +589,29 @@ export default function BrandDetailPage() {
             </div>
 
             {brandMessage && <p className="form-success" style={{ marginTop: '1.5rem' }}>{brandMessage}</p>}
+            {deployMessage && <p className="form-success" style={{ marginTop: '0.75rem' }}>{deployMessage}</p>}
             {brandError && <p className="form-error">{brandError}</p>}
 
             <div className="admin-actions-row">
-              <button type="submit" className="btn btn-primary" disabled={brandSaving}>
+              <button type="submit" className="btn btn-primary" disabled={brandSaving || deployLoading}>
                 {brandSaving ? t.pages.loading : t.pages.brandSave}
               </button>
-              <button type="button" className="btn btn-danger" disabled={brandSaving} onClick={handleDeleteBrand}>
+              <Link
+                to={`/admin?section=create-model&brandId=${brand.id}`}
+                className="btn btn-secondary"
+              >
+                {t.pages.addModel}
+              </Link>
+              <button type="button" className="btn btn-danger" disabled={brandSaving || deployLoading} onClick={handleDeleteBrand}>
                 {t.pages.brandDelete}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={brandSaving || deployLoading}
+                onClick={handleDeployToProd}
+              >
+                {deployLoading ? t.pages.loading : t.pages.deployToProd}
               </button>
             </div>
           </form>
@@ -621,11 +656,6 @@ export default function BrandDetailPage() {
                     {group.cars.length} {formatModelLabel(group.cars.length, lang)}
                     </span>
                   </div>
-                  {isAdmin && (
-                    <Link to={`/admin?section=create-model&brandId=${brand.id}`} className="brand-lineup-add-btn" title={t.adminPanel.createModel}>
-                      {t.pages.addNew || 'Add new'}
-                    </Link>
-                  )}
                 </div>
 
                 <div className="cars-grid">
