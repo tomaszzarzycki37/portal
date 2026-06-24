@@ -2442,6 +2442,16 @@ body.app-theme-dark .brand-anecdote-text {
   border: 1px solid #e2e8f0;
 }
 
+.detail-image-wrap {
+  width: 100%;
+  border-radius: 0.75rem;
+}
+
+.detail-image-wrap .detail-image {
+  display: block;
+  margin: 0;
+}
+
 .detail-specs-card {
   border: 1px solid #e2e8f0;
   border-radius: 1rem;

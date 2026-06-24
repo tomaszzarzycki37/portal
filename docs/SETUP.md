@@ -158,4 +158,4 @@ python manage.py shell
 - Enable caching for frequently accessed data
 - Use pagination for large result sets
 
-For more information, see DEPLOYMENT.md for production setup.
+For local development setup, see this file. For production deploy (autachin.pl, Cursor/VS Code workflow, SSH), see [DEPLOYMENT.md](DEPLOYMENT.md).

@@ -54,8 +54,10 @@ PORTAL/
 │   ├── package.json
 │   └── vite.config.js
 ├── config/                 # Configuration files
-│   ├── apache.conf        # Apache VirtualHost configuration
-│   ├── gunicorn.conf      # Gunicorn settings
+│   ├── autachin.conf      # Apache VirtualHost (production: autachin.pl)
+│   ├── apache.conf        # Apache VirtualHost (generic template)
+│   ├── gunicorn.conf.py   # Gunicorn settings
+│   ├── gunicorn.service   # Systemd service file
 │   └── nginx.conf         # Nginx configuration (optional)
 └── docs/                   # Documentation
     ├── SETUP.md           # Setup instructions
@@ -126,15 +128,24 @@ See [API.md](docs/API.md) for complete documentation.
 
 ## Deployment
 
-### Production with Apache + Gunicorn
+### Production (autachin.pl)
 
-See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete setup instructions.
+| | |
+|---|---|
+| Domain | `autachin.pl` |
+| Server path | `/var/www/PORTAL/` |
+| Config | `config/autachin.conf` |
+| Repo | `https://github.com/tomaszzarzycki37/portal.git` |
+
+**Routine deploy:** edit locally → `git push` → `ssh ubuntu@autachin.pl` → `git pull` → migrate → build → restart `gunicorn-chinese-cars` + Apache.
+
+See [DEPLOYMENT.md](docs/DEPLOYMENT.md) — section **Standardowy workflow wdrożenia**.
 
 **Quick Overview:**
 1. Deploy backend with Gunicorn
-2. Configure Apache as reverse proxy
-3. Build and deploy React frontend
-4. Set up SSL/TLS with Let's Encrypt
+2. Configure Apache as reverse proxy (`config/autachin.conf`)
+3. Build and deploy React frontend (`npm run build` → `frontend/dist/`)
+4. Set up SSL/TLS with Let's Encrypt (optional)
 
 ## Future Modules
 

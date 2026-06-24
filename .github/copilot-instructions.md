@@ -70,6 +70,13 @@ PORTAL/
 ### Production Deployment
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment guide with Apache + Gunicorn + PostgreSQL + SSL.
 
+**Standard PROD deploy workflow (autachin.pl):**
+1. Local: `git push origin main`
+2. SSH: `ubuntu@autachin.pl` → `/var/www/PORTAL`
+3. Server: `git pull` → `migrate` → `npm run build` (frontend) → restart `gunicorn-chinese-cars` + `apache2`
+4. Data-only updates: `update_car_price.py` / `update_car_dimensions.py` (API) or `python manage.py populate_car_dimensions` on server
+5. Never commit passwords to Git — use env vars (`PORTAL_ADMIN_PASSWORD`, `PORTAL_SSH_PASSWORD`)
+
 ## Key Endpoints
 
 ### Cars API

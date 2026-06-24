@@ -165,6 +165,7 @@ export default function CarDetailPage() {
   const [adminProductionStatus, setAdminProductionStatus] = useState('active')
   const [adminFeatured, setAdminFeatured] = useState(false)
   const [adminImage, setAdminImage] = useState(null)
+  const [heroImagePreviewUrl, setHeroImagePreviewUrl] = useState('')
   const [isHeroImageEditorOpen, setIsHeroImageEditorOpen] = useState(false)
   const [heroImageSaving, setHeroImageSaving] = useState(false)
   const [heroImageMessage, setHeroImageMessage] = useState('')
@@ -295,6 +296,17 @@ export default function CarDetailPage() {
     }
   }, [opinions, opinionSlideIndex])
 
+  useEffect(() => {
+    if (!adminImage) {
+      setHeroImagePreviewUrl('')
+      return undefined
+    }
+
+    const previewUrl = URL.createObjectURL(adminImage)
+    setHeroImagePreviewUrl(previewUrl)
+    return () => URL.revokeObjectURL(previewUrl)
+  }, [adminImage])
+
   const handleToggleComments = async (opinionId) => {
     setExpandedOpinions((prev) => {
       const next = new Set(prev)
@@ -395,11 +407,27 @@ export default function CarDetailPage() {
       setCar(response.data)
       setAdminImage(null)
       setHeroImageMessage(t.adminInline.saved)
+      setIsHeroImageEditorOpen(false)
     } catch (error) {
       setHeroImageError(extractApiErrorMessage(error, t.adminInline.saveError))
     } finally {
       setHeroImageSaving(false)
     }
+  }
+
+  const handleOpenHeroImageEditor = () => {
+    if (!isAdmin) return
+    setAdminImage(null)
+    setHeroImageMessage('')
+    setHeroImageError('')
+    setIsHeroImageEditorOpen(true)
+  }
+
+  const handleCloseHeroImageEditor = () => {
+    setIsHeroImageEditorOpen(false)
+    setAdminImage(null)
+    setHeroImageMessage('')
+    setHeroImageError('')
   }
 
   const handleAdminOpinionCreate = async (e) => {
@@ -604,54 +632,29 @@ export default function CarDetailPage() {
             <Link to={`/reviews?model=${car.id}`} className="btn btn-primary btn-sm">
               {t.pages.reviewsSectionTitle}
             </Link>
-            {isAdmin && (
-              <button
-                type="button"
-                className={`admin-inline-toggle admin-inline-gear ${isHeroImageEditorOpen ? 'is-open' : ''}`}
-                onClick={() => setIsHeroImageEditorOpen((prev) => !prev)}
-                aria-expanded={isHeroImageEditorOpen}
-                aria-label={isHeroImageEditorOpen ? t.adminPanel.hideImageEditor : t.adminPanel.editImage}
-                title={isHeroImageEditorOpen ? t.adminPanel.hideImageEditor : t.adminPanel.editImage}
-              >
-                <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
-                </svg>
-              </button>
-            )}
           </div>
-
-          {isAdmin && isHeroImageEditorOpen && (
-            <div style={{ marginTop: '0.55rem', display: 'grid', gap: '0.5rem' }}>
-              <div className="admin-file-picker-row">
-                <input
-                  id="hero-image"
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    setAdminImage(e.target.files?.[0] || null)
-                    setHeroImageMessage('')
-                    setHeroImageError('')
-                  }}
-                />
-                <label htmlFor="hero-image" className="btn btn-secondary btn-sm">{t.adminInline.chooseFile}</label>
-                <span className="admin-file-picker-name">{adminImage ? adminImage.name : t.adminInline.noFileSelected}</span>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  disabled={!adminImage || heroImageSaving}
-                  onClick={handleHeroImageSave}
-                >
-                  {heroImageSaving ? t.pages.loading : t.adminInline.save}
-                </button>
-              </div>
-              {heroImageMessage && <p className="form-success">{heroImageMessage}</p>}
-              {heroImageError && <p className="form-error">{heroImageError}</p>}
-            </div>
-          )}
         </div>
 
-        <img src={getCarImage(car)} alt={car.name} className="detail-image" onError={handleCarImageError} />
+        {isAdmin ? (
+          <div
+            className="detail-image-wrap review-inline-editable-block"
+            role="button"
+            tabIndex={0}
+            onClick={handleOpenHeroImageEditor}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                handleOpenHeroImageEditor()
+              }
+            }}
+            aria-label={t.adminPanel.editImage}
+            title={t.adminPanel.editImage}
+          >
+            <img src={getCarImage(car)} alt={car.name} className="detail-image" onError={handleCarImageError} />
+          </div>
+        ) : (
+          <img src={getCarImage(car)} alt={car.name} className="detail-image" onError={handleCarImageError} />
+        )}
       </section>
 
       <section className="detail-specs-card">
@@ -1460,6 +1463,66 @@ export default function CarDetailPage() {
           </form>
           )}
         </section>
+      )}
+
+      {isAdmin && isHeroImageEditorOpen && (
+        <div className="review-inline-editor-backdrop" onClick={handleCloseHeroImageEditor}>
+          <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
+            <h3 className="review-inline-editor-title">
+              {t.pages.editLabel}: {t.adminPanel.image}
+            </h3>
+            <div className="review-image-editor">
+              <div className="review-gallery-main-container">
+                <div className="review-gallery-main-wrapper">
+                  <img
+                    src={heroImagePreviewUrl || getCarImage(car)}
+                    alt={car.name}
+                    className="review-gallery-main"
+                  />
+                </div>
+              </div>
+              <div className="review-image-upload-area">
+                <input
+                  id="hero-image-modal-input"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(event) => {
+                    setAdminImage(event.target.files?.[0] || null)
+                    setHeroImageMessage('')
+                    setHeroImageError('')
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => document.getElementById('hero-image-modal-input')?.click()}
+                  disabled={heroImageSaving}
+                >
+                  {t.adminInline.chooseFile}
+                </button>
+                <span className="admin-file-picker-name">
+                  {adminImage ? adminImage.name : t.adminInline.noFileSelected}
+                </span>
+              </div>
+              {heroImageMessage && <p className="form-success">{heroImageMessage}</p>}
+              {heroImageError && <p className="form-error">{heroImageError}</p>}
+              <div className="admin-actions-row">
+                <button type="button" className="btn btn-secondary" onClick={handleCloseHeroImageEditor}>
+                  {t.pages.cancelLabel}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={!adminImage || heroImageSaving}
+                  onClick={handleHeroImageSave}
+                >
+                  {heroImageSaving ? t.pages.loading : t.pages.saveLabel}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

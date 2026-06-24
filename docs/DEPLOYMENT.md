@@ -4,6 +4,244 @@
 
 This guide covers deploying the Chinese Cars Portal to a production server using Apache as reverse proxy and Gunicorn as the WSGI server.
 
+## Current Production Environment (autachin.pl)
+
+| Setting | Value |
+|---------|-------|
+| **Domain** | `autachin.pl`, `www.autachin.pl` |
+| **Server path** | `/var/www/PORTAL/` |
+| **Apache config** | `config/autachin.conf` |
+| **Frontend (built)** | `/var/www/PORTAL/frontend/dist/` |
+| **Backend media** | `/var/www/PORTAL/backend/media/` |
+| **Gunicorn** | `127.0.0.1:8000` (proxied by Apache) |
+| **Git repository** | `https://github.com/tomaszzarzycki37/portal.git` |
+| **Branch** | `main` |
+| **Apache logs** | `/var/log/apache2/autachin_error.log`, `autachin_access.log` |
+| **SSH user** | `ubuntu` |
+| **SSH host** | `autachin.pl` (VPS hostname: `vps-2c2d51b4`) |
+| **Gunicorn systemd** | `gunicorn-chinese-cars.service` |
+
+Apache routes:
+
+- `/api`, `/django-admin`, `/static` → Gunicorn (port 8000)
+- `/media` → `/var/www/PORTAL/backend/media/`
+- all other paths → React SPA (`frontend/dist/index.html`)
+
+## Deploy from Cursor or VS Code (routine workflow)
+
+Cursor and VS Code use the same workflow. There is no special deploy plugin — changes go to production via **Git + SSH**.
+
+### Local machine (Windows)
+
+Project folder:
+
+```
+C:\Users\<user>\OneDrive - Teleste Corporation\Desktop\PORTAL
+```
+
+**Step 1 — make and test changes locally**
+
+```powershell
+# Backend (optional local test)
+cd backend
+.\.venv\Scripts\Activate.ps1
+python manage.py runserver
+
+# Frontend (optional local test)
+cd ..\frontend
+npm run dev
+```
+
+**Step 2 — build frontend (if React changed)**
+
+```powershell
+cd frontend
+npm install
+npm run build
+```
+
+Output goes to `frontend/dist/` — Apache serves this folder on production.
+
+**Step 3 — push to GitHub**
+
+```powershell
+cd C:\Users\<user>\OneDrive - Teleste Corporation\Desktop\PORTAL
+git status
+git add .
+git commit -m "Describe your change"
+git push origin main
+```
+
+### Production server (Linux, via SSH)
+
+**Step 4 — connect to server**
+
+```bash
+ssh user@server_ip
+cd /var/www/PORTAL
+```
+
+Or use **Remote SSH** in Cursor / VS Code: `Ctrl+Shift+P` → `Remote-SSH: Connect to Host`.
+
+**Step 5 — pull and update**
+
+```bash
+cd /var/www/PORTAL
+git pull origin main
+
+# Backend
+cd backend
+source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py collectstatic --noinput
+
+# Frontend
+cd ../frontend
+npm install
+npm run build
+
+# Restart services
+sudo systemctl restart gunicorn-chinese-cars
+sudo systemctl restart apache2
+```
+
+**Step 6 — verify**
+
+```bash
+curl -I http://autachin.pl
+sudo systemctl status gunicorn-chinese-cars
+sudo journalctl -u gunicorn-chinese-cars -n 20
+tail -f /var/log/apache2/autachin_error.log
+```
+
+### Deploy checklist (quick reference)
+
+- [ ] Changes tested locally
+- [ ] `npm run build` (if frontend changed)
+- [ ] `git push origin main`
+- [ ] SSH → `git pull` on server
+- [ ] `migrate` + `collectstatic` (if backend changed)
+- [ ] `npm run build` on server (if frontend changed)
+- [ ] Restart Gunicorn + Apache
+- [ ] Check site in browser (hard refresh: `Ctrl+F5`)
+
+### IDE tools (Cursor / VS Code)
+
+| Tool | Purpose |
+|------|---------|
+| Integrated terminal (`Ctrl+`` `) | Run git, npm, ssh locally |
+| Git panel | Commit and push changes |
+| Remote SSH extension | Edit files directly on server |
+| AI (Cursor) | Code changes — deploy steps stay the same |
+
+> **Note:** Cursor is a VS Code fork. Anything that worked in VS Code (terminal, Git, Remote SSH) works identically in Cursor.
+
+## Standardowy workflow wdrożenia (zapamiętaj)
+
+Ten proces używamy zawsze: **lokalne zmiany → GitHub → SSH na serwer → pull → migrate/build → restart**.
+
+### Krok 1 — lokalnie (Windows / Cursor)
+
+```powershell
+cd "C:\Users\tomasz.zarzycki\OneDrive - Teleste Corporation\Desktop\PORTAL"
+
+# opcjonalnie, gdy zmieniasz frontend:
+cd frontend
+npm run build
+cd ..
+
+git add .
+git commit -m "Opis zmian"
+git push origin main
+```
+
+### Krok 2 — serwer PROD (SSH jako ubuntu)
+
+```bash
+ssh ubuntu@autachin.pl
+cd /var/www/PORTAL
+git pull origin main
+
+cd backend
+source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py collectstatic --noinput
+
+cd ../frontend
+npm install
+npm run build
+
+sudo systemctl restart gunicorn-chinese-cars
+sudo systemctl restart apache2
+```
+
+### Krok 2b — jedna komenda na serwerze (skrót)
+
+Po zalogowaniu SSH możesz wkleić:
+
+```bash
+cd /var/www/PORTAL && git pull origin main && \
+cd backend && source venv/bin/activate && \
+pip install -q -r requirements.txt && python manage.py migrate && \
+python manage.py collectstatic --noinput && \
+cd ../frontend && npm install --silent && npm run build && \
+sudo systemctl restart gunicorn-chinese-cars && sudo systemctl restart apache2 && \
+echo "DEPLOY OK"
+```
+
+### Krok 3 — weryfikacja
+
+```bash
+curl -I https://autachin.pl
+sudo systemctl status gunicorn-chinese-cars
+```
+
+W przeglądarce: **Ctrl+F5** (twarde odświeżenie).
+
+### Aktualizacja danych modeli (bez pełnego deployu kodu)
+
+Gdy zmieniasz tylko **dane** (ceny, wymiary), jak wcześniej w Visual Studio:
+
+**A) Skrypt API** (z Windows, po `git push` gdy backend ma nowe pola):
+
+```powershell
+$env:PORTAL_ADMIN_USER = "admin"
+$env:PORTAL_ADMIN_PASSWORD = "<haslo-admina>"
+backend\.venv\Scripts\python.exe update_car_dimensions.py
+# lub: update_car_price.py
+```
+
+**B) Komenda na serwerze** (wymiary z pliku `dimension_data.py`):
+
+```bash
+cd /var/www/PORTAL/backend && source venv/bin/activate
+python manage.py populate_car_dimensions
+```
+
+> **Bezpieczeństwo:** nie commituj haseł do Git. Używaj zmiennych środowiskowych lub wpisuj hasło tylko w terminalu.
+
+### Windows — SSH bez interakcji (PuTTY plink)
+
+Gdy `ssh` wymaga hasła w PowerShell, można użyć PuTTY `plink` (hasło z env, nie w repo):
+
+```powershell
+$env:PORTAL_SSH_PASSWORD = "<haslo-ubuntu>"
+& "C:\Program Files\PuTTY\plink.exe" -batch `
+  -hostkey "SHA256:CtTW09cszl1rViqTi0JzNS3ByoqGP5rZgJlIM5lEWXw" `
+  -pw $env:PORTAL_SSH_PASSWORD ubuntu@autachin.pl `
+  "cd /var/www/PORTAL && git pull origin main && cd backend && source venv/bin/activate && python manage.py migrate && cd ../frontend && npm run build && sudo systemctl restart gunicorn-chinese-cars && sudo systemctl restart apache2"
+```
+
+### Checklist (skrót)
+
+1. `git push origin main`
+2. `ssh ubuntu@autachin.pl`
+3. `git pull` → `migrate` → `npm run build`
+4. `restart gunicorn-chinese-cars` + `apache2`
+5. Ctrl+F5 w przeglądarce
+
 ## Prerequisites
 
 - Ubuntu 20.04 LTS or similar
@@ -70,9 +308,11 @@ ALTER ROLE portal_user SET timezone TO 'UTC';
 
 ```bash
 cd /var/www
-git clone https://github.com/yourusername/chinese-cars-portal.git
-cd chinese-cars-portal
+git clone https://github.com/tomaszzarzycki37/portal.git PORTAL
+cd PORTAL
 ```
+
+For a generic / new server, replace the repo URL and folder name as needed.
 
 ### 2. Setup Backend
 
@@ -158,6 +398,16 @@ sudo systemctl status gunicorn-chinese-cars
 
 ### 1. Create Virtual Host
 
+**Production (autachin.pl):**
+
+```bash
+sudo cp config/autachin.conf /etc/apache2/sites-available/autachin.conf
+sudo nano /etc/apache2/sites-available/autachin.conf
+sudo a2ensite autachin
+```
+
+**Generic template (other domains):**
+
 ```bash
 sudo cp config/apache.conf /etc/apache2/sites-available/chinese-cars-portal.conf
 sudo nano /etc/apache2/sites-available/chinese-cars-portal.conf
@@ -166,12 +416,13 @@ sudo nano /etc/apache2/sites-available/chinese-cars-portal.conf
 Edit the file and replace:
 - `yourdomain.com` with your actual domain
 - SSL certificate paths
+- `/var/www/chinese-cars-portal` paths with your install path
 - Any other settings as needed
 
 ### 2. Enable Site
 
 ```bash
-sudo a2ensite chinese-cars-portal
+sudo a2ensite chinese-cars-portal   # or: sudo a2ensite autachin
 sudo a2dissite 000-default  # Disable default site
 sudo apache2ctl configtest  # Should say "Syntax OK"
 sudo systemctl restart apache2
@@ -264,34 +515,24 @@ du -sh /var/www/chinese-cars-portal/backend/media/
 
 ## Updating Application
 
-### 1. Pull Latest Changes
+See [Deploy from Cursor or VS Code](#deploy-from-cursor-or-vs-code-routine-workflow) for the full local → GitHub → server workflow.
+
+Server-only update (after `git push` from local machine):
 
 ```bash
-cd /var/www/chinese-cars-portal
+cd /var/www/PORTAL
 git pull origin main
-```
 
-### 2. Backend Update
-
-```bash
 cd backend
 source venv/bin/activate
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py collectstatic --noinput
-```
 
-### 3. Frontend Update
-
-```bash
 cd ../frontend
 npm install
 npm run build
-```
 
-### 4. Restart Services
-
-```bash
 sudo systemctl restart gunicorn-chinese-cars
 sudo systemctl restart apache2
 ```
