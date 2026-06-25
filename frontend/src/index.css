@@ -1717,6 +1717,23 @@ body.app-theme-dark .brand-lineup-add-btn:hover {
   padding: 0.35rem;
 }
 
+.brand-catalog-logo-wrap {
+  display: inline-flex;
+  border-radius: 0.9rem;
+  cursor: pointer;
+}
+
+.brand-logo-editor-preview {
+  max-width: 220px;
+  margin: 0 auto 1rem;
+}
+
+.brand-logo-editor-image {
+  object-fit: contain;
+  background: #fff;
+  max-height: 180px;
+}
+
 .brand-catalog-logo-fallback {
   display: inline-flex;
   align-items: center;

@@ -6,6 +6,15 @@ import { createBrandPlaceholderUrl, getBrandLogoOrPlaceholder } from '../utils/b
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser, isAuthenticatedUser } from '../utils/auth'
 
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(new Error('file_read_failed'))
+    reader.readAsDataURL(file)
+  })
+}
+
 function detectDriveType(engineType) {
   const text = String(engineType || '').toLowerCase()
   if (text.includes('awd') || text.includes('4x4') || text.includes('4wd')) return 'awd'
@@ -38,11 +47,25 @@ export default function CarsListPage() {
   const [expandedBrandDescriptions, setExpandedBrandDescriptions] = useState(() => new Set())
   const [previewImageUrl, setPreviewImageUrl] = useState('')
   const [previewImageAlt, setPreviewImageAlt] = useState('')
+  const [logoEditorBrand, setLogoEditorBrand] = useState(null)
+  const [logoEditorFile, setLogoEditorFile] = useState(null)
+  const [logoEditorPreviewUrl, setLogoEditorPreviewUrl] = useState('')
+  const [logoEditorCleared, setLogoEditorCleared] = useState(false)
+  const [logoEditorSaving, setLogoEditorSaving] = useState(false)
+  const [logoEditorMessage, setLogoEditorMessage] = useState('')
+  const [logoEditorError, setLogoEditorError] = useState('')
   const { t, lang } = useTranslation()
   const isAdmin = isAdminUser()
   const isLoggedIn = isAuthenticatedUser()
 
   const isImagePreviewOpen = Boolean(previewImageUrl)
+  const isLogoEditorOpen = Boolean(logoEditorBrand)
+
+  const logoEditorDisplayUrl = useMemo(() => {
+    if (logoEditorPreviewUrl) return logoEditorPreviewUrl
+    if (logoEditorCleared) return createBrandPlaceholderUrl(logoEditorBrand?.name)
+    return getBrandLogoOrPlaceholder(logoEditorBrand?.logo || '', logoEditorBrand?.name)
+  }, [logoEditorBrand, logoEditorPreviewUrl, logoEditorCleared])
 
   const openGuestImagePreview = (imageUrl, imageAlt) => {
     if (isLoggedIn || !imageUrl) return
@@ -70,19 +93,6 @@ export default function CarsListPage() {
   useEffect(() => {
     fetchCatalog()
   }, [])
-
-  useEffect(() => {
-    if (!isImagePreviewOpen) return undefined
-
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') {
-        closeGuestImagePreview()
-      }
-    }
-
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
-  }, [isImagePreviewOpen])
 
   const fetchCatalog = async () => {
     setLoading(true)
@@ -131,6 +141,102 @@ export default function CarsListPage() {
     setCars(nextCars)
     setLoading(false)
   }
+
+  const handleOpenLogoEditor = (brand) => {
+    if (!isAdmin || !brand) return
+    setLogoEditorBrand(brand)
+    setLogoEditorFile(null)
+    setLogoEditorPreviewUrl('')
+    setLogoEditorCleared(false)
+    setLogoEditorMessage('')
+    setLogoEditorError('')
+  }
+
+  const handleCloseLogoEditor = () => {
+    setLogoEditorBrand(null)
+    setLogoEditorFile(null)
+    setLogoEditorPreviewUrl('')
+    setLogoEditorCleared(false)
+    setLogoEditorMessage('')
+    setLogoEditorError('')
+  }
+
+  const handleLogoFileChange = async (event) => {
+    const file = event.target.files?.[0] || null
+    if (!file) return
+
+    try {
+      setLogoEditorError('')
+      setLogoEditorCleared(false)
+      setLogoEditorFile(file)
+      const previewUrl = await readFileAsDataUrl(file)
+      setLogoEditorPreviewUrl(previewUrl)
+    } catch {
+      setLogoEditorError(t.pages.brandLogoUploadError)
+    } finally {
+      event.target.value = ''
+    }
+  }
+
+  const handleLogoClear = () => {
+    setLogoEditorFile(null)
+    setLogoEditorPreviewUrl('')
+    setLogoEditorCleared(true)
+    setLogoEditorMessage('')
+    setLogoEditorError('')
+  }
+
+  const handleLogoSave = async () => {
+    if (!isAdmin || !logoEditorBrand || (!logoEditorFile && !logoEditorCleared)) return
+
+    try {
+      setLogoEditorSaving(true)
+      setLogoEditorMessage('')
+      setLogoEditorError('')
+
+      const formData = new FormData()
+      if (logoEditorFile) {
+        formData.append('logo', logoEditorFile)
+      } else if (logoEditorCleared) {
+        formData.append('logo', '')
+      }
+
+      const response = await api.patch(`/cars/brands/${logoEditorBrand.slug}/`, formData)
+      setBrands((prev) => prev.map((brand) => (
+        brand.id === logoEditorBrand.id ? { ...brand, logo: response.data.logo } : brand
+      )))
+      setLogoEditorMessage(t.pages.brandSaved)
+      handleCloseLogoEditor()
+    } catch {
+      setLogoEditorError(t.pages.brandSaveError)
+    } finally {
+      setLogoEditorSaving(false)
+    }
+  }
+
+  const handleLogoEditorKeyDown = (event, brand) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      handleOpenLogoEditor(brand)
+    }
+  }
+
+  useEffect(() => {
+    if (!isImagePreviewOpen && !isLogoEditorOpen) return undefined
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        if (isLogoEditorOpen) {
+          handleCloseLogoEditor()
+        } else {
+          closeGuestImagePreview()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [isImagePreviewOpen, isLogoEditorOpen])
 
   const sortedCars = useMemo(
     () => [...cars].sort((a, b) => `${a.brand_name} ${a.name}`.localeCompare(`${b.brand_name} ${b.name}`)),
@@ -366,15 +472,37 @@ export default function CarsListPage() {
               <section key={brand.slug || brand.name} className="brand-catalog-card">
                 <div className="brand-catalog-header brand-catalog-header-static">
                   <div className="brand-catalog-identity">
-                    <img
-                      src={brandLogo}
-                      alt={brand.name}
-                      className="brand-catalog-logo"
-                      onError={(event) => {
-                        event.currentTarget.onerror = null
-                        event.currentTarget.src = createBrandPlaceholderUrl(brand.name)
-                      }}
-                    />
+                    {isAdmin ? (
+                      <div
+                        className="brand-catalog-logo-wrap review-inline-editable-block"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleOpenLogoEditor(brand)}
+                        onKeyDown={(event) => handleLogoEditorKeyDown(event, brand)}
+                        aria-label={`${t.pages.editLabel}: ${t.pages.brandLogo}`}
+                        title={`${t.pages.editLabel}: ${t.pages.brandLogo}`}
+                      >
+                        <img
+                          src={brandLogo}
+                          alt={brand.name}
+                          className="brand-catalog-logo"
+                          onError={(event) => {
+                            event.currentTarget.onerror = null
+                            event.currentTarget.src = createBrandPlaceholderUrl(brand.name)
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <img
+                        src={brandLogo}
+                        alt={brand.name}
+                        className="brand-catalog-logo"
+                        onError={(event) => {
+                          event.currentTarget.onerror = null
+                          event.currentTarget.src = createBrandPlaceholderUrl(brand.name)
+                        }}
+                      />
+                    )}
 
                     <div>
                       <div className="brand-catalog-title-row">
@@ -511,6 +639,75 @@ export default function CarsListPage() {
               ×
             </button>
             <img src={previewImageUrl} alt={previewImageAlt} className="image-preview-full" />
+          </div>
+        </div>
+      )}
+
+      {isAdmin && isLogoEditorOpen && (
+        <div className="review-inline-editor-backdrop" onClick={handleCloseLogoEditor}>
+          <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
+            <h3 className="review-inline-editor-title">
+              {t.pages.editLabel}: {t.pages.brandLogo}
+              {logoEditorBrand?.name ? ` (${logoEditorBrand.name})` : ''}
+            </h3>
+            <div className="review-image-editor">
+              <div className="review-gallery-main-container brand-logo-editor-preview">
+                <div className="review-gallery-main-wrapper">
+                  <img
+                    src={logoEditorDisplayUrl}
+                    alt={logoEditorBrand?.name || t.pages.brandLogo}
+                    className="review-gallery-main brand-logo-editor-image"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null
+                      event.currentTarget.src = createBrandPlaceholderUrl(logoEditorBrand?.name)
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="review-image-upload-area">
+                <input
+                  id="brand-logo-modal-input"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleLogoFileChange}
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => document.getElementById('brand-logo-modal-input')?.click()}
+                  disabled={logoEditorSaving}
+                >
+                  {t.adminInline.chooseFile}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleLogoClear}
+                  disabled={logoEditorSaving}
+                >
+                  {t.pages.brandLogoClear}
+                </button>
+                <span className="admin-file-picker-name">
+                  {logoEditorFile ? logoEditorFile.name : t.adminInline.noFileSelected}
+                </span>
+              </div>
+              {logoEditorMessage && <p className="form-success">{logoEditorMessage}</p>}
+              {logoEditorError && <p className="form-error">{logoEditorError}</p>}
+              <div className="admin-actions-row">
+                <button type="button" className="btn btn-secondary" onClick={handleCloseLogoEditor}>
+                  {t.pages.cancelLabel}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={(!logoEditorFile && !logoEditorCleared) || logoEditorSaving}
+                  onClick={handleLogoSave}
+                >
+                  {logoEditorSaving ? t.pages.loading : t.pages.saveLabel}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
