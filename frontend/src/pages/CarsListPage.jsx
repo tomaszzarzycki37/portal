@@ -68,6 +68,13 @@ export default function CarsListPage() {
   const [creatingModel, setCreatingModel] = useState(false)
   const [createModelMessage, setCreateModelMessage] = useState('')
   const [createModelError, setCreateModelError] = useState('')
+  const [brandTextEditor, setBrandTextEditor] = useState(null)
+  const [brandTextDraftEn, setBrandTextDraftEn] = useState('')
+  const [brandTextDraftPl, setBrandTextDraftPl] = useState('')
+  const [brandTextDraftFoundedYear, setBrandTextDraftFoundedYear] = useState('')
+  const [brandDescriptionEditorLang, setBrandDescriptionEditorLang] = useState('pl')
+  const [brandTextSaving, setBrandTextSaving] = useState(false)
+  const [brandTextError, setBrandTextError] = useState('')
   const { t, lang } = useTranslation()
   const isAdmin = isAdminUser()
   const isLoggedIn = isAuthenticatedUser()
@@ -75,6 +82,7 @@ export default function CarsListPage() {
   const isImagePreviewOpen = Boolean(previewImageUrl)
   const isLogoEditorOpen = Boolean(logoEditorBrand)
   const isCreateModelOpen = Boolean(createModelBrand)
+  const isBrandTextEditorOpen = Boolean(brandTextEditor)
 
   const logoEditorDisplayUrl = useMemo(() => {
     if (logoEditorPreviewUrl) return logoEditorPreviewUrl
@@ -310,12 +318,75 @@ export default function CarsListPage() {
     }
   }
 
+  const handleEditableKeyDown = (event, action) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      action()
+    }
+  }
+
+  const getBrandTextFieldLabel = (field) => {
+    if (field === 'description') return t.adminPanel.description
+    if (field === 'founded_year') return t.pages.brandFounded
+    return t.pages.editLabel
+  }
+
+  const handleOpenBrandTextEditor = (brand, field) => {
+    if (!isAdmin || !brand) return
+    setBrandTextError('')
+    setBrandDescriptionEditorLang(lang === 'pl' ? 'pl' : 'en')
+    setBrandTextDraftEn(brand.description_en || brand.description || '')
+    setBrandTextDraftPl(brand.description_pl || '')
+    setBrandTextDraftFoundedYear(brand.founded_year ? String(brand.founded_year) : '')
+    setBrandTextEditor({ brand, field })
+  }
+
+  const handleCloseBrandTextEditor = () => {
+    setBrandTextEditor(null)
+    setBrandTextError('')
+  }
+
+  const handleSaveBrandText = async () => {
+    if (!brandTextEditor?.brand) return
+
+    const { brand, field } = brandTextEditor
+
+    try {
+      setBrandTextSaving(true)
+      setBrandTextError('')
+
+      const payload = {}
+      if (field === 'description') {
+        payload.description_en = brandTextDraftEn
+        payload.description_pl = brandTextDraftPl
+      } else if (field === 'founded_year') {
+        const foundedYearValue = String(brandTextDraftFoundedYear || '').trim()
+        const parsedYear = foundedYearValue ? Number.parseInt(foundedYearValue, 10) : null
+        if (foundedYearValue && Number.isNaN(parsedYear)) {
+          setBrandTextError(t.pages.brandSaveError)
+          return
+        }
+        payload.founded_year = parsedYear
+      }
+
+      const response = await api.patch(`/cars/brands/${brand.slug}/`, payload)
+      setBrands((prev) => prev.map((item) => (item.id === brand.id ? { ...item, ...response.data } : item)))
+      handleCloseBrandTextEditor()
+    } catch {
+      setBrandTextError(t.pages.brandSaveError)
+    } finally {
+      setBrandTextSaving(false)
+    }
+  }
+
   useEffect(() => {
-    if (!isImagePreviewOpen && !isLogoEditorOpen && !isCreateModelOpen) return undefined
+    if (!isImagePreviewOpen && !isLogoEditorOpen && !isCreateModelOpen && !isBrandTextEditorOpen) return undefined
 
     const handleEscape = (event) => {
       if (event.key === 'Escape') {
-        if (isCreateModelOpen) {
+        if (isBrandTextEditorOpen) {
+          handleCloseBrandTextEditor()
+        } else if (isCreateModelOpen) {
           handleCloseCreateModel()
         } else if (isLogoEditorOpen) {
           handleCloseLogoEditor()
@@ -327,7 +398,7 @@ export default function CarsListPage() {
 
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [isImagePreviewOpen, isLogoEditorOpen, isCreateModelOpen])
+  }, [isImagePreviewOpen, isLogoEditorOpen, isCreateModelOpen, isBrandTextEditorOpen])
 
   const sortedCars = useMemo(
     () => [...cars].sort((a, b) => `${a.brand_name} ${a.name}`.localeCompare(`${b.brand_name} ${b.name}`)),
@@ -600,11 +671,24 @@ export default function CarsListPage() {
                         <h2 className="brand-catalog-title">{brand.name}</h2>
                         <span className="brand-catalog-badge">{matchedCount} {modelLabel}</span>
                       </div>
-                      {brandDescription && (
+                      {(brandDescription || isAdmin) && (
                         <>
-                          <p className={`brand-catalog-description${isDescriptionExpanded ? '' : ' brand-catalog-description-collapsed'}`}>
-                            {brandDescription}
-                          </p>
+                          {isAdmin ? (
+                            <p
+                              className={`brand-catalog-description review-inline-editable-block${isDescriptionExpanded ? '' : ' brand-catalog-description-collapsed'}${brandDescription ? '' : ' review-section-empty'}`}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => handleOpenBrandTextEditor(brand, 'description')}
+                              onKeyDown={(event) => handleEditableKeyDown(event, () => handleOpenBrandTextEditor(brand, 'description'))}
+                              title={`${t.pages.editLabel}: ${t.adminPanel.description}`}
+                            >
+                              {brandDescription || t.pages.brandDescriptionClickToEdit}
+                            </p>
+                          ) : (
+                            <p className={`brand-catalog-description${isDescriptionExpanded ? '' : ' brand-catalog-description-collapsed'}`}>
+                              {brandDescription}
+                            </p>
+                          )}
                           {shouldShowDescriptionToggle && (
                             <button
                               type="button"
@@ -617,8 +701,21 @@ export default function CarsListPage() {
                         </>
                       )}
                       <div className="brand-catalog-meta-row">
-                        {brand.founded_year && (
-                          <span className="brand-catalog-meta-pill">{t.pages.brandFounded}: {brand.founded_year}</span>
+                        {(brand.founded_year || isAdmin) && (
+                          isAdmin ? (
+                            <span
+                              className={`brand-catalog-meta-pill review-inline-editable-block${brand.founded_year ? '' : ' review-section-empty'}`}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => handleOpenBrandTextEditor(brand, 'founded_year')}
+                              onKeyDown={(event) => handleEditableKeyDown(event, () => handleOpenBrandTextEditor(brand, 'founded_year'))}
+                              title={`${t.pages.editLabel}: ${t.pages.brandFounded}`}
+                            >
+                              {t.pages.brandFounded}: {brand.founded_year || '—'}
+                            </span>
+                          ) : (
+                            <span className="brand-catalog-meta-pill">{t.pages.brandFounded}: {brand.founded_year}</span>
+                          )
                         )}
                         <span className="brand-catalog-meta-pill">{matchedCount} {modelLabel}</span>
                       </div>
@@ -943,6 +1040,76 @@ export default function CarsListPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isAdmin && isBrandTextEditorOpen && (
+        <div className="review-inline-editor-backdrop" onClick={handleCloseBrandTextEditor}>
+          <div className="review-inline-editor-modal catalog-create-model-modal" onClick={(event) => event.stopPropagation()}>
+            <h3 className="review-inline-editor-title">
+              {t.pages.editLabel}: {getBrandTextFieldLabel(brandTextEditor.field)}
+              {brandTextEditor.brand?.name ? ` — ${brandTextEditor.brand.name}` : ''}
+            </h3>
+            {brandTextEditor.field === 'description' ? (
+              <div>
+                <div className="brand-description-switch-row" style={{ marginBottom: '0.75rem' }}>
+                  <label className="form-label">{t.adminPanel.textLanguage}</label>
+                  <div className="brand-description-switch" role="tablist" aria-label={t.adminPanel.textLanguage}>
+                    <button
+                      type="button"
+                      className={`brand-description-switch-btn ${brandDescriptionEditorLang === 'en' ? 'is-active' : ''}`}
+                      onClick={() => setBrandDescriptionEditorLang('en')}
+                    >
+                      EN
+                    </button>
+                    <button
+                      type="button"
+                      className={`brand-description-switch-btn ${brandDescriptionEditorLang === 'pl' ? 'is-active' : ''}`}
+                      onClick={() => setBrandDescriptionEditorLang('pl')}
+                    >
+                      PL
+                    </button>
+                  </div>
+                </div>
+                <label className="form-label" htmlFor="catalog-brand-description">
+                  {brandDescriptionEditorLang === 'pl' ? t.adminPanel.descriptionPl : t.adminPanel.descriptionEn}
+                </label>
+                <textarea
+                  id="catalog-brand-description"
+                  className="form-input form-textarea"
+                  rows={6}
+                  value={brandDescriptionEditorLang === 'pl' ? brandTextDraftPl : brandTextDraftEn}
+                  onChange={(e) => {
+                    if (brandDescriptionEditorLang === 'pl') {
+                      setBrandTextDraftPl(e.target.value)
+                    } else {
+                      setBrandTextDraftEn(e.target.value)
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="form-label" htmlFor="catalog-brand-founded">{t.pages.brandFounded}</label>
+                <input
+                  id="catalog-brand-founded"
+                  type="number"
+                  className="form-input"
+                  value={brandTextDraftFoundedYear}
+                  onChange={(e) => setBrandTextDraftFoundedYear(e.target.value)}
+                />
+              </div>
+            )}
+            {brandTextError && <p className="form-error">{brandTextError}</p>}
+            <div className="admin-actions-row">
+              <button type="button" className="btn btn-secondary" onClick={handleCloseBrandTextEditor}>
+                {t.pages.cancelLabel}
+              </button>
+              <button type="button" className="btn btn-primary" disabled={brandTextSaving} onClick={handleSaveBrandText}>
+                {brandTextSaving ? t.pages.loading : t.pages.saveLabel}
+              </button>
+            </div>
           </div>
         </div>
       )}
