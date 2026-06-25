@@ -13,9 +13,11 @@ from django.utils.dateparse import parse_date
 from django.db import transaction
 from django.http import HttpResponse
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from .models import UserProfile, PasswordChangeAudit
+from .authentication import mark_user_active
 from apps.common.audit import log_admin_action
 from apps.common.models import AdminActionLog
 from .serializers import (
@@ -31,6 +33,7 @@ from .serializers import (
 class PublicTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
+        mark_user_active(self.user, update_login=True)
         profile = getattr(self.user, 'profile', None)
         data['force_password_reset'] = bool(getattr(profile, 'force_password_reset', False))
         return data
@@ -42,7 +45,22 @@ class PublicTokenObtainPairView(TokenObtainPairView):
     authentication_classes = []
 
 
+class PublicTokenRefreshSerializer(TokenRefreshSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        refresh = RefreshToken(attrs['refresh'])
+        user_id = refresh.payload.get('user_id')
+        if user_id:
+            try:
+                user = User.objects.get(pk=user_id)
+                mark_user_active(user)
+            except User.DoesNotExist:
+                pass
+        return data
+
+
 class PublicTokenRefreshView(TokenRefreshView):
+    serializer_class = PublicTokenRefreshSerializer
     permission_classes = [AllowAny]
     authentication_classes = []
 
@@ -147,7 +165,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
     def active_now(self, request):
         """List users active recently based on profile.last_seen timestamp."""
-        minutes_raw = request.query_params.get('minutes', '15')
+        minutes_raw = request.query_params.get('minutes', '60')
         try:
             minutes = int(minutes_raw)
         except (TypeError, ValueError):

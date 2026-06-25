@@ -398,17 +398,24 @@ export default function AdminDashboard() {
     }
   }
 
-  const loadActiveUsers = async () => {
-    setActiveUsersLoading(true)
+  const loadActiveUsers = async (options = {}) => {
+    const { silent = false } = options
+    if (!silent) {
+      setActiveUsersLoading(true)
+    }
     try {
-      const response = await api.get('/users/active_now/?minutes=15')
+      const response = await api.get('/users/active_now/?minutes=60')
       const users = response.data?.results || []
       setActiveUsersList(users)
     } catch {
-      setActiveUsersList([])
-      setUsersError(t.adminPanel.usersActiveNowLoadError)
+      if (!silent) {
+        setActiveUsersList([])
+        setUsersError(t.adminPanel.usersActiveNowLoadError)
+      }
     } finally {
-      setActiveUsersLoading(false)
+      if (!silent) {
+        setActiveUsersLoading(false)
+      }
     }
   }
 
@@ -1048,6 +1055,17 @@ export default function AdminDashboard() {
     }
     loadActiveUsers()
     loadRecentActions()
+  }, [isUserModerationSectionOpen])
+
+  useEffect(() => {
+    if (!isUserModerationSectionOpen) return undefined
+
+    const refreshIntervalMs = 60_000
+    const intervalId = window.setInterval(() => {
+      loadActiveUsers({ silent: true })
+    }, refreshIntervalMs)
+
+    return () => window.clearInterval(intervalId)
   }, [isUserModerationSectionOpen])
 
   useEffect(() => {
@@ -2628,6 +2646,8 @@ export default function AdminDashboard() {
                       </p>
                       <p className="admin-meta">
                         {t.adminPanel.usersLastLoginLabel}: {formatUserDate(user.last_login)}
+                        {' • '}
+                        {t.adminPanel.usersLastSeenLabel}: {formatUserDate(user.profile?.last_seen)}
                         {' • '}
                         {t.adminPanel.usersJoinedLabel}: {formatUserDate(user.date_joined)}
                       </p>
