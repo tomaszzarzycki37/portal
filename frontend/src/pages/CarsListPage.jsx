@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
 import { useTranslation } from '../i18n'
@@ -21,6 +21,95 @@ function detectDriveType(engineType) {
   if (text.includes('fwd')) return 'fwd'
   if (text.includes('rwd')) return 'rwd'
   return 'other'
+}
+
+/** Collapse height: 8 lines — see `.brand-catalog-description-collapsed` in index.css */
+
+function BrandCatalogDescription({
+  brandId,
+  brandDescription,
+  isExpanded,
+  onToggle,
+  isAdmin,
+  emptyLabel,
+  editLabel,
+  onEdit,
+  onEditKeyDown,
+  readMoreLabel,
+  showLessLabel,
+}) {
+  const textRef = useRef(null)
+  const [needsToggle, setNeedsToggle] = useState(false)
+  const displayText = brandDescription || (isAdmin ? emptyLabel : '')
+
+  useLayoutEffect(() => {
+    const el = textRef.current
+    if (!el || !String(brandDescription || '').trim()) {
+      setNeedsToggle(false)
+      return
+    }
+
+    const measureOverflow = () => {
+      const node = textRef.current
+      if (!node) return
+      const wasExpanded = !node.classList.contains('brand-catalog-description-collapsed')
+      if (wasExpanded) {
+        node.classList.add('brand-catalog-description-collapsed')
+      }
+      const overflow = node.scrollHeight > node.clientHeight + 1
+      if (wasExpanded) {
+        node.classList.remove('brand-catalog-description-collapsed')
+      }
+      setNeedsToggle(overflow)
+    }
+
+    measureOverflow()
+    window.addEventListener('resize', measureOverflow)
+    return () => window.removeEventListener('resize', measureOverflow)
+  }, [brandDescription])
+
+  const collapsedClass = isExpanded ? '' : ' brand-catalog-description-collapsed'
+
+  const handleToggle = (event) => {
+    event.stopPropagation()
+    onToggle(brandId)
+  }
+
+  if (isAdmin) {
+    return (
+      <>
+        <p
+          ref={textRef}
+          className={`brand-catalog-description review-inline-editable-block${collapsedClass}${brandDescription ? '' : ' review-section-empty'}`}
+          role="button"
+          tabIndex={0}
+          onClick={onEdit}
+          onKeyDown={onEditKeyDown}
+          title={editLabel}
+        >
+          {displayText}
+        </p>
+        {needsToggle && (
+          <button type="button" className="brand-description-toggle" onClick={handleToggle}>
+            {isExpanded ? showLessLabel : readMoreLabel}
+          </button>
+        )}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <p ref={textRef} className={`brand-catalog-description${collapsedClass}`}>
+        {displayText}
+      </p>
+      {needsToggle && (
+        <button type="button" className="brand-description-toggle" onClick={handleToggle}>
+          {isExpanded ? showLessLabel : readMoreLabel}
+        </button>
+      )}
+    </>
+  )
 }
 
 function formatModelLabel(count, lang) {
@@ -628,7 +717,6 @@ export default function CarsListPage() {
               ? (brand.description_pl || brand.description_en || brand.description)
               : (brand.description_en || brand.description)
             const isDescriptionExpanded = expandedBrandDescriptions.has(brand.id)
-            const shouldShowDescriptionToggle = String(brandDescription || '').trim().length > 420
 
             return (
               <section key={brand.slug || brand.name} className="brand-catalog-card">
@@ -672,33 +760,19 @@ export default function CarsListPage() {
                         <span className="brand-catalog-badge">{matchedCount} {modelLabel}</span>
                       </div>
                       {(brandDescription || isAdmin) && (
-                        <>
-                          {isAdmin ? (
-                            <p
-                              className={`brand-catalog-description review-inline-editable-block${isDescriptionExpanded ? '' : ' brand-catalog-description-collapsed'}${brandDescription ? '' : ' review-section-empty'}`}
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => handleOpenBrandTextEditor(brand, 'description')}
-                              onKeyDown={(event) => handleEditableKeyDown(event, () => handleOpenBrandTextEditor(brand, 'description'))}
-                              title={`${t.pages.editLabel}: ${t.adminPanel.description}`}
-                            >
-                              {brandDescription || t.pages.brandDescriptionClickToEdit}
-                            </p>
-                          ) : (
-                            <p className={`brand-catalog-description${isDescriptionExpanded ? '' : ' brand-catalog-description-collapsed'}`}>
-                              {brandDescription}
-                            </p>
-                          )}
-                          {shouldShowDescriptionToggle && (
-                            <button
-                              type="button"
-                              className="brand-description-toggle"
-                              onClick={() => toggleBrandDescription(brand.id)}
-                            >
-                              {isDescriptionExpanded ? t.pages.showLess : t.pages.readMore}
-                            </button>
-                          )}
-                        </>
+                        <BrandCatalogDescription
+                          brandId={brand.id}
+                          brandDescription={brandDescription}
+                          isExpanded={isDescriptionExpanded}
+                          onToggle={toggleBrandDescription}
+                          isAdmin={isAdmin}
+                          emptyLabel={t.pages.brandDescriptionClickToEdit}
+                          editLabel={`${t.pages.editLabel}: ${t.adminPanel.description}`}
+                          onEdit={() => handleOpenBrandTextEditor(brand, 'description')}
+                          onEditKeyDown={(event) => handleEditableKeyDown(event, () => handleOpenBrandTextEditor(brand, 'description'))}
+                          readMoreLabel={t.pages.readMore}
+                          showLessLabel={t.pages.showLess}
+                        />
                       )}
                       <div className="brand-catalog-meta-row">
                         {(brand.founded_year || isAdmin) && (

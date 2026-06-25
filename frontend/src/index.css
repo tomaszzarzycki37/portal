@@ -1789,6 +1789,7 @@ body.app-theme-dark .brand-logo-editor-image {
   color: #475569;
 }
 
+/* Collapsed brand description on /cars — keep in sync with BRAND_DESCRIPTION_COLLAPSED_LINES in CarsListPage.jsx */
 .brand-catalog-description-collapsed {
   display: -webkit-box;
   line-clamp: 8;
