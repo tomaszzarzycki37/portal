@@ -54,12 +54,27 @@ export default function CarsListPage() {
   const [logoEditorSaving, setLogoEditorSaving] = useState(false)
   const [logoEditorMessage, setLogoEditorMessage] = useState('')
   const [logoEditorError, setLogoEditorError] = useState('')
+  const [createModelBrand, setCreateModelBrand] = useState(null)
+  const [newModelName, setNewModelName] = useState('')
+  const [newModelYear, setNewModelYear] = useState('')
+  const [newModelType, setNewModelType] = useState('sedan')
+  const [newModelEngine, setNewModelEngine] = useState('')
+  const [newModelPriceMin, setNewModelPriceMin] = useState('')
+  const [newModelPriceMax, setNewModelPriceMax] = useState('')
+  const [newModelCurrency, setNewModelCurrency] = useState('CNY')
+  const [newModelDescription, setNewModelDescription] = useState('')
+  const [newModelStatus, setNewModelStatus] = useState('active')
+  const [newModelFeatured, setNewModelFeatured] = useState(false)
+  const [creatingModel, setCreatingModel] = useState(false)
+  const [createModelMessage, setCreateModelMessage] = useState('')
+  const [createModelError, setCreateModelError] = useState('')
   const { t, lang } = useTranslation()
   const isAdmin = isAdminUser()
   const isLoggedIn = isAuthenticatedUser()
 
   const isImagePreviewOpen = Boolean(previewImageUrl)
   const isLogoEditorOpen = Boolean(logoEditorBrand)
+  const isCreateModelOpen = Boolean(createModelBrand)
 
   const logoEditorDisplayUrl = useMemo(() => {
     if (logoEditorPreviewUrl) return logoEditorPreviewUrl
@@ -94,8 +109,10 @@ export default function CarsListPage() {
     fetchCatalog()
   }, [])
 
-  const fetchCatalog = async () => {
-    setLoading(true)
+  const fetchCatalog = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true)
+    }
 
     let nextBrands = []
     let nextCars = []
@@ -124,7 +141,6 @@ export default function CarsListPage() {
       console.error('Error fetching cars with page_size:', error)
 
       try {
-        // Fallback for environments where page_size can be ignored or rejected.
         const fallbackCarsResponse = await api.get('/cars/')
         const fallbackPayload = fallbackCarsResponse?.data
         nextCars = Array.isArray(fallbackPayload)
@@ -139,7 +155,80 @@ export default function CarsListPage() {
 
     setBrands(nextBrands)
     setCars(nextCars)
-    setLoading(false)
+    if (!silent) {
+      setLoading(false)
+    }
+  }
+
+  const resetCreateModelForm = () => {
+    setNewModelName('')
+    setNewModelYear('')
+    setNewModelType('sedan')
+    setNewModelEngine('')
+    setNewModelPriceMin('')
+    setNewModelPriceMax('')
+    setNewModelCurrency('CNY')
+    setNewModelDescription('')
+    setNewModelStatus('active')
+    setNewModelFeatured(false)
+    setCreateModelMessage('')
+    setCreateModelError('')
+  }
+
+  const handleOpenCreateModel = (brand) => {
+    if (!isAdmin || !brand) return
+    resetCreateModelForm()
+    setCreateModelBrand(brand)
+  }
+
+  const handleCloseCreateModel = () => {
+    setCreateModelBrand(null)
+    resetCreateModelForm()
+  }
+
+  const handleCreateModel = async (event) => {
+    event.preventDefault()
+    if (!createModelBrand) return
+
+    setCreateModelMessage('')
+    setCreateModelError('')
+
+    const name = newModelName.trim()
+    const parsedYear = Number.parseInt(newModelYear.trim(), 10)
+    const brandId = Number.parseInt(String(createModelBrand.id), 10)
+    if (!name || Number.isNaN(parsedYear) || Number.isNaN(brandId)) {
+      setCreateModelError(t.adminPanel.createModelValidation)
+      return
+    }
+
+    if (!newModelDescription.trim()) {
+      setCreateModelError(t.adminPanel.createModelValidation)
+      return
+    }
+
+    try {
+      setCreatingModel(true)
+      await api.post('/cars/', {
+        brand_id: brandId,
+        name,
+        year_introduced: parsedYear,
+        vehicle_type: newModelType,
+        description: newModelDescription,
+        engine_type: newModelEngine,
+        price_min: newModelPriceMin ? parseFloat(newModelPriceMin) : null,
+        price_max: newModelPriceMax ? parseFloat(newModelPriceMax) : null,
+        currency: newModelCurrency,
+        production_status: newModelStatus,
+        is_featured: newModelFeatured,
+      })
+
+      await fetchCatalog({ silent: true })
+      handleCloseCreateModel()
+    } catch {
+      setCreateModelError(t.adminPanel.modelCreateError)
+    } finally {
+      setCreatingModel(false)
+    }
   }
 
   const handleOpenLogoEditor = (brand) => {
@@ -222,11 +311,13 @@ export default function CarsListPage() {
   }
 
   useEffect(() => {
-    if (!isImagePreviewOpen && !isLogoEditorOpen) return undefined
+    if (!isImagePreviewOpen && !isLogoEditorOpen && !isCreateModelOpen) return undefined
 
     const handleEscape = (event) => {
       if (event.key === 'Escape') {
-        if (isLogoEditorOpen) {
+        if (isCreateModelOpen) {
+          handleCloseCreateModel()
+        } else if (isLogoEditorOpen) {
           handleCloseLogoEditor()
         } else {
           closeGuestImagePreview()
@@ -236,7 +327,7 @@ export default function CarsListPage() {
 
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [isImagePreviewOpen, isLogoEditorOpen])
+  }, [isImagePreviewOpen, isLogoEditorOpen, isCreateModelOpen])
 
   const sortedCars = useMemo(
     () => [...cars].sort((a, b) => `${a.brand_name} ${a.name}`.localeCompare(`${b.brand_name} ${b.name}`)),
@@ -546,16 +637,17 @@ export default function CarsListPage() {
                       <div className="brand-empty-models-content">
                         <p>{hasActiveFilters ? t.pages.noModelsFound : t.pages.noModelsInBrand}</p>
                         {isAdmin && !hasActiveFilters && (
-                          <Link
-                            to={`/admin?section=create-model&brandId=${brand.id}`}
+                          <button
+                            type="button"
                             className="admin-inline-toggle admin-inline-gear"
                             title={t.adminPanel.createModel}
                             aria-label={t.adminPanel.createModel}
+                            onClick={() => handleOpenCreateModel(brand)}
                           >
                             <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
                               <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
                             </svg>
-                          </Link>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -708,6 +800,149 @@ export default function CarsListPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {isAdmin && isCreateModelOpen && (
+        <div className="review-inline-editor-backdrop" onClick={handleCloseCreateModel}>
+          <div className="review-inline-editor-modal catalog-create-model-modal" onClick={(event) => event.stopPropagation()}>
+            <h3 className="review-inline-editor-title">
+              {t.adminPanel.createModel}
+              {createModelBrand?.name ? ` — ${createModelBrand.name}` : ''}
+            </h3>
+            <p className="admin-field-note" style={{ marginBottom: '0.85rem' }}>{t.adminPanel.createModelSubtitle}</p>
+            <form onSubmit={handleCreateModel}>
+              <div className="admin-form-grid">
+                <div>
+                  <label className="form-label" htmlFor="catalog-new-model-name">{t.adminInline.modelName}</label>
+                  <input
+                    id="catalog-new-model-name"
+                    className="form-input"
+                    value={newModelName}
+                    onChange={(e) => setNewModelName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="form-label" htmlFor="catalog-new-model-year">{t.pages.year}</label>
+                  <input
+                    id="catalog-new-model-year"
+                    type="number"
+                    className="form-input"
+                    value={newModelYear}
+                    onChange={(e) => setNewModelYear(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="form-label" htmlFor="catalog-new-model-type">{t.pages.type}</label>
+                  <select
+                    id="catalog-new-model-type"
+                    className="form-input"
+                    value={newModelType}
+                    onChange={(e) => setNewModelType(e.target.value)}
+                  >
+                    <option value="sedan">Sedan</option>
+                    <option value="suv">SUV</option>
+                    <option value="crossover">Crossover</option>
+                    <option value="hatchback">Hatchback</option>
+                    <option value="coupe">Coupe</option>
+                    <option value="van">Van</option>
+                    <option value="truck">Truck</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label" htmlFor="catalog-new-model-engine">{t.pages.engine}</label>
+                  <input
+                    id="catalog-new-model-engine"
+                    className="form-input"
+                    value={newModelEngine}
+                    onChange={(e) => setNewModelEngine(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="form-label" htmlFor="catalog-new-model-price-min">{t.adminPanel.priceMinK}</label>
+                  <input
+                    id="catalog-new-model-price-min"
+                    type="number"
+                    className="form-input"
+                    value={newModelPriceMin}
+                    onChange={(e) => setNewModelPriceMin(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="form-label" htmlFor="catalog-new-model-price-max">{t.adminPanel.priceMaxK}</label>
+                  <input
+                    id="catalog-new-model-price-max"
+                    type="number"
+                    className="form-input"
+                    value={newModelPriceMax}
+                    onChange={(e) => setNewModelPriceMax(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="form-label" htmlFor="catalog-new-model-currency">{t.adminPanel.baseCurrency}</label>
+                  <select
+                    id="catalog-new-model-currency"
+                    className="form-input"
+                    value={newModelCurrency}
+                    onChange={(e) => setNewModelCurrency(e.target.value)}
+                  >
+                    <option value="CNY">¥ CNY</option>
+                    <option value="USD">$ USD</option>
+                    <option value="EUR">€ EUR</option>
+                    <option value="GBP">£ GBP</option>
+                    <option value="JPY">¥ JPY</option>
+                    <option value="PLN">zł PLN</option>
+                    <option value="INR">₹ INR</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label" htmlFor="catalog-new-model-status">{t.pages.productionStatus}</label>
+                  <select
+                    id="catalog-new-model-status"
+                    className="form-input"
+                    value={newModelStatus}
+                    onChange={(e) => setNewModelStatus(e.target.value)}
+                  >
+                    <option value="active">{t.pages.statusActive}</option>
+                    <option value="discontinued">{t.pages.statusDiscontinued}</option>
+                    <option value="upcoming">{t.pages.statusUpcoming}</option>
+                  </select>
+                </div>
+                <div className="admin-form-grid-full">
+                  <label className="form-label" htmlFor="catalog-new-model-description">{t.adminPanel.description}</label>
+                  <textarea
+                    id="catalog-new-model-description"
+                    className="form-input form-textarea"
+                    rows={4}
+                    value={newModelDescription}
+                    onChange={(e) => setNewModelDescription(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              <label className="form-checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={newModelFeatured}
+                  onChange={(e) => setNewModelFeatured(e.target.checked)}
+                />
+                {t.adminInline.featured}
+              </label>
+              {createModelMessage && <p className="form-success">{createModelMessage}</p>}
+              {createModelError && <p className="form-error">{createModelError}</p>}
+              <div className="admin-actions-row">
+                <button type="button" className="btn btn-secondary" onClick={handleCloseCreateModel}>
+                  {t.pages.cancelLabel}
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={creatingModel}>
+                  {creatingModel ? t.pages.loading : t.adminPanel.createModel}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

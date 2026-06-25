@@ -1661,6 +1661,10 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	margin-top: 1.2rem;
 }
 
+.catalog-create-model-modal {
+	width: min(760px, 96vw);
+}
+
 /* Image Editor */
 .review-image-editor {
 	margin-bottom: 1rem;
