@@ -1679,6 +1679,16 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	border-radius: 0.5rem;
 	background: #f8fafc;
 	text-align: center;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 0.85rem;
+}
+
+.review-image-upload-area > .admin-file-picker-name {
+	flex: 0 0 100%;
+	margin-top: 0.15rem;
 }
 
 .review-image-gallery {
