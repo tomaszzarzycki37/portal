@@ -6,6 +6,8 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, F, FloatField, ExpressionWrapper
 from apps.common.helpers import IsOwnerOrAdminOrReadOnly
+from apps.common.audit import log_admin_action
+from apps.common.models import AdminActionLog
 from .models import Opinion, Comment, Vote, PressReview
 from .serializers import (
     OpinionListSerializer, OpinionDetailSerializer, OpinionCreateUpdateSerializer,
@@ -181,4 +183,37 @@ class PressReviewViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        instance = serializer.save(author=self.request.user)
+        if self.request.user.is_staff:
+            log_admin_action(
+                self.request.user,
+                AdminActionLog.ACTION_REVIEW_CREATE,
+                object_type='review',
+                object_id=instance.id,
+                object_label=instance.title,
+                metadata={'slug': instance.slug, 'car_model_id': instance.car_model_id},
+            )
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        if self.request.user.is_staff:
+            log_admin_action(
+                self.request.user,
+                AdminActionLog.ACTION_REVIEW_UPDATE,
+                object_type='review',
+                object_id=instance.id,
+                object_label=instance.title,
+                metadata={'slug': instance.slug, 'car_model_id': instance.car_model_id},
+            )
+
+    def perform_destroy(self, instance):
+        if self.request.user.is_staff:
+            log_admin_action(
+                self.request.user,
+                AdminActionLog.ACTION_REVIEW_DELETE,
+                object_type='review',
+                object_id=instance.id,
+                object_label=instance.title,
+                metadata={'slug': instance.slug, 'car_model_id': instance.car_model_id},
+            )
+        instance.delete()

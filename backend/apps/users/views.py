@@ -16,6 +16,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.models import User
 from .models import UserProfile, PasswordChangeAudit
+from apps.common.audit import log_admin_action
+from apps.common.models import AdminActionLog
 from .serializers import (
     UserSerializer,
     UserRegistrationSerializer,
@@ -74,11 +76,25 @@ class UserViewSet(viewsets.ModelViewSet):
         target_user = self.get_object()
         self._ensure_superuser_guard(target_user)
         serializer.save(changed_by=self.request.user)
+        log_admin_action(
+            self.request.user,
+            AdminActionLog.ACTION_USER_UPDATE,
+            object_type='user',
+            object_id=target_user.id,
+            object_label=target_user.username,
+        )
 
     def perform_destroy(self, instance):
         self._ensure_superuser_guard(instance)
         if instance == self.request.user:
             raise PermissionDenied('You cannot delete your own account.')
+        log_admin_action(
+            self.request.user,
+            AdminActionLog.ACTION_USER_DELETE,
+            object_type='user',
+            object_id=instance.id,
+            object_label=instance.username,
+        )
         instance.delete()
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
@@ -265,6 +281,14 @@ class UserViewSet(viewsets.ModelViewSet):
                 reason='temporary_password_generated',
                 is_temporary=True,
                 force_reset_required=True,
+            )
+
+            log_admin_action(
+                request.user,
+                AdminActionLog.ACTION_USER_TEMP_PASSWORD,
+                object_type='user',
+                object_id=user.id,
+                object_label=user.username,
             )
 
         return Response({

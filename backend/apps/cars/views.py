@@ -4,6 +4,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
+from apps.common.audit import log_admin_action
+from apps.common.models import AdminActionLog
 from .models import Brand, CarModel
 from .serializers import BrandSerializer, CarModelListSerializer, CarModelDetailSerializer
 from apps.common.helpers import IsAdminOrReadOnly
@@ -18,6 +20,39 @@ class BrandViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'founded_year', 'created_at']
     permission_classes = [IsAdminOrReadOnly]
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        log_admin_action(
+            self.request.user,
+            AdminActionLog.ACTION_BRAND_CREATE,
+            object_type='brand',
+            object_id=instance.id,
+            object_label=instance.name,
+            metadata={'slug': instance.slug},
+        )
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        log_admin_action(
+            self.request.user,
+            AdminActionLog.ACTION_BRAND_UPDATE,
+            object_type='brand',
+            object_id=instance.id,
+            object_label=instance.name,
+            metadata={'slug': instance.slug},
+        )
+
+    def perform_destroy(self, instance):
+        log_admin_action(
+            self.request.user,
+            AdminActionLog.ACTION_BRAND_DELETE,
+            object_type='brand',
+            object_id=instance.id,
+            object_label=instance.name,
+            metadata={'slug': instance.slug},
+        )
+        instance.delete()
 
 
 class CarModelViewSet(viewsets.ModelViewSet):
@@ -34,6 +69,43 @@ class CarModelViewSet(viewsets.ModelViewSet):
         if self.action in ['retrieve', 'create', 'update', 'partial_update']:
             return CarModelDetailSerializer
         return CarModelListSerializer
+
+    def _model_label(self, instance):
+        brand_name = instance.brand.name if instance.brand_id else ''
+        return f"{brand_name} {instance.name}".strip()
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        log_admin_action(
+            self.request.user,
+            AdminActionLog.ACTION_MODEL_CREATE,
+            object_type='car_model',
+            object_id=instance.id,
+            object_label=self._model_label(instance),
+            metadata={'brand_id': instance.brand_id, 'slug': instance.slug},
+        )
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        log_admin_action(
+            self.request.user,
+            AdminActionLog.ACTION_MODEL_UPDATE,
+            object_type='car_model',
+            object_id=instance.id,
+            object_label=self._model_label(instance),
+            metadata={'brand_id': instance.brand_id, 'slug': instance.slug},
+        )
+
+    def perform_destroy(self, instance):
+        log_admin_action(
+            self.request.user,
+            AdminActionLog.ACTION_MODEL_DELETE,
+            object_type='car_model',
+            object_id=instance.id,
+            object_label=self._model_label(instance),
+            metadata={'brand_id': instance.brand_id, 'slug': instance.slug},
+        )
+        instance.delete()
 
     @action(detail=True, methods=['get'])
     def opinions(self, request, pk=None):

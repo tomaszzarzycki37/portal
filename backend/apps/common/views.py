@@ -5,11 +5,14 @@ from django.conf import settings
 from django.core.files.storage import default_storage
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
+from .audit import log_admin_action
 from .helpers import IsAdminOrReadOnly, IsAuthenticated
-from .models import SiteTextOverride
-from .serializers import SiteTextOverrideSerializer
+from .models import AdminActionLog, SiteTextOverride
+from .pagination import StandardResultsSetPagination
+from .serializers import AdminActionLogSerializer, SiteTextOverrideSerializer
 
 
 class SiteTextOverrideViewSet(viewsets.ModelViewSet):
@@ -29,6 +32,42 @@ class SiteTextOverrideViewSet(viewsets.ModelViewSet):
 
 		return queryset
 
+	def _text_label(self, instance):
+		return f"{instance.key} ({instance.lang})"
+
+	def perform_create(self, serializer):
+		instance = serializer.save()
+		log_admin_action(
+			self.request.user,
+			AdminActionLog.ACTION_TEXT_CREATE,
+			object_type='site_text',
+			object_id=instance.id,
+			object_label=self._text_label(instance),
+			metadata={'key': instance.key, 'lang': instance.lang},
+		)
+
+	def perform_update(self, serializer):
+		instance = serializer.save()
+		log_admin_action(
+			self.request.user,
+			AdminActionLog.ACTION_TEXT_EDIT,
+			object_type='site_text',
+			object_id=instance.id,
+			object_label=self._text_label(instance),
+			metadata={'key': instance.key, 'lang': instance.lang},
+		)
+
+	def perform_destroy(self, instance):
+		log_admin_action(
+			self.request.user,
+			AdminActionLog.ACTION_TEXT_DELETE,
+			object_type='site_text',
+			object_id=instance.id,
+			object_label=self._text_label(instance),
+			metadata={'key': instance.key, 'lang': instance.lang},
+		)
+		instance.delete()
+
 	@action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
 	def upload(self, request):
 		"""Upload a file and return relative media path"""
@@ -46,6 +85,15 @@ class SiteTextOverrideViewSet(viewsets.ModelViewSet):
 
 			# Return relative URL for media
 			media_url = f'/media/{path}'
+
+			if request.user.is_staff:
+				log_admin_action(
+					request.user,
+					AdminActionLog.ACTION_FILE_UPLOAD,
+					object_type='file',
+					object_label=file.name,
+					metadata={'path': path, 'url': media_url},
+				)
 
 			return Response({'url': media_url}, status=status.HTTP_201_CREATED)
 		except Exception as e:
@@ -87,3 +135,18 @@ class SiteTextOverrideViewSet(viewsets.ModelViewSet):
 			'message': 'DEPLOY_OK',
 			'output': (result.stdout or '').strip()[-2000:],
 		})
+
+
+class AdminActionLogViewSet(viewsets.ReadOnlyModelViewSet):
+	"""Recent admin actions for the supervision panel."""
+	queryset = AdminActionLog.objects.select_related('actor').all()
+	serializer_class = AdminActionLogSerializer
+	permission_classes = [IsAdminUser]
+	pagination_class = StandardResultsSetPagination
+
+	def get_queryset(self):
+		queryset = AdminActionLog.objects.select_related('actor').all()
+		action_type = self.request.query_params.get('action_type')
+		if action_type:
+			queryset = queryset.filter(action_type=action_type)
+		return queryset

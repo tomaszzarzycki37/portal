@@ -288,6 +288,8 @@ export default function AdminDashboard() {
   const [usersAuditFromDate, setUsersAuditFromDate] = useState('')
   const [usersAuditToDate, setUsersAuditToDate] = useState('')
   const [usersAuditExporting, setUsersAuditExporting] = useState(false)
+  const [recentActions, setRecentActions] = useState([])
+  const [recentActionsLoading, setRecentActionsLoading] = useState(false)
 
   const extractVerdictFromContent = (content) => {
     const lines = (content || '').split('\n')
@@ -407,6 +409,20 @@ export default function AdminDashboard() {
       setUsersError(t.adminPanel.usersActiveNowLoadError)
     } finally {
       setActiveUsersLoading(false)
+    }
+  }
+
+  const loadRecentActions = async () => {
+    setRecentActionsLoading(true)
+    try {
+      const response = await api.get('/common/admin-actions/?page_size=30')
+      const entries = response.data.results || response.data || []
+      setRecentActions(entries)
+    } catch {
+      setRecentActions([])
+      setUsersError(t.adminPanel.recentActionsLoadError)
+    } finally {
+      setRecentActionsLoading(false)
     }
   }
 
@@ -831,6 +847,13 @@ export default function AdminDashboard() {
     return parsed.toLocaleString()
   }
 
+  const formatAdminActionMessage = (entry) => {
+    const label = entry.object_label || t.adminPanel.recentActionsUnknownObject
+    const template = t.adminPanel.adminActionMessages?.[entry.action_type]
+      || t.adminPanel.recentActionsUnknownAction
+    return template.replace('{label}', label)
+  }
+
   const stats = useMemo(() => {
     const totalCars = cars.length
     const featuredCars = cars.filter((car) => car.is_featured).length
@@ -1024,6 +1047,7 @@ export default function AdminDashboard() {
       loadUsers()
     }
     loadActiveUsers()
+    loadRecentActions()
   }, [isUserModerationSectionOpen])
 
   useEffect(() => {
@@ -2464,6 +2488,53 @@ export default function AdminDashboard() {
               <span className="admin-meta"><strong>{t.adminPanel.usersStatActive}:</strong> {usersStats.active}</span>
               <span className="admin-meta"><strong>{t.adminPanel.usersStatBlocked}:</strong> {usersStats.blocked}</span>
               <span className="admin-meta"><strong>{t.adminPanel.usersStatOnlineNow}:</strong> {activeUsersList.length}</span>
+            </div>
+
+            <div style={{ marginTop: '0.75rem' }}>
+              <p className="admin-section-caption" style={{ marginBottom: '0.35rem' }}>{t.adminPanel.recentActionsTitle}</p>
+              <p className="admin-meta" style={{ marginBottom: '0.55rem' }}>{t.adminPanel.recentActionsSubtitle}</p>
+
+              <div className="admin-actions-row" style={{ justifyContent: 'flex-start', marginBottom: '0.55rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={loadRecentActions}
+                  disabled={recentActionsLoading}
+                >
+                  {recentActionsLoading ? t.pages.loading : t.adminPanel.refreshRecentActions}
+                </button>
+              </div>
+
+              <div className="admin-review-list">
+                {(recentActionsLoading && recentActions.length === 0) && (
+                  <p className="admin-meta">{t.pages.loading}</p>
+                )}
+
+                {!recentActionsLoading && recentActions.length === 0 && (
+                  <p className="admin-meta">{t.adminPanel.recentActionsEmpty}</p>
+                )}
+
+                {recentActions.length > 0 && (
+                  <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: 'left', padding: '0.45rem 0.25rem' }}>{t.adminPanel.recentActionsWhenLabel}</th>
+                        <th style={{ textAlign: 'left', padding: '0.45rem 0.25rem' }}>{t.adminPanel.recentActionsWhoLabel}</th>
+                        <th style={{ textAlign: 'left', padding: '0.45rem 0.25rem' }}>{t.adminPanel.recentActionsWhatLabel}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentActions.map((entry) => (
+                        <tr key={entry.id}>
+                          <td style={{ padding: '0.45rem 0.25rem', whiteSpace: 'nowrap' }}>{formatUserDate(entry.created_at)}</td>
+                          <td style={{ padding: '0.45rem 0.25rem' }}>{entry.actor_username || '—'}</td>
+                          <td style={{ padding: '0.45rem 0.25rem' }}>{formatAdminActionMessage(entry)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
 
             <div style={{ marginTop: '0.75rem' }}>
