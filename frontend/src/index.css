@@ -140,6 +140,9 @@ body.app-theme-dark .detail-kv-row {
 body.app-theme-dark .brand-catalog-logo,
 body.app-theme-dark .detail-image {
   border-color: #4b5563;
+}
+
+body.app-theme-dark .detail-image {
   background: #1f232a;
 }
 
@@ -1713,7 +1716,7 @@ body.app-theme-dark .brand-lineup-add-btn:hover {
   object-fit: contain;
   border-radius: 0.9rem;
   border: 1px solid #dbe4f0;
-  background: #fff;
+  background: transparent;
   padding: 0.35rem;
 }
 
