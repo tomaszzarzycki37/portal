@@ -2380,6 +2380,15 @@ body.app-theme-dark .review-inline-editor-modal .form-label {
 	color: #cbd5e1;
 }
 
+body.app-theme-dark .review-image-upload-area {
+	background: #0f172a;
+	border-color: #475569;
+}
+
+body.app-theme-dark .review-inline-editor-modal .admin-file-picker-name {
+	color: #cbd5e1;
+}
+
 body.app-theme-dark .review-gallery-main {
 	background: #1e293b;
 }

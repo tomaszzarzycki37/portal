@@ -137,12 +137,13 @@ body.app-theme-dark .detail-kv-row {
   color: #e5e7eb;
 }
 
-body.app-theme-dark .brand-catalog-logo,
-body.app-theme-dark .detail-image {
-  border-color: #4b5563;
+body.app-theme-dark .brand-catalog-logo {
+  background: #eef2f7;
+  border-color: #64748b;
 }
 
 body.app-theme-dark .detail-image {
+  border-color: #4b5563;
   background: #1f232a;
 }
 
@@ -1737,6 +1738,10 @@ body.app-theme-dark .brand-lineup-add-btn:hover {
   max-height: 180px;
 }
 
+body.app-theme-dark .brand-logo-editor-image {
+  background: #1e293b;
+}
+
 .brand-catalog-logo-fallback {
   display: inline-flex;
   align-items: center;
@@ -2074,6 +2079,11 @@ body.app-theme-dark .brand-description-toggle:hover {
   border: 1px solid #dbe4f0;
   background: #fff;
   padding: 0.45rem;
+}
+
+body.app-theme-dark .brand-detail-logo {
+  background: #eef2f7;
+  border-color: #64748b;
 }
 
 .brand-detail-title,
