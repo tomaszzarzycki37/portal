@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
 import ScrollToTopButton from './ScrollToTopButton'
+import UserActivityHeartbeat from './UserActivityHeartbeat'
 
 export default function Layout() {
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function Layout() {
       </main>
       <Footer />
       <ScrollToTopButton />
+      <UserActivityHeartbeat />
     </div>
   )
 }

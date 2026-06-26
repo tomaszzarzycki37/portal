@@ -404,7 +404,7 @@ export default function AdminDashboard() {
       setActiveUsersLoading(true)
     }
     try {
-      const response = await api.get('/users/active_now/?minutes=60')
+      const response = await api.get('/users/active_now/?minutes=15')
       const users = response.data?.results || []
       setActiveUsersList(users)
     } catch {

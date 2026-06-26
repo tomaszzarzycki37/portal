@@ -80,7 +80,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action == 'create':
             permission_classes = [AllowAny]
-        elif self.action in ['me', 'update_profile', 'opinions', 'change_password']:
+        elif self.action in ['me', 'update_profile', 'opinions', 'change_password', 'heartbeat']:
             permission_classes = [IsAuthenticated]
         else:
             permission_classes = [IsAdminUser]
@@ -120,6 +120,17 @@ class UserViewSet(viewsets.ModelViewSet):
         """Get current user profile"""
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def heartbeat(self, request):
+        """Keep last_seen fresh while a logged-in browser tab is open."""
+        mark_user_active(request.user)
+        profile = request.user.profile
+        profile.refresh_from_db(fields=['last_seen'])
+        return Response({
+            'ok': True,
+            'last_seen': profile.last_seen,
+        })
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def update_profile(self, request):

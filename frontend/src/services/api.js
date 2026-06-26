@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { notifyAuthSessionChanged } from '../utils/auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
@@ -47,6 +48,7 @@ api.interceptors.response.use(
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
         localStorage.removeItem('current_user')
+        notifyAuthSessionChanged()
         window.location.href = '/login'
       }
     }
