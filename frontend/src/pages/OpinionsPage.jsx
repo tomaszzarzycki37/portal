@@ -8,6 +8,14 @@ import api from '../services/api'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { canEditByAuthorId, isAuthenticatedUser } from '../utils/auth'
+import DetailedOpinionCard from '../components/DetailedOpinionCard'
+import DetailedOpinionForm from '../components/DetailedOpinionForm'
+import {
+  buildEmptyDetailedRatings,
+  buildOpinionDraftFromApi,
+  buildOpinionPayload,
+  validateOpinionDraft,
+} from '../constants/opinionRatings'
 
 const WORD_LIKE_MODULES = {
   toolbar: [
@@ -270,41 +278,14 @@ export default function OpinionsPage() {
 
   const handleStartEditOpinion = (opinion) => {
     setEditingOpinionId(opinion.id)
-    setEditingOpinionDraft({
-      title: opinion.title || '',
-      content: opinion.content || '',
-      car_model: String(opinion.car_id || ''),
-      rating_quality: Number(opinion.rating_quality || 5),
-      rating_workmanship: Number(opinion.rating_workmanship || 5),
-      rating_economy: Number(opinion.rating_economy || 5),
-      rating_safety: Number(opinion.rating_safety || 5),
-      rating_comfort: Number(opinion.rating_comfort || 5),
-      rating_performance: Number(opinion.rating_performance || 5),
-      rating_design: Number(opinion.rating_design || 5),
-      rating_reliability: Number(opinion.rating_reliability || 5),
-    })
+    setEditingOpinionDraft(buildOpinionDraftFromApi(opinion))
     setOpinionMessage('')
     setOpinionError('')
   }
 
   const handleSaveOpinion = async (opinionId) => {
     if (!editingOpinionDraft) return
-    const normalizedContent = String(editingOpinionDraft.content || '').trim()
-    const ratingKeys = [
-      'rating_quality',
-      'rating_workmanship',
-      'rating_economy',
-      'rating_safety',
-      'rating_comfort',
-      'rating_performance',
-      'rating_design',
-      'rating_reliability',
-    ]
-    const hasInvalidRating = ratingKeys.some((key) => {
-      const value = Number(editingOpinionDraft[key])
-      return !Number.isFinite(value) || value < 1 || value > 5
-    })
-    if (!editingOpinionDraft.title.trim() || !getMeaningfulRichText(normalizedContent) || !editingOpinionDraft.car_model || hasInvalidRating) {
+    if (!validateOpinionDraft(editingOpinionDraft, { requireCarModel: true })) {
       setOpinionError(t.pages.opinionCreateValidation)
       return
     }
@@ -313,19 +294,7 @@ export default function OpinionsPage() {
       setOpinionActionSaving(true)
       setOpinionError('')
       setOpinionMessage('')
-      await api.patch(`/opinions/${opinionId}/`, {
-        car_model: Number.parseInt(editingOpinionDraft.car_model, 10),
-        title: editingOpinionDraft.title.trim(),
-        content: normalizedContent,
-        rating_quality: Number(editingOpinionDraft.rating_quality),
-        rating_workmanship: Number(editingOpinionDraft.rating_workmanship),
-        rating_economy: Number(editingOpinionDraft.rating_economy),
-        rating_safety: Number(editingOpinionDraft.rating_safety),
-        rating_comfort: Number(editingOpinionDraft.rating_comfort),
-        rating_performance: Number(editingOpinionDraft.rating_performance),
-        rating_design: Number(editingOpinionDraft.rating_design),
-        rating_reliability: Number(editingOpinionDraft.rating_reliability),
-      })
+      await api.patch(`/opinions/${opinionId}/`, buildOpinionPayload(editingOpinionDraft))
       await reloadOpinions()
       setEditingOpinionId(null)
       setEditingOpinionDraft(null)
@@ -377,16 +346,7 @@ export default function OpinionsPage() {
     }
   }
 
-  const opinionRatingCategories = [
-    { key: 'rating_quality', label: t.pages.ratingQuality },
-    { key: 'rating_workmanship', label: t.pages.ratingWorkmanship },
-    { key: 'rating_economy', label: t.pages.ratingEconomy },
-    { key: 'rating_safety', label: t.pages.ratingSafety },
-    { key: 'rating_comfort', label: t.pages.ratingComfort },
-    { key: 'rating_performance', label: t.pages.ratingPerformance },
-    { key: 'rating_design', label: t.pages.ratingDesign },
-    { key: 'rating_reliability', label: t.pages.ratingReliability },
-  ]
+  const allCars = useMemo(() => Object.values(carsById), [carsById])
 
   return (
     <div className="opinions-page-wrap">
@@ -464,38 +424,14 @@ export default function OpinionsPage() {
                                     </div>
                                     {editingOpinionId === opinion.id && editingOpinionDraft ? (
                                       <div className="admin-form-card" style={{ marginBottom: '0.5rem' }}>
-                                        <label className="form-label">{t.pages.opinionTitle}</label>
-                                        <input
-                                          className="form-input"
-                                          value={editingOpinionDraft.title}
-                                          onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, title: e.target.value }))}
+                                        <DetailedOpinionForm
+                                          draft={editingOpinionDraft}
+                                          onChange={setEditingOpinionDraft}
+                                          t={t}
+                                          RichTextEditorComponent={RichTextEditor}
+                                          showCarSelect
+                                          cars={allCars}
                                         />
-                                        <RichTextEditor
-                                          id={`opinion-content-${opinion.id}`}
-                                          label={t.adminPanel.description}
-                                          value={editingOpinionDraft.content}
-                                          onChange={(nextValue) => setEditingOpinionDraft((prev) => ({ ...prev, content: nextValue }))}
-                                          placeholder={t.adminPanel.reviewEditorPlaceholder}
-                                        />
-                                        <label className="form-label">{t.pages.averageRating}</label>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                          {opinionRatingCategories.map((category) => (
-                                            <div key={category.key}>
-                                              <label className="form-label">{category.label}</label>
-                                              <select
-                                                className="form-input"
-                                                value={editingOpinionDraft[category.key] ?? 5}
-                                                onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, [category.key]: Number(e.target.value) }))}
-                                              >
-                                                <option value={5}>5</option>
-                                                <option value={4}>4</option>
-                                                <option value={3}>3</option>
-                                                <option value={2}>2</option>
-                                                <option value={1}>1</option>
-                                              </select>
-                                            </div>
-                                          ))}
-                                        </div>
                                         <div className="admin-actions-row">
                                           <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setEditingOpinionId(null); setEditingOpinionDraft(null) }}>
                                             {t.pages.cancelLabel}
@@ -509,24 +445,15 @@ export default function OpinionsPage() {
                                       <>
                                         <div className="opinion-list-header">
                                           <h4 className="opinion-title">{opinion.title}</h4>
-                                          <span className="opinion-rating">{formatRatingDisplay(opinion.rating)}</span>
-                                        </div>
-                                        <div className="opinion-list-meta">
-                                          <span className="opinion-author">{opinion.author?.username || t.pages.unknownAuthor}</span>
                                           <span className="opinion-date">{formatDate(opinion.created_at)}</span>
                                         </div>
-                                        <div
-                                          className="opinion-content"
-                                          dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(opinion.content) }}
+                                        <DetailedOpinionCard
+                                          opinion={{
+                                            ...opinion,
+                                            content: sanitizeRichHtml(opinion.content),
+                                          }}
+                                          t={t}
                                         />
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                                          {opinionRatingCategories.map((category) => (
-                                            <div key={category.key} className="opinion-category-rating">
-                                              <span style={{ fontSize: '0.85rem', color: '#666' }}>{category.label}</span>
-                                              <span className="rating" style={{ fontSize: '0.95rem' }}>{formatRatingDisplay(opinion[category.key])}</span>
-                                            </div>
-                                          ))}
-                                        </div>
                                         <div className="opinion-list-footer">
                                           <div className="opinion-votes" role="group" aria-label="Opinion votes">
                                             <button

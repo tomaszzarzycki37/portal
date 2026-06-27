@@ -1,9 +1,17 @@
 """Models for opinions app"""
+from decimal import Decimal
+
 from django.db import models
 from django.utils.text import slugify
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from apps.cars.models import CarModel
+
+from .rating_schema import (
+    flatten_detailed_ratings,
+    migrate_legacy_to_detailed,
+    sync_legacy_ratings_from_detailed,
+)
 
 
 class Opinion(models.Model):
@@ -54,6 +62,10 @@ class Opinion(models.Model):
         default=5,
         help_text='Reliability rating (1-5)'
     )
+
+    detailed_ratings = models.JSONField(default=dict, blank=True)
+    fuel_consumption_min = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    fuel_consumption_max = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     
     # Metadata
     is_verified_owner = models.BooleanField(default=False)
@@ -71,10 +83,35 @@ class Opinion(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.author.username}"
+
+    @property
+    def uses_detailed_ratings(self):
+        return bool(self.detailed_ratings)
+
+    @property
+    def fuel_consumption_avg(self):
+        if self.fuel_consumption_min is None or self.fuel_consumption_max is None:
+            return None
+        return round((self.fuel_consumption_min + self.fuel_consumption_max) / Decimal('2'), 2)
+
+    def ensure_detailed_ratings(self):
+        if not self.detailed_ratings:
+            self.detailed_ratings = migrate_legacy_to_detailed(self)
+        return self.detailed_ratings
+
+    def apply_detailed_ratings(self, detailed_ratings):
+        self.detailed_ratings = detailed_ratings
+        legacy = sync_legacy_ratings_from_detailed(detailed_ratings)
+        for field, value in legacy.items():
+            setattr(self, field, value)
     
     @property
     def rating(self):
-        """Calculate average rating from all categories"""
+        """Calculate average rating from detailed or legacy categories."""
+        if self.detailed_ratings:
+            values = flatten_detailed_ratings(self.detailed_ratings)
+            if values:
+                return round(sum(values) / len(values), 1)
         ratings = [
             self.rating_quality, self.rating_workmanship, self.rating_economy,
             self.rating_safety, self.rating_comfort, self.rating_performance,

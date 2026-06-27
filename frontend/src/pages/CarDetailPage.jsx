@@ -8,6 +8,24 @@ import api from '../services/api'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { normalizeMediaUrl } from '../utils/mediaUrl'
 import { canEditByAuthorId, isAdminUser, isAuthenticatedUser } from '../utils/auth'
+import DetailedOpinionCard from '../components/DetailedOpinionCard'
+import DetailedOpinionForm from '../components/DetailedOpinionForm'
+import {
+  buildEmptyDetailedRatings,
+  buildOpinionDraftFromApi,
+  buildOpinionPayload,
+  validateOpinionDraft,
+} from '../constants/opinionRatings'
+
+function createEmptyOpinionDraft() {
+  return {
+    title: '',
+    content: '',
+    detailed_ratings: buildEmptyDetailedRatings(),
+    fuel_consumption_min: '',
+    fuel_consumption_max: '',
+  }
+}
 
 const WORD_LIKE_MODULES = {
   toolbar: [
@@ -170,16 +188,7 @@ export default function CarDetailPage() {
   const [heroImageSaving, setHeroImageSaving] = useState(false)
   const [heroImageMessage, setHeroImageMessage] = useState('')
   const [heroImageError, setHeroImageError] = useState('')
-  const [adminOpinionTitle, setAdminOpinionTitle] = useState('')
-  const [adminOpinionContent, setAdminOpinionContent] = useState('')
-  const [adminOpinionRatingQuality, setAdminOpinionRatingQuality] = useState(5)
-  const [adminOpinionRatingWorkmanship, setAdminOpinionRatingWorkmanship] = useState(5)
-  const [adminOpinionRatingEconomy, setAdminOpinionRatingEconomy] = useState(5)
-  const [adminOpinionRatingSafety, setAdminOpinionRatingSafety] = useState(5)
-  const [adminOpinionRatingComfort, setAdminOpinionRatingComfort] = useState(5)
-  const [adminOpinionRatingPerformance, setAdminOpinionRatingPerformance] = useState(5)
-  const [adminOpinionRatingDesign, setAdminOpinionRatingDesign] = useState(5)
-  const [adminOpinionRatingReliability, setAdminOpinionRatingReliability] = useState(5)
+  const [adminOpinionDraft, setAdminOpinionDraft] = useState(createEmptyOpinionDraft)
   const [adminOpinionSaving, setAdminOpinionSaving] = useState(false)
   const [adminOpinionMessage, setAdminOpinionMessage] = useState('')
   const [adminOpinionError, setAdminOpinionError] = useState('')
@@ -200,16 +209,6 @@ export default function CarDetailPage() {
   const [adminError, setAdminError] = useState('')
   const isAdmin = isAdminUser()
   const isLoggedIn = isAuthenticatedUser()
-  const opinionRatingCategories = [
-    { key: 'rating_quality', label: t.pages.ratingQuality },
-    { key: 'rating_workmanship', label: t.pages.ratingWorkmanship },
-    { key: 'rating_economy', label: t.pages.ratingEconomy },
-    { key: 'rating_safety', label: t.pages.ratingSafety },
-    { key: 'rating_comfort', label: t.pages.ratingComfort },
-    { key: 'rating_performance', label: t.pages.ratingPerformance },
-    { key: 'rating_design', label: t.pages.ratingDesign },
-    { key: 'rating_reliability', label: t.pages.ratingReliability },
-  ]
 
   useEffect(() => {
     const fetchData = async () => {
@@ -434,10 +433,7 @@ export default function CarDetailPage() {
     e.preventDefault()
     if (!isLoggedIn || !car) return
 
-    const trimmedTitle = String(adminOpinionTitle || '').trim()
-    const trimmedContent = String(adminOpinionContent || '').trim()
-
-    if (!trimmedTitle || !getMeaningfulRichText(trimmedContent)) {
+    if (!validateOpinionDraft(adminOpinionDraft)) {
       setAdminOpinionMessage('')
       setAdminOpinionError(t.pages.opinionCreateValidation)
       return
@@ -449,17 +445,8 @@ export default function CarDetailPage() {
       setAdminOpinionError('')
 
       await api.post('/opinions/', {
+        ...buildOpinionPayload(adminOpinionDraft),
         car_model: car.id,
-        title: trimmedTitle,
-        content: trimmedContent,
-        rating_quality: adminOpinionRatingQuality,
-        rating_workmanship: adminOpinionRatingWorkmanship,
-        rating_economy: adminOpinionRatingEconomy,
-        rating_safety: adminOpinionRatingSafety,
-        rating_comfort: adminOpinionRatingComfort,
-        rating_performance: adminOpinionRatingPerformance,
-        rating_design: adminOpinionRatingDesign,
-        rating_reliability: adminOpinionRatingReliability,
       })
 
       const [carResponse, opinionsResponse] = await Promise.all([
@@ -468,17 +455,7 @@ export default function CarDetailPage() {
       ])
       setCar(carResponse.data)
       setOpinions(opinionsResponse.data.results || opinionsResponse.data)
-
-      setAdminOpinionTitle('')
-      setAdminOpinionContent('')
-      setAdminOpinionRatingQuality(5)
-      setAdminOpinionRatingWorkmanship(5)
-      setAdminOpinionRatingEconomy(5)
-      setAdminOpinionRatingSafety(5)
-      setAdminOpinionRatingComfort(5)
-      setAdminOpinionRatingPerformance(5)
-      setAdminOpinionRatingDesign(5)
-      setAdminOpinionRatingReliability(5)
+      setAdminOpinionDraft(createEmptyOpinionDraft())
       setAdminOpinionMessage(t.pages.opinionCreated)
     } catch {
       setAdminOpinionError(t.pages.opinionCreateError)
@@ -489,28 +466,15 @@ export default function CarDetailPage() {
 
   const handleStartOpinionEdit = (opinion) => {
     setEditingOpinionId(opinion.id)
-    setEditingOpinionDraft({
-      title: opinion.title || '',
-      content: opinion.content || '',
-      rating_quality: opinion.rating_quality || 5,
-      rating_workmanship: opinion.rating_workmanship || 5,
-      rating_economy: opinion.rating_economy || 5,
-      rating_safety: opinion.rating_safety || 5,
-      rating_comfort: opinion.rating_comfort || 5,
-      rating_performance: opinion.rating_performance || 5,
-      rating_design: opinion.rating_design || 5,
-      rating_reliability: opinion.rating_reliability || 5,
-    })
+    setEditingOpinionDraft(buildOpinionDraftFromApi(opinion))
     setAdminOpinionMessage('')
     setAdminOpinionError('')
   }
 
   const handleSaveOpinionEdit = async (opinionId) => {
     if (!editingOpinionDraft || !car) return
-    const trimmedTitle = String(editingOpinionDraft.title || '').trim()
-    const trimmedContent = String(editingOpinionDraft.content || '').trim()
 
-    if (!trimmedTitle || !getMeaningfulRichText(trimmedContent)) {
+    if (!validateOpinionDraft(editingOpinionDraft)) {
       setAdminOpinionError(t.pages.opinionCreateValidation)
       return
     }
@@ -520,17 +484,8 @@ export default function CarDetailPage() {
       setAdminOpinionMessage('')
       setAdminOpinionError('')
       await api.patch(`/opinions/${opinionId}/`, {
+        ...buildOpinionPayload(editingOpinionDraft),
         car_model: car.id,
-        title: trimmedTitle,
-        content: trimmedContent,
-        rating_quality: editingOpinionDraft.rating_quality || 5,
-        rating_workmanship: editingOpinionDraft.rating_workmanship || 5,
-        rating_economy: editingOpinionDraft.rating_economy || 5,
-        rating_safety: editingOpinionDraft.rating_safety || 5,
-        rating_comfort: editingOpinionDraft.rating_comfort || 5,
-        rating_performance: editingOpinionDraft.rating_performance || 5,
-        rating_design: editingOpinionDraft.rating_design || 5,
-        rating_reliability: editingOpinionDraft.rating_reliability || 5,
       })
 
       const opinionsResponse = await api.get(`/opinions/?car_model=${id}&ordering=-created_at`)
@@ -889,106 +844,12 @@ export default function CarDetailPage() {
 
             {isAddOpinionOpen && (
               <form onSubmit={handleAdminOpinionCreate}>
-                <label className="form-label" htmlFor="admin-opinion-title">{t.pages.opinionTitle}</label>
-                <input
-                  id="admin-opinion-title"
-                  className="form-input"
-                  value={adminOpinionTitle}
-                  onChange={(e) => setAdminOpinionTitle(e.target.value)}
+                <DetailedOpinionForm
+                  draft={adminOpinionDraft}
+                  onChange={setAdminOpinionDraft}
+                  t={t}
+                  RichTextEditorComponent={RichTextEditor}
                 />
-
-                <RichTextEditor
-                  id="admin-opinion-content"
-                  label={t.adminPanel.description}
-                  value={adminOpinionContent}
-                  onChange={setAdminOpinionContent}
-                  placeholder={t.adminPanel.reviewEditorPlaceholder}
-                />
-
-                <label className="form-label" htmlFor="admin-opinion-rating">{t.pages.averageRating}</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <div>
-                    <label className="form-label">{t.pages.ratingQuality}</label>
-                    <select className="form-input" value={adminOpinionRatingQuality} onChange={(e) => setAdminOpinionRatingQuality(Number(e.target.value))}>
-                      <option value={5}>5</option>
-                      <option value={4}>4</option>
-                      <option value={3}>3</option>
-                      <option value={2}>2</option>
-                      <option value={1}>1</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label">{t.pages.ratingWorkmanship}</label>
-                    <select className="form-input" value={adminOpinionRatingWorkmanship} onChange={(e) => setAdminOpinionRatingWorkmanship(Number(e.target.value))}>
-                      <option value={5}>5</option>
-                      <option value={4}>4</option>
-                      <option value={3}>3</option>
-                      <option value={2}>2</option>
-                      <option value={1}>1</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label">{t.pages.ratingEconomy}</label>
-                    <select className="form-input" value={adminOpinionRatingEconomy} onChange={(e) => setAdminOpinionRatingEconomy(Number(e.target.value))}>
-                      <option value={5}>5</option>
-                      <option value={4}>4</option>
-                      <option value={3}>3</option>
-                      <option value={2}>2</option>
-                      <option value={1}>1</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label">{t.pages.ratingSafety}</label>
-                    <select className="form-input" value={adminOpinionRatingSafety} onChange={(e) => setAdminOpinionRatingSafety(Number(e.target.value))}>
-                      <option value={5}>5</option>
-                      <option value={4}>4</option>
-                      <option value={3}>3</option>
-                      <option value={2}>2</option>
-                      <option value={1}>1</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label">{t.pages.ratingComfort}</label>
-                    <select className="form-input" value={adminOpinionRatingComfort} onChange={(e) => setAdminOpinionRatingComfort(Number(e.target.value))}>
-                      <option value={5}>5</option>
-                      <option value={4}>4</option>
-                      <option value={3}>3</option>
-                      <option value={2}>2</option>
-                      <option value={1}>1</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label">{t.pages.ratingPerformance}</label>
-                    <select className="form-input" value={adminOpinionRatingPerformance} onChange={(e) => setAdminOpinionRatingPerformance(Number(e.target.value))}>
-                      <option value={5}>5</option>
-                      <option value={4}>4</option>
-                      <option value={3}>3</option>
-                      <option value={2}>2</option>
-                      <option value={1}>1</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label">{t.pages.ratingDesign}</label>
-                    <select className="form-input" value={adminOpinionRatingDesign} onChange={(e) => setAdminOpinionRatingDesign(Number(e.target.value))}>
-                      <option value={5}>5</option>
-                      <option value={4}>4</option>
-                      <option value={3}>3</option>
-                      <option value={2}>2</option>
-                      <option value={1}>1</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label">{t.pages.ratingReliability}</label>
-                    <select className="form-input" value={adminOpinionRatingReliability} onChange={(e) => setAdminOpinionRatingReliability(Number(e.target.value))}>
-                      <option value={5}>5</option>
-                      <option value={4}>4</option>
-                      <option value={3}>3</option>
-                      <option value={2}>2</option>
-                      <option value={1}>1</option>
-                    </select>
-                  </div>
-                </div>
-
                 <button type="submit" className="btn btn-primary" disabled={adminOpinionSaving}>
                   {adminOpinionSaving ? t.pages.loading : t.pages.addOpinionSubmit}
                 </button>
@@ -1010,107 +871,17 @@ export default function CarDetailPage() {
               <article key={activeOpinion.id} className="opinion-card-item">
                 {editingOpinionId === activeOpinion.id && editingOpinionDraft ? (
                   <div className="admin-form-card" style={{ marginBottom: '0.5rem' }}>
-                    <label className="form-label">{t.pages.opinionTitle}</label>
-                    <input
-                      className="form-input"
-                      value={editingOpinionDraft.title}
-                      onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, title: e.target.value }))}
+                    <DetailedOpinionForm
+                      draft={editingOpinionDraft}
+                      onChange={setEditingOpinionDraft}
+                      t={t}
+                      RichTextEditorComponent={RichTextEditor}
                     />
-                    <RichTextEditor
-                      id={`edit-opinion-content-${opinion.id}`}
-                      label={t.adminPanel.description}
-                      value={editingOpinionDraft.content}
-                      onChange={(nextValue) => setEditingOpinionDraft((prev) => ({ ...prev, content: nextValue }))}
-                      placeholder={t.adminPanel.reviewEditorPlaceholder}
-                    />
-                    <label className="form-label">{t.pages.averageRating}</label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                      <div>
-                        <label className="form-label">{t.pages.ratingQuality}</label>
-                        <select className="form-input" value={editingOpinionDraft.rating_quality} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_quality: Number(e.target.value) }))}>
-                          <option value={5}>5</option>
-                          <option value={4}>4</option>
-                          <option value={3}>3</option>
-                          <option value={2}>2</option>
-                          <option value={1}>1</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="form-label">{t.pages.ratingWorkmanship}</label>
-                        <select className="form-input" value={editingOpinionDraft.rating_workmanship} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_workmanship: Number(e.target.value) }))}>
-                          <option value={5}>5</option>
-                          <option value={4}>4</option>
-                          <option value={3}>3</option>
-                          <option value={2}>2</option>
-                          <option value={1}>1</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="form-label">{t.pages.ratingEconomy}</label>
-                        <select className="form-input" value={editingOpinionDraft.rating_economy} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_economy: Number(e.target.value) }))}>
-                          <option value={5}>5</option>
-                          <option value={4}>4</option>
-                          <option value={3}>3</option>
-                          <option value={2}>2</option>
-                          <option value={1}>1</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="form-label">{t.pages.ratingSafety}</label>
-                        <select className="form-input" value={editingOpinionDraft.rating_safety} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_safety: Number(e.target.value) }))}>
-                          <option value={5}>5</option>
-                          <option value={4}>4</option>
-                          <option value={3}>3</option>
-                          <option value={2}>2</option>
-                          <option value={1}>1</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="form-label">{t.pages.ratingComfort}</label>
-                        <select className="form-input" value={editingOpinionDraft.rating_comfort} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_comfort: Number(e.target.value) }))}>
-                          <option value={5}>5</option>
-                          <option value={4}>4</option>
-                          <option value={3}>3</option>
-                          <option value={2}>2</option>
-                          <option value={1}>1</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="form-label">{t.pages.ratingPerformance}</label>
-                        <select className="form-input" value={editingOpinionDraft.rating_performance} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_performance: Number(e.target.value) }))}>
-                          <option value={5}>5</option>
-                          <option value={4}>4</option>
-                          <option value={3}>3</option>
-                          <option value={2}>2</option>
-                          <option value={1}>1</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="form-label">{t.pages.ratingDesign}</label>
-                        <select className="form-input" value={editingOpinionDraft.rating_design} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_design: Number(e.target.value) }))}>
-                          <option value={5}>5</option>
-                          <option value={4}>4</option>
-                          <option value={3}>3</option>
-                          <option value={2}>2</option>
-                          <option value={1}>1</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="form-label">{t.pages.ratingReliability}</label>
-                        <select className="form-input" value={editingOpinionDraft.rating_reliability} onChange={(e) => setEditingOpinionDraft((prev) => ({ ...prev, rating_reliability: Number(e.target.value) }))}>
-                          <option value={5}>5</option>
-                          <option value={4}>4</option>
-                          <option value={3}>3</option>
-                          <option value={2}>2</option>
-                          <option value={1}>1</option>
-                        </select>
-                      </div>
-                    </div>
                     <div className="admin-actions-row">
                       <button type="button" className="btn btn-secondary" onClick={() => { setEditingOpinionId(null); setEditingOpinionDraft(null) }}>
                         {t.pages.cancelLabel}
                       </button>
-                      <button type="button" className="btn btn-primary" disabled={opinionActionLoading} onClick={() => handleSaveOpinionEdit(opinion.id)}>
+                      <button type="button" className="btn btn-primary" disabled={opinionActionLoading} onClick={() => handleSaveOpinionEdit(activeOpinion.id)}>
                         {opinionActionLoading ? t.pages.loading : t.pages.saveLabel}
                       </button>
                     </div>
@@ -1118,19 +889,15 @@ export default function CarDetailPage() {
                 ) : (
                   <>
                     <h3 className="opinion-title">{activeOpinion.title}</h3>
-                    <p className="opinion-meta">{activeOpinion.author?.username || 'user'}</p>
-                    <div
-                      className="opinion-text"
-                      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(activeOpinion.content) }}
+                    <DetailedOpinionCard
+                      opinion={{
+                        ...activeOpinion,
+                        car_year: car?.year_introduced,
+                        content: sanitizeRichHtml(activeOpinion.content),
+                      }}
+                      t={t}
+                      showHeader={false}
                     />
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                      {opinionRatingCategories.map((category) => (
-                        <div key={category.key} className="opinion-category-rating">
-                          <span style={{ fontSize: '0.85rem', color: '#666' }}>{category.label}</span>
-                          <span className="rating" style={{ fontSize: '0.95rem' }}>{formatRatingDisplay(activeOpinion[category.key])}</span>
-                        </div>
-                      ))}
-                    </div>
                     <div className="opinion-rating-row">
                       <div className="opinion-votes" role="group" aria-label="Opinion votes">
                         <button

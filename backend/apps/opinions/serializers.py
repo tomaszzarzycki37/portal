@@ -1,7 +1,16 @@
 """Serializers for opinions app"""
+from decimal import Decimal
+
 from rest_framework import serializers
 from .models import Opinion, Comment, Vote, PressReview
+from .rating_schema import empty_detailed_ratings, validate_detailed_ratings
 from django.contrib.auth.models import User
+
+
+def _serialize_fuel(value):
+    if value is None:
+        return None
+    return float(value)
 
 
 class UserBriefSerializer(serializers.ModelSerializer):
@@ -29,15 +38,20 @@ class OpinionListSerializer(serializers.ModelSerializer):
     car_id = serializers.IntegerField(source='car_model.id', read_only=True)
     car_name = serializers.CharField(source='car_model.name', read_only=True)
     car_brand_name = serializers.CharField(source='car_model.brand.name', read_only=True)
+    car_year = serializers.IntegerField(source='car_model.year_introduced', read_only=True)
     content = serializers.CharField(read_only=True)
     comments_count = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
+    fuel_consumption_avg = serializers.SerializerMethodField()
+    uses_detailed_ratings = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Opinion
-        fields = ['id', 'car_id', 'car_name', 'car_brand_name', 'title', 'content', 'rating', 
+        fields = ['id', 'car_id', 'car_name', 'car_brand_name', 'car_year', 'title', 'content', 'rating',
                   'rating_quality', 'rating_workmanship', 'rating_economy', 'rating_safety',
                   'rating_comfort', 'rating_performance', 'rating_design', 'rating_reliability',
+                  'detailed_ratings', 'uses_detailed_ratings',
+                  'fuel_consumption_min', 'fuel_consumption_max', 'fuel_consumption_avg',
                   'author', 'helpful_count', 'unhelpful_count', 'comments_count', 'is_verified_owner', 'created_at']
 
     def get_comments_count(self, obj):
@@ -46,20 +60,30 @@ class OpinionListSerializer(serializers.ModelSerializer):
     def get_rating(self, obj):
         return obj.rating
 
+    def get_fuel_consumption_avg(self, obj):
+        avg = obj.fuel_consumption_avg
+        return _serialize_fuel(avg)
+
 
 class OpinionDetailSerializer(serializers.ModelSerializer):
     author = UserBriefSerializer(read_only=True)
     car_name = serializers.CharField(source='car_model.name', read_only=True)
     car_id = serializers.IntegerField(source='car_model.id', read_only=True)
+    car_brand_name = serializers.CharField(source='car_model.brand.name', read_only=True)
+    car_year = serializers.IntegerField(source='car_model.year_introduced', read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     user_vote = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
+    fuel_consumption_avg = serializers.SerializerMethodField()
+    uses_detailed_ratings = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Opinion
-        fields = ['id', 'car_id', 'car_name', 'title', 'content', 'rating',
+        fields = ['id', 'car_id', 'car_name', 'car_brand_name', 'car_year', 'title', 'content', 'rating',
                   'rating_quality', 'rating_workmanship', 'rating_economy', 'rating_safety',
                   'rating_comfort', 'rating_performance', 'rating_design', 'rating_reliability',
+                  'detailed_ratings', 'uses_detailed_ratings',
+                  'fuel_consumption_min', 'fuel_consumption_max', 'fuel_consumption_avg',
                   'author', 'helpful_count', 'unhelpful_count', 'comments', 'user_vote',
                   'is_verified_owner', 'is_approved', 'created_at', 'updated_at']
 
@@ -73,17 +97,59 @@ class OpinionDetailSerializer(serializers.ModelSerializer):
     def get_rating(self, obj):
         return obj.rating
 
+    def get_fuel_consumption_avg(self, obj):
+        avg = obj.fuel_consumption_avg
+        return _serialize_fuel(avg)
+
 
 class OpinionCreateUpdateSerializer(serializers.ModelSerializer):
+    detailed_ratings = serializers.JSONField(required=False)
+    fuel_consumption_min = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, allow_null=True)
+    fuel_consumption_max = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, allow_null=True)
+
     class Meta:
         model = Opinion
-        fields = ['car_model', 'title', 'content', 'rating_quality', 'rating_workmanship',
+        fields = ['car_model', 'title', 'content', 'detailed_ratings',
+                  'fuel_consumption_min', 'fuel_consumption_max',
+                  'rating_quality', 'rating_workmanship',
                   'rating_economy', 'rating_safety', 'rating_comfort', 'rating_performance',
                   'rating_design', 'rating_reliability']
 
+    def validate(self, attrs):
+        detailed = attrs.get('detailed_ratings')
+        if detailed is None and self.instance:
+            detailed = self.instance.detailed_ratings
+        if detailed is None:
+            detailed = empty_detailed_ratings()
+        try:
+            attrs['detailed_ratings'] = validate_detailed_ratings(detailed)
+        except ValueError as exc:
+            raise serializers.ValidationError({'detailed_ratings': str(exc)}) from exc
+
+        fuel_min = attrs.get('fuel_consumption_min', getattr(self.instance, 'fuel_consumption_min', None))
+        fuel_max = attrs.get('fuel_consumption_max', getattr(self.instance, 'fuel_consumption_max', None))
+        if fuel_min is not None and fuel_max is not None and fuel_min > fuel_max:
+            raise serializers.ValidationError({
+                'fuel_consumption_max': 'Maximum fuel consumption must be greater than or equal to minimum.',
+            })
+        return attrs
+
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user
-        return super().create(validated_data)
+        detailed = validated_data.pop('detailed_ratings')
+        instance = Opinion(**validated_data)
+        instance.apply_detailed_ratings(detailed)
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        detailed = validated_data.pop('detailed_ratings', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if detailed is not None:
+            instance.apply_detailed_ratings(detailed)
+        instance.save()
+        return instance
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
