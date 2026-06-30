@@ -3309,6 +3309,13 @@ body.app-theme-dark .file-input-btn:hover {
 
 .detailed-opinion-general-text {
   margin: 0;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.detailed-opinion-general-text p {
+  margin: 0;
+  color: inherit;
 }
 
 .detailed-opinion-fuel-table,
@@ -3359,6 +3366,24 @@ body.app-theme-dark .detailed-opinion-section-title,
 body.app-theme-dark .detailed-opinion-meta-line,
 body.app-theme-dark .detailed-opinion-rating-label {
   color: #e2e8f0;
+}
+
+body.app-theme-dark .detailed-opinion-general-text,
+body.app-theme-dark .detailed-opinion-general-text.opinion-content,
+body.app-theme-dark .detailed-opinion-general-text p {
+  color: #e2e8f0;
+}
+
+body.app-theme-dark .detailed-opinion-card-header {
+  border-bottom-color: #334155;
+}
+
+body.app-theme-dark .detailed-opinion-overall-label {
+  color: #94a3b8;
+}
+
+body.app-theme-dark .detailed-opinion-overall-stars {
+  color: #fbbf24;
 }
 
 body.app-theme-dark .detailed-opinion-fuel-row {

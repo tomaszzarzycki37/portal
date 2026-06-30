@@ -2856,6 +2856,17 @@ body.app-theme-dark .admin-rich-editor-compact .ql-editor {
 	margin-bottom: 1rem;
 }
 
+.opinion-detail-page {
+	display: grid;
+	gap: 1rem;
+}
+
+.opinion-detail-page .page-card {
+	max-width: none;
+	width: 100%;
+	margin: 0;
+}
+
 .model-family-variant-select {
 	max-width: 100%;
 	margin-top: 0.35rem;
