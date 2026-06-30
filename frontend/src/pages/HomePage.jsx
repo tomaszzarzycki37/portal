@@ -517,7 +517,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="home-filter-section">
-                    <label className="home-filter-label">{t.adminInline.modelLabel}</label>
+                    <label className="home-filter-label">{t.pages.modelFilterLabel}</label>
                     <input
                       type="text"
                       className="form-input"
