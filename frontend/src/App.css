@@ -2911,3 +2911,86 @@ body.app-theme-dark .admin-rich-editor-compact .ql-editor {
 		grid-template-columns: 220px 1fr auto;
 	}
 }
+
+/* Model family + brand lineup — dark theme */
+body.app-theme-dark .model-family-breadcrumbs {
+	color: #94a3b8;
+}
+
+body.app-theme-dark .model-family-hero-image,
+body.app-theme-dark .brand-lineup-model-image {
+	border-color: #4b5563;
+}
+
+body.app-theme-dark .model-family-brand-name,
+body.app-theme-dark .model-family-variant-count,
+body.app-theme-dark .model-family-empty,
+body.app-theme-dark .brand-lineup-model-meta {
+	color: #94a3b8;
+}
+
+body.app-theme-dark .model-family-selected-variant {
+	border-top-color: #3b414b;
+}
+
+body.app-theme-dark .model-family-selected-title,
+body.app-theme-dark .model-family-opinion-title,
+body.app-theme-dark .brand-lineup-model-title {
+	color: #f3f4f6;
+}
+
+body.app-theme-dark .model-family-selected-description,
+body.app-theme-dark .model-family-opinion-excerpt {
+	color: #cbd5e1;
+}
+
+body.app-theme-dark .model-family-overall-stars {
+	color: #e2e8f0;
+}
+
+body.app-theme-dark .model-family-overall-count,
+body.app-theme-dark .model-family-opinion-variant,
+body.app-theme-dark .model-family-opinion-date {
+	color: #94a3b8;
+}
+
+body.app-theme-dark .model-family-rating-section {
+	background: #1e293b;
+	border-color: #334155;
+}
+
+body.app-theme-dark .model-family-rating-section-title,
+body.app-theme-dark .model-family-rating-row {
+	color: #e2e8f0;
+}
+
+body.app-theme-dark .model-family-opinion-card {
+	background: #1e293b;
+	border-color: #334155;
+}
+
+body.app-theme-dark .model-family-opinion-author {
+	color: #f3f4f6;
+}
+
+body.app-theme-dark .model-family-variant-btn {
+	background: #1e293b;
+	border-color: #334155;
+}
+
+body.app-theme-dark .model-family-variant-btn.is-active {
+	background: #292524;
+	border-color: #f59e0b;
+}
+
+body.app-theme-dark .model-family-variant-year {
+	color: #f3f4f6;
+}
+
+body.app-theme-dark .model-family-variant-engine {
+	color: #cbd5e1;
+}
+
+body.app-theme-dark .model-family-variant-meta {
+	color: #94a3b8;
+}
