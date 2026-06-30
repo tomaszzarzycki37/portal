@@ -7,112 +7,146 @@ from django.core.management.base import BaseCommand
 from apps.cars.dimension_data import get_dimensions_for_model
 from apps.cars.models import Brand, CarModel
 
-DEFAULT_VARIANTS = [
-    {
-        'year_introduced': 2020,
-        'engine_type': 'ICE – 1.5T 147 KM FWD',
-        'horsepower': 147,
-        'acceleration': '9.1',
-        'top_speed': 180,
-        'fuel_consumption': '6.9',
-        'price_min': Decimal('89000'),
-        'price_max': Decimal('115000'),
-        'production_status': 'discontinued',
-        'description': (
-            'Wersja startowa Omoda 5 z silnikiem benzynowym 1.5T. '
-            'Wariant testowy do porównania roczników i napędów.'
-        ),
-    },
-    {
-        'year_introduced': 2022,
-        'engine_type': 'ICE – 1.6T 186 KM FWD',
-        'horsepower': 186,
-        'acceleration': '8.6',
-        'top_speed': 185,
-        'fuel_consumption': '7.2',
-        'price_min': Decimal('105000'),
-        'price_max': Decimal('145000'),
-        'production_status': 'active',
-        'description': (
-            'Podstawowa wersja spalinowa Omoda 5 po liftingu. '
-            'Wariant testowy – rocznik referencyjny.'
-        ),
-    },
-    {
-        'year_introduced': 2023,
-        'engine_type': 'BEV – 150 kW FWD',
-        'horsepower': 204,
-        'acceleration': '7.6',
-        'top_speed': 172,
-        'fuel_consumption': 'EV',
-        'price_min': Decimal('125000'),
-        'price_max': Decimal('165000'),
-        'production_status': 'active',
-        'description': (
-            'Pełna elektryka Omoda 5 z jednym silnikiem na przedniej osi. '
-            'Wariant testowy BEV.'
-        ),
-    },
-    {
-        'year_introduced': 2024,
-        'engine_type': 'PHEV – 1.5T + 150 kW AWD',
-        'horsepower': 245,
-        'acceleration': '7.2',
-        'top_speed': 180,
-        'fuel_consumption': '1.2 (WLTC)',
-        'price_min': Decimal('138000'),
-        'price_max': Decimal('178000'),
-        'production_status': 'active',
-        'description': (
-            'Hybryda plug-in z napędem na obie osie. '
-            'Wariant testowy PHEV.'
-        ),
-    },
-    {
-        'year_introduced': 2025,
-        'engine_type': 'ICE – 1.6T Sport 197 KM AWD',
-        'horsepower': 197,
-        'acceleration': '7.8',
-        'top_speed': 190,
-        'fuel_consumption': '7.5',
-        'price_min': Decimal('142000'),
-        'price_max': Decimal('188000'),
-        'production_status': 'active',
-        'description': (
-            'Wersja sportowa z napędem 4x4 i mocniejszą jednostką spalinową. '
-            'Wariant testowy ICE AWD.'
-        ),
-    },
-    {
-        'year_introduced': 2026,
-        'engine_type': 'BEV – dual motor 205 kW AWD',
-        'horsepower': 279,
-        'acceleration': '6.9',
-        'top_speed': 180,
-        'fuel_consumption': 'EV',
-        'price_min': Decimal('155000'),
-        'price_max': Decimal('205000'),
-        'production_status': 'upcoming',
-        'description': (
-            'Najmocniejsza wersja elektryczna z dwoma silnikami. '
-            'Wariant testowy – nadchodzący rocznik.'
-        ),
-    },
+
+def _variant(
+    year,
+    engine_type,
+    *,
+    horsepower,
+    acceleration,
+    top_speed,
+    fuel_consumption,
+    price_min,
+    price_max,
+    production_status='active',
+    description='',
+):
+    return {
+        'year_introduced': year,
+        'engine_type': engine_type,
+        'horsepower': horsepower,
+        'acceleration': acceleration,
+        'top_speed': top_speed,
+        'fuel_consumption': fuel_consumption,
+        'price_min': Decimal(str(price_min)),
+        'price_max': Decimal(str(price_max)),
+        'production_status': production_status,
+        'description': description,
+    }
+
+
+OMODA_5_VARIANTS = [
+    _variant(
+        2020, 'ICE – 1.5T 147 KM FWD',
+        horsepower=147, acceleration='9.1', top_speed=180, fuel_consumption='6.9',
+        price_min=89000, price_max=115000, production_status='discontinued',
+        description='Wersja startowa Omoda 5 z silnikiem benzynowym 1.5T. Wariant testowy.',
+    ),
+    _variant(
+        2022, 'ICE – 1.6T 186 KM FWD',
+        horsepower=186, acceleration='8.6', top_speed=185, fuel_consumption='7.2',
+        price_min=105000, price_max=145000,
+        description='Podstawowa wersja spalinowa Omoda 5 po liftingu. Wariant testowy.',
+    ),
+    _variant(
+        2023, 'BEV – 150 kW FWD',
+        horsepower=204, acceleration='7.6', top_speed=172, fuel_consumption='EV',
+        price_min=125000, price_max=165000,
+        description='Pełna elektryka Omoda 5 z jednym silnikiem na przedniej osi. Wariant testowy BEV.',
+    ),
+    _variant(
+        2024, 'PHEV – 1.5T + 150 kW AWD',
+        horsepower=245, acceleration='7.2', top_speed=180, fuel_consumption='1.2 (WLTC)',
+        price_min=138000, price_max=178000,
+        description='Hybryda plug-in z napędem na obie osie. Wariant testowy PHEV.',
+    ),
+    _variant(
+        2025, 'ICE – 1.6T Sport 197 KM AWD',
+        horsepower=197, acceleration='7.8', top_speed=190, fuel_consumption='7.5',
+        price_min=142000, price_max=188000,
+        description='Wersja sportowa z napędem 4x4. Wariant testowy ICE AWD.',
+    ),
+    _variant(
+        2026, 'BEV – dual motor 205 kW AWD',
+        horsepower=279, acceleration='6.9', top_speed=180, fuel_consumption='EV',
+        price_min=155000, price_max=205000, production_status='upcoming',
+        description='Najmocniejsza wersja elektryczna Omoda 5. Wariant testowy – nadchodzący rocznik.',
+    ),
 ]
+
+BAIC_TEST_VARIANTS = [
+    _variant(
+        2021, 'ICE – 1.5T 136 KM FWD',
+        horsepower=136, acceleration='9.4', top_speed=175, fuel_consumption='6.8',
+        price_min=78000, price_max=98000, production_status='discontinued',
+        description='BAIC TEST – pierwsza wersja spalinowa (wariant testowy, rocznik 2021).',
+    ),
+    _variant(
+        2022, 'ICE – 1.5T Turbo 150 KM FWD',
+        horsepower=150, acceleration='8.9', top_speed=178, fuel_consumption='7.0',
+        price_min=82000, price_max=102000, production_status='discontinued',
+        description='BAIC TEST – wersja spalinowa z doładowaniem (wariant testowy, rocznik 2022).',
+    ),
+    _variant(
+        2023, 'BEV – 120 kW FWD',
+        horsepower=163, acceleration='8.2', top_speed=160, fuel_consumption='EV',
+        price_min=95000, price_max=125000,
+        description='BAIC TEST – pierwsza wersja elektryczna (wariant testowy BEV, rocznik 2023).',
+    ),
+    _variant(
+        2024, 'PHEV – 1.5T + 120 kW FWD',
+        horsepower=218, acceleration='7.5', top_speed=170, fuel_consumption='1.4 (WLTC)',
+        price_min=108000, price_max=138000,
+        description='BAIC TEST – hybryda plug-in (wariant testowy PHEV, rocznik 2024).',
+    ),
+    _variant(
+        2025, 'ICE – 2.0T 204 KM AWD',
+        horsepower=204, acceleration='7.9', top_speed=190, fuel_consumption='7.6',
+        price_min=118000, price_max=152000,
+        description='BAIC TEST – wersja spalinowa z napędem AWD (wariant testowy, rocznik 2025).',
+    ),
+    _variant(
+        2026, 'BEV – dual motor 180 kW AWD',
+        horsepower=245, acceleration='7.0', top_speed=175, fuel_consumption='EV',
+        price_min=128000, price_max=168000, production_status='upcoming',
+        description='BAIC TEST – elektryczna wersja z dwoma silnikami (wariant testowy, rocznik 2026).',
+    ),
+]
+
+VARIANT_PROFILES = {
+    ('chery', 'omoda 5'): OMODA_5_VARIANTS,
+    ('baic', 'test'): BAIC_TEST_VARIANTS,
+}
+
+DEFAULT_PROFILE = ('chery', 'omoda 5')
 
 
 class Command(BaseCommand):
-    help = 'Add test year/engine variants for a model family (default: Chery Omoda 5).'
+    help = 'Add test year/engine variants for a model family (profiles: chery/Omoda 5, baic/TEST).'
 
     def add_arguments(self, parser):
-        parser.add_argument('--brand-slug', default='chery', help='Brand slug (default: chery)')
-        parser.add_argument('--model-name', default='Omoda 5', help='Model family name (default: Omoda 5)')
+        parser.add_argument('--brand-slug', default=None, help='Brand slug (e.g. chery, baic)')
+        parser.add_argument('--model-name', default=None, help='Model family name (e.g. "Omoda 5", TEST)')
         parser.add_argument('--dry-run', action='store_true', help='Show planned changes without writing')
 
     def handle(self, *args, **options):
         brand_slug = options['brand_slug']
         model_name = options['model_name']
         dry_run = options['dry_run']
+
+        if brand_slug is None or model_name is None:
+            brand_slug, model_name = DEFAULT_PROFILE[0], 'Omoda 5'
+
+        profile_key = (brand_slug.lower(), model_name.lower())
+        variants = VARIANT_PROFILES.get(profile_key)
+        if variants is None:
+            known = ', '.join(f'{b}/{m}' for b, m in VARIANT_PROFILES)
+            self.stderr.write(
+                self.style.ERROR(
+                    f'No variant profile for {brand_slug}/{model_name}. Known profiles: {known}',
+                ),
+            )
+            return
 
         try:
             brand = Brand.objects.get(slug=brand_slug)
@@ -125,7 +159,7 @@ class Command(BaseCommand):
             .order_by('-year_introduced')
             .first()
         )
-        vehicle_type = base.vehicle_type if base else 'crossover'
+        vehicle_type = base.vehicle_type if base else 'sedan'
         dimensions = get_dimensions_for_model(name=model_name)
         length_mm = width_mm = height_mm = None
         if dimensions:
@@ -135,9 +169,8 @@ class Command(BaseCommand):
 
         created = 0
         updated = 0
-        skipped = 0
 
-        for variant in DEFAULT_VARIANTS:
+        for variant in variants:
             year = variant['year_introduced']
             label = f'{brand.name} {model_name} ({year}) – {variant["engine_type"]}'
 
@@ -201,7 +234,7 @@ class Command(BaseCommand):
             self.stdout.write('')
             self.stdout.write(
                 self.style.SUCCESS(
-                    f'Done for {brand.name} {model_name}: {created} created, {updated} updated, '
-                    f'{skipped} skipped. Total variants: {total}.',
+                    f'Done for {brand.name} {model_name}: {created} created, {updated} updated. '
+                    f'Total variants: {total}.',
                 ),
             )
