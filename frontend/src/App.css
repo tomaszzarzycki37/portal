@@ -2565,6 +2565,12 @@ body.app-theme-dark .admin-rich-editor-compact .ql-editor {
 	gap: 1rem;
 }
 
+.model-family-page .page-card {
+	max-width: none;
+	width: 100%;
+	margin: 0;
+}
+
 .model-family-breadcrumbs {
 	font-size: 0.92rem;
 	color: #64748b;
@@ -2723,14 +2729,14 @@ body.app-theme-dark .admin-rich-editor-compact .ql-editor {
 
 .model-family-ratings-grid {
 	display: grid;
-	gap: 1rem;
+	gap: 1.25rem;
 	grid-template-columns: 1fr;
 }
 
 .model-family-rating-section {
 	border: 1px solid #e2e8f0;
 	border-radius: 0.75rem;
-	padding: 0.85rem;
+	padding: 1rem 1.35rem;
 	background: #f8fafc;
 }
 
@@ -2748,11 +2754,11 @@ body.app-theme-dark .admin-rich-editor-compact .ql-editor {
 }
 
 .model-family-rating-row {
-	display: flex;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
 	align-items: center;
-	justify-content: space-between;
-	gap: 0.75rem;
-	font-size: 0.88rem;
+	gap: 1rem;
+	font-size: 0.9rem;
 }
 
 .model-family-opinion-feed {
