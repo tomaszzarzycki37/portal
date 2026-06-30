@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import { useTranslation } from '../i18n'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser } from '../utils/auth'
+import { filterCarsForCatalogSearch, parseCatalogSearchParams } from '../utils/catalogSearch'
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -90,6 +91,7 @@ function formatModelLabel(count, lang) {
 
 export default function BrandDetailPage() {
   const { slug } = useParams()
+  const [searchParams] = useSearchParams()
   const { t, lang } = useTranslation()
   const isAdmin = isAdminUser()
   const [themeMode, setThemeMode] = useState(() => localStorage.getItem('admin_theme_mode') || 'light')
@@ -195,10 +197,20 @@ export default function BrandDetailPage() {
     [brandLogoUrl, brand?.name],
   )
 
+  const catalogSearchFilters = useMemo(
+    () => parseCatalogSearchParams(searchParams),
+    [searchParams],
+  )
+
+  const filteredCars = useMemo(
+    () => filterCarsForCatalogSearch(cars, catalogSearchFilters),
+    [cars, catalogSearchFilters],
+  )
+
   const groupedCars = useMemo(() => {
     const buckets = new Map()
 
-    cars.forEach((car) => {
+    filteredCars.forEach((car) => {
       const rawName = String(car.name || '').trim()
       const key = rawName.toLowerCase() || 'unknown-model'
 
@@ -219,7 +231,7 @@ export default function BrandDetailPage() {
         label: group.label,
         cars: [...group.cars].sort((a, b) => (b.year_introduced || 0) - (a.year_introduced || 0)),
       }))
-  }, [cars])
+  }, [filteredCars])
 
   const handleBrandLogoFileChange = async (e) => {
     const file = e.target.files?.[0] || null
@@ -597,7 +609,7 @@ export default function BrandDetailPage() {
           )}
         </div>
 
-        {cars.length === 0 ? (
+        {filteredCars.length === 0 ? (
           <div className="page-card brand-empty-models-card">
             <div className="brand-empty-models-content">
               <p>{t.pages.noModelsInBrand}</p>

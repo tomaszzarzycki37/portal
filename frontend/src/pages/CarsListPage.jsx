@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import { useTranslation } from '../i18n'
 import { createBrandPlaceholderUrl, getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { sortBrandsByName } from '../utils/brands'
+import { filterCarsForCatalogSearch, parseCatalogSearchParams } from '../utils/catalogSearch'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser, isAuthenticatedUser } from '../utils/auth'
 
@@ -165,7 +166,9 @@ export default function CarsListPage() {
   const [brandDescriptionEditorLang, setBrandDescriptionEditorLang] = useState('pl')
   const [brandTextSaving, setBrandTextSaving] = useState(false)
   const [brandTextError, setBrandTextError] = useState('')
+  const [yearFilter, setYearFilter] = useState('')
   const { t, lang } = useTranslation()
+  const [searchParams] = useSearchParams()
   const isAdmin = isAdminUser()
   const isLoggedIn = isAuthenticatedUser()
 
@@ -206,6 +209,22 @@ export default function CarsListPage() {
   useEffect(() => {
     fetchCatalog()
   }, [])
+
+  useEffect(() => {
+    const parsed = parseCatalogSearchParams(searchParams)
+    if (parsed.modelSearch) setSearchTerm(parsed.modelSearch)
+    else if (parsed.keywordSearch) setSearchTerm(parsed.keywordSearch)
+    else setSearchTerm('')
+    setYearFilter(parsed.yearSearch || '')
+    setEngineSearch(parsed.engineSearch || '')
+    setVehicleTypeFilter(parsed.vehicleTypeFilter || 'all')
+    setProductionStatusFilter(parsed.statusFilter || 'all')
+  }, [searchParams])
+
+  const urlCatalogFilters = useMemo(
+    () => parseCatalogSearchParams(searchParams),
+    [searchParams],
+  )
 
   const fetchCatalog = async ({ silent = false } = {}) => {
     if (!silent) {
@@ -514,7 +533,7 @@ export default function CarsListPage() {
         .map((brand) => brand.id),
     )
 
-    return sortedCars.filter((car) => {
+    const baseFiltered = sortedCars.filter((car) => {
       const haystack = `${car.brand_name || ''} ${car.name || ''} ${car.description || ''} ${car.engine_type || ''}`.toLowerCase()
 
       if (
@@ -528,9 +547,46 @@ export default function CarsListPage() {
       if (vehicleTypeFilter !== 'all' && String(car.vehicle_type || '') !== vehicleTypeFilter) return false
       if (productionStatusFilter !== 'all' && String(car.production_status || '') !== productionStatusFilter) return false
       if (driveTypeFilter !== 'all' && detectDriveType(car.engine_type) !== driveTypeFilter) return false
+      const parsedYear = Number.parseInt(String(yearFilter || '').trim(), 10)
+      if (Number.isFinite(parsedYear)) {
+        const yearIntroduced = Number.parseInt(String(car.year_introduced || '').trim(), 10)
+        if (yearIntroduced !== parsedYear) return false
+      }
       return true
     })
-  }, [sortedCars, brands, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter])
+
+    const hasAdvancedUrlFilters = Boolean(
+      String(urlCatalogFilters.yearFrom || '').trim()
+      || String(urlCatalogFilters.yearTo || '').trim()
+      || String(urlCatalogFilters.horsepowerFrom || '').trim()
+      || String(urlCatalogFilters.horsepowerTo || '').trim()
+      || String(urlCatalogFilters.topSpeedFrom || '').trim()
+      || String(urlCatalogFilters.topSpeedTo || '').trim()
+      || String(urlCatalogFilters.fuelConsumptionSearch || '').trim()
+      || String(urlCatalogFilters.priceFrom || '').trim()
+      || String(urlCatalogFilters.priceTo || '').trim(),
+    )
+
+    if (!hasAdvancedUrlFilters) return baseFiltered
+
+    return filterCarsForCatalogSearch(baseFiltered, {
+      modelSearch: '',
+      yearSearch: '',
+      keywordSearch: '',
+      engineSearch: '',
+      vehicleTypeFilter: 'all',
+      statusFilter: 'all',
+      yearFrom: urlCatalogFilters.yearFrom,
+      yearTo: urlCatalogFilters.yearTo,
+      horsepowerFrom: urlCatalogFilters.horsepowerFrom,
+      horsepowerTo: urlCatalogFilters.horsepowerTo,
+      topSpeedFrom: urlCatalogFilters.topSpeedFrom,
+      topSpeedTo: urlCatalogFilters.topSpeedTo,
+      fuelConsumptionSearch: urlCatalogFilters.fuelConsumptionSearch,
+      priceFrom: urlCatalogFilters.priceFrom,
+      priceTo: urlCatalogFilters.priceTo,
+    })
+  }, [sortedCars, brands, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter, yearFilter, urlCatalogFilters])
 
   const brandIdsMatchingSearch = useMemo(() => {
     const normalizedSearch = String(searchTerm || '').trim().toLowerCase()
@@ -609,6 +665,7 @@ export default function CarsListPage() {
     const list = (
       !searchTerm.trim() &&
       !engineSearch.trim() &&
+      !yearFilter.trim() &&
       vehicleTypeFilter === 'all' &&
       productionStatusFilter === 'all' &&
       driveTypeFilter === 'all'
@@ -618,11 +675,12 @@ export default function CarsListPage() {
         (brand) => (matchedCountByBrand.get(brand.id) || 0) > 0 || brandIdsMatchingSearch.has(brand.id),
       )
     return sortBrandsByName(list)
-  }, [brands, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter, matchedCountByBrand, brandIdsMatchingSearch])
+  }, [brands, searchTerm, engineSearch, yearFilter, vehicleTypeFilter, productionStatusFilter, driveTypeFilter, matchedCountByBrand, brandIdsMatchingSearch])
 
   const hasActiveFilters =
     Boolean(searchTerm.trim()) ||
     Boolean(engineSearch.trim()) ||
+    Boolean(yearFilter.trim()) ||
     vehicleTypeFilter !== 'all' ||
     productionStatusFilter !== 'all' ||
     driveTypeFilter !== 'all'

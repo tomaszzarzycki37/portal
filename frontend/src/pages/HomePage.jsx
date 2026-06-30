@@ -6,6 +6,11 @@ import api from '../services/api'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser } from '../utils/auth'
 import { normalizeMediaUrl } from '../utils/mediaUrl'
+import { sortBrandsByName } from '../utils/brands'
+import {
+  buildCatalogSearchPath,
+  filterCarsForCatalogSearch,
+} from '../utils/catalogSearch'
 
 const FALLBACK_HERO_IMAGE = 'https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&w=1800&q=80'
 const HERO_BACKGROUND_CONTENT_KEY = 'home.heroSearchBackgroundUrl'
@@ -36,22 +41,15 @@ function resolveMediaUrl(url) {
   return normalizeMediaUrl(`${API_ORIGIN}/${url}`)
 }
 
-const parsePriceRange = (car) => {
-  const priceMin = Number.parseFloat(String(car.price_min || ''))
-  const priceMax = Number.parseFloat(String(car.price_max || ''))
-  
-  const min = Number.isFinite(priceMin) ? priceMin : null
-  const max = Number.isFinite(priceMax) ? priceMax : null
-  
-  return { min, max }
-}
-
 export default function HomePage() {
   const { t, lang } = useTranslation()
   const [cars, setCars] = useState([])
+  const [brandCatalog, setBrandCatalog] = useState([])
   const [featuredReviews, setFeaturedReviews] = useState([])
   const [featuredSlideIndex, setFeaturedSlideIndex] = useState(0)
   const [selectedBrand, setSelectedBrand] = useState('all')
+  const [modelSearch, setModelSearch] = useState('')
+  const [yearSearch, setYearSearch] = useState('')
   const [engineSearch, setEngineSearch] = useState('')
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -90,16 +88,22 @@ export default function HomePage() {
   const isAdmin = isAdminUser()
 
   useEffect(() => {
-    const loadCars = async () => {
+    const loadCatalog = async () => {
       try {
-        const response = await api.get('/cars/?page_size=200')
-        setCars(response.data.results || response.data || [])
+        const [carsResponse, brandsResponse] = await Promise.all([
+          api.get('/cars/?page_size=200'),
+          api.get('/cars/brands/?ordering=name&page_size=500'),
+        ])
+        setCars(carsResponse.data.results || carsResponse.data || [])
+        const brandList = brandsResponse.data.results || brandsResponse.data || []
+        setBrandCatalog(sortBrandsByName(brandList))
       } catch {
         setCars([])
+        setBrandCatalog([])
       }
     }
 
-    loadCars()
+    loadCatalog()
   }, [])
 
   useEffect(() => {
@@ -209,53 +213,43 @@ export default function HomePage() {
   }, [cars])
 
   const brands = useMemo(() => {
+    if (brandCatalog.length > 0) {
+      return brandCatalog.map((brand) => brand.name).filter(Boolean)
+    }
     const values = new Set(cars.map((car) => String(car.brand_name || '').trim()).filter(Boolean))
     return Array.from(values).sort((a, b) => a.localeCompare(b))
-  }, [cars])
+  }, [brandCatalog, cars])
 
-  const filteredCars = useMemo(() => {
-    const normalizedKeyword = String(keywordSearch || '').trim().toLowerCase()
-    const normalizedEngine = String(engineSearch || '').trim().toLowerCase()
-    const normalizedFuelConsumption = String(fuelConsumptionSearch || '').trim().toLowerCase()
-    const parsedYearFrom = Number.parseInt(String(yearFrom || '').trim(), 10)
-    const parsedYearTo = Number.parseInt(String(yearTo || '').trim(), 10)
-    const parsedHorsepowerFrom = Number.parseInt(String(horsepowerFrom || '').trim(), 10)
-    const parsedHorsepowerTo = Number.parseInt(String(horsepowerTo || '').trim(), 10)
-    const parsedTopSpeedFrom = Number.parseInt(String(topSpeedFrom || '').trim(), 10)
-    const parsedTopSpeedTo = Number.parseInt(String(topSpeedTo || '').trim(), 10)
-    const parsedPriceFrom = Number.parseInt(String(priceFrom || '').trim(), 10)
-    const parsedPriceTo = Number.parseInt(String(priceTo || '').trim(), 10)
+  const modelsForSelectedBrand = useMemo(() => {
+    const values = new Set(
+      cars
+        .filter((car) => selectedBrand === 'all' || String(car.brand_name || '') === selectedBrand)
+        .map((car) => String(car.name || '').trim())
+        .filter(Boolean),
+    )
+    return Array.from(values).sort((a, b) => a.localeCompare(b))
+  }, [cars, selectedBrand])
 
-    return cars.filter((car) => {
-      const haystack = `${car.brand_name || ''} ${car.name || ''} ${car.description || ''} ${car.engine_type || ''} ${car.price_range_display || ''}`.toLowerCase()
-      if (normalizedKeyword && !haystack.includes(normalizedKeyword)) return false
-      if (selectedBrand !== 'all' && String(car.brand_name || '') !== selectedBrand) return false
-      if (normalizedEngine && !String(car.engine_type || '').toLowerCase().includes(normalizedEngine)) return false
-      if (vehicleTypeFilter !== 'all' && String(car.vehicle_type || '') !== vehicleTypeFilter) return false
-      if (statusFilter !== 'all' && String(car.production_status || '') !== statusFilter) return false
-      if (normalizedFuelConsumption && !String(car.fuel_consumption || '').toLowerCase().includes(normalizedFuelConsumption)) return false
-
-      const yearIntroduced = Number.parseInt(String(car.year_introduced || '').trim(), 10)
-      if (Number.isFinite(parsedYearFrom) && Number.isFinite(yearIntroduced) && yearIntroduced < parsedYearFrom) return false
-      if (Number.isFinite(parsedYearTo) && Number.isFinite(yearIntroduced) && yearIntroduced > parsedYearTo) return false
-
-      const horsepower = Number.parseInt(String(car.horsepower || '').trim(), 10)
-      if (Number.isFinite(parsedHorsepowerFrom) && Number.isFinite(horsepower) && horsepower < parsedHorsepowerFrom) return false
-      if (Number.isFinite(parsedHorsepowerTo) && Number.isFinite(horsepower) && horsepower > parsedHorsepowerTo) return false
-
-      const topSpeed = Number.parseInt(String(car.top_speed || '').trim(), 10)
-      if (Number.isFinite(parsedTopSpeedFrom) && Number.isFinite(topSpeed) && topSpeed < parsedTopSpeedFrom) return false
-      if (Number.isFinite(parsedTopSpeedTo) && Number.isFinite(topSpeed) && topSpeed > parsedTopSpeedTo) return false
-
-      const { min: carPriceMin, max: carPriceMax } = parsePriceRange(car)
-      if (Number.isFinite(parsedPriceFrom) && Number.isFinite(carPriceMax) && carPriceMax < parsedPriceFrom) return false
-      if (Number.isFinite(parsedPriceTo) && Number.isFinite(carPriceMin) && carPriceMin > parsedPriceTo) return false
-      return true
-    })
-  }, [
-    cars,
+  const catalogFilters = useMemo(() => ({
+    modelSearch,
+    yearSearch,
     keywordSearch,
-    selectedBrand,
+    engineSearch,
+    vehicleTypeFilter,
+    statusFilter,
+    fuelConsumptionSearch,
+    yearFrom,
+    yearTo,
+    horsepowerFrom,
+    horsepowerTo,
+    topSpeedFrom,
+    topSpeedTo,
+    priceFrom,
+    priceTo,
+  }), [
+    modelSearch,
+    yearSearch,
+    keywordSearch,
     engineSearch,
     vehicleTypeFilter,
     statusFilter,
@@ -269,6 +263,19 @@ export default function HomePage() {
     priceFrom,
     priceTo,
   ])
+
+  const filteredCars = useMemo(() => {
+    const scopedCars = selectedBrand === 'all'
+      ? cars
+      : cars.filter((car) => String(car.brand_name || '') === selectedBrand)
+
+    return filterCarsForCatalogSearch(scopedCars, catalogFilters)
+  }, [cars, selectedBrand, catalogFilters])
+
+  const catalogSearchPath = useMemo(
+    () => buildCatalogSearchPath(selectedBrand, brandCatalog, catalogFilters),
+    [selectedBrand, brandCatalog, catalogFilters],
+  )
 
   const carById = useMemo(() => {
     const byId = new Map()
@@ -497,7 +504,10 @@ export default function HomePage() {
                     <select
                       className="form-input"
                       value={selectedBrand}
-                      onChange={(e) => setSelectedBrand(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedBrand(e.target.value)
+                        setModelSearch('')
+                      }}
                     >
                       <option value="all">{t.pages.allLabel}</option>
                       {brands.map((brand) => (
@@ -507,53 +517,38 @@ export default function HomePage() {
                   </div>
 
                   <div className="home-filter-section">
-                    <label className="home-filter-label">{t.pages.engineFilter}</label>
+                    <label className="home-filter-label">{t.adminInline.modelLabel}</label>
                     <input
                       type="text"
                       className="form-input"
-                      value={engineSearch}
-                      onChange={(e) => setEngineSearch(e.target.value)}
-                      placeholder={t.pages.engineFilterPlaceholder}
-                      list="engineTypes"
+                      value={modelSearch}
+                      onChange={(e) => setModelSearch(e.target.value)}
+                      placeholder={t.pages.modelSearchPlaceholder}
+                      list="homeModelOptions"
                     />
-                    <datalist id="engineTypes">
-                      {engineTypes.map((type) => (
-                        <option key={type} value={type} />
+                    <datalist id="homeModelOptions">
+                      {modelsForSelectedBrand.map((model) => (
+                        <option key={model} value={model} />
                       ))}
                     </datalist>
                   </div>
 
-                  <div className="home-filter-section">
-                    <label className="home-filter-label">{t.pages.typeFilter}</label>
-                    <select
+                  <div className="home-filter-section home-filter-section-last">
+                    <label className="home-filter-label">{t.pages.yearSearchLabel}</label>
+                    <input
+                      type="number"
                       className="form-input"
-                      value={vehicleTypeFilter}
-                      onChange={(e) => setVehicleTypeFilter(e.target.value)}
-                    >
-                      <option value="all">{t.pages.allLabel}</option>
-                      {vehicleTypes.map((type) => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="home-filter-section">
-                    <label className="home-filter-label">{t.pages.productionStatus}</label>
-                    <select
-                      className="form-input"
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                      <option value="all">{t.pages.allLabel}</option>
-                      <option value="active">{t.pages.statusActive}</option>
-                      <option value="discontinued">{t.pages.statusDiscontinued}</option>
-                      <option value="upcoming">{t.pages.statusUpcoming}</option>
-                    </select>
+                      value={yearSearch}
+                      onChange={(e) => setYearSearch(e.target.value)}
+                      placeholder={t.pages.yearSearchPlaceholder}
+                      min="1900"
+                      max="2100"
+                    />
                   </div>
                 </div>
 
                 <Link
-                  to="/cars"
+                  to={catalogSearchPath}
                   className="home-filter-cta"
                   style={{ textDecoration: 'none', display: 'block', textAlign: 'center' }}
                 >
@@ -609,7 +604,52 @@ export default function HomePage() {
 
                 <div className="home-search-advanced-grid">
                   <div className="home-filter-section">
-                    <label className="home-filter-label">Rok od</label>
+                    <label className="home-filter-label">{t.pages.engineFilter}</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={engineSearch}
+                      onChange={(e) => setEngineSearch(e.target.value)}
+                      placeholder={t.pages.engineFilterPlaceholder}
+                      list="engineTypes"
+                    />
+                    <datalist id="engineTypes">
+                      {engineTypes.map((type) => (
+                        <option key={type} value={type} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">{t.pages.typeFilter}</label>
+                    <select
+                      className="form-input"
+                      value={vehicleTypeFilter}
+                      onChange={(e) => setVehicleTypeFilter(e.target.value)}
+                    >
+                      <option value="all">{t.pages.allLabel}</option>
+                      {vehicleTypes.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">{t.pages.productionStatus}</label>
+                    <select
+                      className="form-input"
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                      <option value="all">{t.pages.allLabel}</option>
+                      <option value="active">{t.pages.statusActive}</option>
+                      <option value="discontinued">{t.pages.statusDiscontinued}</option>
+                      <option value="upcoming">{t.pages.statusUpcoming}</option>
+                    </select>
+                  </div>
+
+                  <div className="home-filter-section">
+                    <label className="home-filter-label">{t.pages.yearFromLabel}</label>
                     <input
                       type="number"
                       className="form-input"
@@ -622,7 +662,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="home-filter-section">
-                    <label className="home-filter-label">Rok do</label>
+                    <label className="home-filter-label">{t.pages.yearToLabel}</label>
                     <input
                       type="number"
                       className="form-input"
@@ -635,7 +675,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="home-filter-section">
-                    <label className="home-filter-label">Moc od</label>
+                    <label className="home-filter-label">{t.pages.horsepowerFromLabel}</label>
                     <input
                       type="number"
                       className="form-input"
@@ -647,7 +687,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="home-filter-section">
-                    <label className="home-filter-label">Moc do</label>
+                    <label className="home-filter-label">{t.pages.horsepowerToLabel}</label>
                     <input
                       type="number"
                       className="form-input"
@@ -659,7 +699,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="home-filter-section">
-                    <label className="home-filter-label">Prędkość od</label>
+                    <label className="home-filter-label">{t.pages.topSpeedFromLabel}</label>
                     <input
                       type="number"
                       className="form-input"
@@ -671,7 +711,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="home-filter-section">
-                    <label className="home-filter-label">Prędkość do</label>
+                    <label className="home-filter-label">{t.pages.topSpeedToLabel}</label>
                     <input
                       type="number"
                       className="form-input"
@@ -685,18 +725,18 @@ export default function HomePage() {
 
                 <div className="home-search-advanced-grid home-search-advanced-grid-secondary">
                   <div className="home-filter-section">
-                    <label className="home-filter-label">Zużycie paliwa</label>
+                    <label className="home-filter-label">{t.pages.fuelConsumptionLabel}</label>
                     <input
                       type="text"
                       className="form-input"
                       value={fuelConsumptionSearch}
                       onChange={(e) => setFuelConsumptionSearch(e.target.value)}
-                      placeholder="5.5, EV, hybrid..."
+                      placeholder={t.pages.fuelConsumptionPlaceholder}
                     />
                   </div>
 
                   <div className="home-filter-section">
-                    <label className="home-filter-label">Zakres cenowy od</label>
+                    <label className="home-filter-label">{t.pages.priceFromLabel}</label>
                     <input
                       type="number"
                       className="form-input"
@@ -708,7 +748,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="home-filter-section home-filter-section-last">
-                    <label className="home-filter-label">Zakres cenowy do</label>
+                    <label className="home-filter-label">{t.pages.priceToLabel}</label>
                     <input
                       type="number"
                       className="form-input"
