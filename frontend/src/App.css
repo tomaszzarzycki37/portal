@@ -2850,17 +2850,58 @@ body.app-theme-dark .admin-rich-editor-compact .ql-editor {
 	margin-bottom: 1rem;
 }
 
+.model-family-variant-select {
+	max-width: 100%;
+	margin-top: 0.35rem;
+}
+
+.brand-lineup-model-list {
+	display: grid;
+	gap: 0.85rem;
+}
+
+.brand-lineup-model-card-grid {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: 1fr;
+	align-items: center;
+}
+
+.brand-lineup-model-image {
+	width: 100%;
+	max-width: 220px;
+	height: 130px;
+	object-fit: cover;
+	border-radius: 0.75rem;
+	border: 1px solid #e2e8f0;
+}
+
+.brand-lineup-model-title {
+	margin: 0 0 0.35rem;
+	font-size: 1.2rem;
+}
+
+.brand-lineup-model-meta {
+	margin: 0.15rem 0;
+	color: #64748b;
+	font-size: 0.92rem;
+}
+
+.brand-lineup-model-cta {
+	justify-self: start;
+}
+
 @media (min-width: 768px) {
 	.model-family-hero-grid {
 		grid-template-columns: 320px 1fr;
 		align-items: center;
 	}
 
-	.model-family-variant-list {
+	.model-family-ratings-grid {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
-	.model-family-ratings-grid {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+	.brand-lineup-model-card-grid {
+		grid-template-columns: 220px 1fr auto;
 	}
 }

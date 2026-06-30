@@ -186,23 +186,19 @@ export default function ModelFamilyPage() {
         <h2 className="detail-section-title">{t.pages.modelFamilyVariantTitle}</h2>
         <p className="admin-subtitle">{t.pages.modelFamilyVariantHint}</p>
 
-        <div className="model-family-variant-list">
-          {filteredVariants.map((variant) => {
-            const isActive = selectedVariant?.id === variant.id
-            return (
-              <button
-                key={variant.id}
-                type="button"
-                className={`model-family-variant-btn${isActive ? ' is-active' : ''}`}
-                onClick={() => handleVariantChange(variant.id)}
-              >
-                <span className="model-family-variant-year">{variant.year_introduced}</span>
-                <span className="model-family-variant-engine">{variant.engine_type || t.pages.engineUnknown}</span>
-                <span className="model-family-variant-meta">{variant.vehicle_type} · {variant.production_status}</span>
-              </button>
-            )
-          })}
-        </div>
+        <label className="form-label" htmlFor="model-family-variant-select">{t.pages.modelFamilyVariantTitle}</label>
+        <select
+          id="model-family-variant-select"
+          className="form-input model-family-variant-select"
+          value={selectedVariant?.id || ''}
+          onChange={(event) => handleVariantChange(event.target.value)}
+        >
+          {filteredVariants.map((variant) => (
+            <option key={variant.id} value={variant.id}>
+              {variant.year_introduced} · {variant.engine_type || t.pages.engineUnknown} · {variant.vehicle_type} · {variant.production_status}
+            </option>
+          ))}
+        </select>
 
         {selectedVariant && (
           <div className="model-family-selected-variant">

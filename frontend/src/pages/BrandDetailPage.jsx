@@ -64,20 +64,6 @@ function formatPriceRange(minK, maxK, currency) {
   return `${config.symbol}${formatK(minValue)}k-${formatK(maxValue)}k`
 }
 
-function convertPriceValue(value, fromCurrency, toCurrency) {
-  const parsedValue = Number.parseFloat(String(value || '').replace(',', '.'))
-  if (Number.isNaN(parsedValue)) return ''
-
-  const fromConfig = CURRENCY_CONFIG[fromCurrency]
-  const toConfig = CURRENCY_CONFIG[toCurrency]
-  if (!fromConfig || !toConfig) return String(value || '')
-
-  const valueInUsd = parsedValue * fromConfig.rateToUsd
-  const converted = valueInUsd / toConfig.rateToUsd
-  const rounded = Math.round(converted * 10) / 10
-  return String(rounded)
-}
-
 function formatModelLabel(count, lang) {
   const value = Number(count) || 0
   if (lang === 'pl') {
@@ -100,10 +86,6 @@ export default function BrandDetailPage() {
   const [brand, setBrand] = useState(null)
   const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(true)
-  const [drafts, setDrafts] = useState({})
-  const [openEditorId, setOpenEditorId] = useState(null)
-  const [savingId, setSavingId] = useState(null)
-  const [statusById, setStatusById] = useState({})
 
   const [brandDescriptionEn, setBrandDescriptionEn] = useState('')
   const [brandDescriptionPl, setBrandDescriptionPl] = useState('')
@@ -142,22 +124,6 @@ export default function BrandDetailPage() {
         const carsResponse = await api.get(`/cars/?brand=${brandData.id}&page_size=200`)
         const carList = carsResponse.data.results || carsResponse.data || []
         setCars(carList)
-
-        const initialDrafts = {}
-        carList.forEach((car) => {
-          initialDrafts[car.id] = {
-            name: car.name || '',
-            year_introduced: car.year_introduced ? String(car.year_introduced) : '',
-            vehicle_type: car.vehicle_type || 'sedan',
-            engine_type: car.engine_type || '',
-            price_min: car.price_min ? String(car.price_min) : '',
-            price_max: car.price_max ? String(car.price_max) : '',
-            currency: car.currency || 'CNY',
-            production_status: car.production_status || 'active',
-            is_featured: !!car.is_featured,
-          }
-        })
-        setDrafts(initialDrafts)
       } catch {
         setBrand(null)
         setCars([])
@@ -314,81 +280,6 @@ export default function BrandDetailPage() {
       setBrandError(t.pages.brandSaveError)
     } finally {
       setBrandSaving(false)
-    }
-  }
-
-  const handleDraftChange = (carId, field, value) => {
-    setDrafts((prev) => ({
-      ...prev,
-      [carId]: {
-        ...(prev[carId] || {}),
-        [field]: value,
-      },
-    }))
-  }
-
-  const handleToggleEditor = (carId) => {
-    setStatusById((prev) => ({ ...prev, [carId]: '' }))
-    setOpenEditorId((prev) => (prev === carId ? null : carId))
-  }
-
-  const handlePriceCurrencyChange = (carId, nextCurrency) => {
-    const currentDraft = drafts[carId] || {}
-    const previousCurrency = currentDraft.currency || 'CNY'
-
-    setDrafts((prev) => ({
-      ...prev,
-      [carId]: {
-        ...(prev[carId] || {}),
-        currency: nextCurrency,
-        price_min: convertPriceValue(prev[carId]?.price_min, previousCurrency, nextCurrency),
-        price_max: convertPriceValue(prev[carId]?.price_max, previousCurrency, nextCurrency),
-      },
-    }))
-  }
-
-  const handleQuickSave = async (carId) => {
-    if (!isAdmin) return
-
-    const draft = drafts[carId]
-    if (!draft) return
-
-    const parsedYear = Number.parseInt(String(draft.year_introduced || '').trim(), 10)
-    if (Number.isNaN(parsedYear)) {
-      setStatusById((prev) => ({ ...prev, [carId]: t.adminInline.yearRequired }))
-      return
-    }
-
-    try {
-      setSavingId(carId)
-      setStatusById((prev) => ({ ...prev, [carId]: '' }))
-
-      const payload = {
-        year_introduced: parsedYear,
-        vehicle_type: draft.vehicle_type,
-        engine_type: draft.engine_type,
-        price_min: draft.price_min ? parseFloat(draft.price_min) : null,
-        price_max: draft.price_max ? parseFloat(draft.price_max) : null,
-        currency: draft.currency,
-        production_status: draft.production_status,
-        is_featured: !!draft.is_featured,
-      }
-
-      const trimmedName = String(draft.name || '').trim()
-      if (trimmedName) {
-        payload.name = trimmedName
-      }
-
-      const response = await api.patch(`/cars/${carId}/`, payload)
-
-      const updatedCar = response.data
-      setCars((prev) => prev.map((car) => (car.id === carId ? { ...car, ...updatedCar } : car)))
-      setStatusById((prev) => ({ ...prev, [carId]: t.adminInline.saved }))
-      setOpenEditorId(null)
-    } catch {
-      setStatusById((prev) => ({ ...prev, [carId]: t.adminInline.saveError }))
-    } finally {
-      setSavingId(null)
     }
   }
 
@@ -645,220 +536,55 @@ export default function BrandDetailPage() {
             </div>
           </div>
         ) : (
-          <div className="brand-lineup-groups">
-            {groupedCars.map((group) => (
-              <section key={group.key} className="brand-lineup-group">
-                <div
-                  className="brand-lineup-group-header"
-                  style={isDarkTheme ? { background: 'linear-gradient(180deg, #2a3039, #232933)', borderColor: '#3f4754' } : undefined}
+          <div className="brand-lineup-model-list">
+            {groupedCars.map((group) => {
+              const primaryVariant = group.cars[0]
+              const familyYears = group.cars
+                .map((car) => car.year_introduced)
+                .filter(Boolean)
+                .sort((a, b) => a - b)
+                .join('–')
+              const totalOpinions = group.cars.reduce((sum, car) => sum + (Number(car.opinions_count) || 0), 0)
+              const avgRating = group.cars.reduce((sum, car) => sum + (Number(car.avg_rating) || 0), 0) / group.cars.length
+
+              return (
+                <article
+                  key={group.key}
+                  className="page-card brand-lineup-model-card"
+                  style={isDarkTheme ? { background: '#262c36', borderColor: '#3f4754' } : undefined}
                 >
-                  <div className="brand-lineup-group-header-left">
-                    <h3 className="brand-lineup-group-title" style={isDarkTheme ? { color: '#f3f4f6' } : undefined}>
-                      <Link to={buildModelFamilyPath(slug, group.label)} className="brand-lineup-group-title-link">
-                        {group.label}
-                      </Link>
-                    </h3>
-                    <span
-                      className="brand-lineup-group-count"
-                      style={isDarkTheme ? { background: '#2f353f', borderColor: '#4b5563', color: '#e5e7eb' } : undefined}
-                  >
-                    {group.cars.length} {formatModelLabel(group.cars.length, lang)}
-                    </span>
+                  <div className="brand-lineup-model-card-grid">
+                    <img
+                      src={getCarImage(primaryVariant)}
+                      alt={group.label}
+                      className="brand-lineup-model-image"
+                      onError={handleCarImageError}
+                    />
+                    <div className="brand-lineup-model-copy">
+                      <h3 className="brand-lineup-model-title">
+                        <Link to={buildModelFamilyPath(slug, group.label)} className="brand-lineup-group-title-link">
+                          {group.label}
+                        </Link>
+                      </h3>
+                      <p className="brand-lineup-model-meta">
+                        {primaryVariant.vehicle_type || '-'}
+                        {familyYears ? ` · ${familyYears}` : ''}
+                      </p>
+                      <p className="brand-lineup-model-meta">
+                        {group.cars.length} {group.cars.length === 1 ? t.pages.modelFamilyVariantSingle : t.pages.modelFamilyVariantPlural}
+                        {' · '}
+                        ★ {avgRating.toFixed(1)}
+                        {' · '}
+                        {totalOpinions} {t.pages.reviewsLabel}
+                      </p>
+                    </div>
+                    <Link to={buildModelFamilyPath(slug, group.label)} className="btn btn-primary brand-lineup-model-cta">
+                      {t.pages.openModel}
+                    </Link>
                   </div>
-                </div>
-
-                <div className="cars-grid">
-                  {group.cars.map((car) => (
-                    <article
-                      key={car.id}
-                      className={`car-card-item ${isAdmin ? 'car-card-admin' : ''}`}
-                      style={isDarkTheme ? { background: '#262c36', borderColor: '#3f4754', boxShadow: '0 12px 24px rgba(3, 6, 12, 0.36)' } : undefined}
-                    >
-                      <Link to={`/cars/${car.id}`} className="car-card-link">
-                        <img
-                          src={getCarImage(car)}
-                          alt={car.name}
-                          className="car-thumb"
-                          onError={handleCarImageError}
-                          style={isDarkTheme ? { border: '1px solid #4b5563' } : undefined}
-                        />
-                        <h3 className="car-name" style={isDarkTheme ? { color: '#f3f4f6' } : undefined}>{car.name}</h3>
-                        <p className="car-meta" style={isDarkTheme ? { color: '#cbd5e1' } : undefined}>
-                          {brand.name} &bull; {car.year_introduced}
-                        </p>
-                        <p className="car-type" style={isDarkTheme ? { color: '#cbd5e1' } : undefined}>{car.vehicle_type}</p>
-                        <div className="car-rating-row">
-                          <span className="rating">★ {car.avg_rating}</span>
-                          <span
-                            className="car-count-badge"
-                            style={isDarkTheme ? { background: '#2f353f', color: '#e5e7eb', borderColor: '#4b5563' } : undefined}
-                          >
-                            {car.opinions_count} {t.pages.reviewsLabel}
-                          </span>
-                        </div>
-                      </Link>
-
-                      {isAdmin && (
-                        <div className="admin-inline-wrap">
-                          <button
-                            type="button"
-                            className="admin-inline-toggle admin-inline-gear"
-                            onClick={() => handleToggleEditor(car.id)}
-                            aria-expanded={openEditorId === car.id}
-                            aria-label={openEditorId === car.id ? t.adminInline.hideSettings : t.adminInline.showSettings}
-                            title={openEditorId === car.id ? t.adminInline.hideSettings : t.adminInline.showSettings}
-                          >
-                            <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
-                              <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
-                            </svg>
-                          </button>
-
-                          {openEditorId === car.id && (
-                            <div className="admin-inline-card">
-                              <p className="admin-inline-title">{t.adminInline.quickEdit}</p>
-
-                              <p className="admin-inline-section-title">{t.adminInline.sectionBasics}</p>
-                              <div className="admin-inline-grid">
-                                <div>
-                                  <label className="form-label" htmlFor={`name-${car.id}`}>{t.adminInline.modelName}</label>
-                                  <input
-                                    id={`name-${car.id}`}
-                                    className="form-input"
-                                    value={drafts[car.id]?.name || ''}
-                                    onChange={(e) => handleDraftChange(car.id, 'name', e.target.value)}
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="form-label" htmlFor={`year-${car.id}`}>{t.pages.year}</label>
-                                  <input
-                                    id={`year-${car.id}`}
-                                    type="number"
-                                    className="form-input"
-                                    value={drafts[car.id]?.year_introduced || ''}
-                                    onChange={(e) => handleDraftChange(car.id, 'year_introduced', e.target.value)}
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="form-label" htmlFor={`type-${car.id}`}>{t.pages.type}</label>
-                                  <select
-                                    id={`type-${car.id}`}
-                                    className="form-input"
-                                    value={drafts[car.id]?.vehicle_type || 'sedan'}
-                                    onChange={(e) => handleDraftChange(car.id, 'vehicle_type', e.target.value)}
-                                  >
-                                    <option value="sedan">Sedan</option>
-                                    <option value="suv">SUV</option>
-                                    <option value="crossover">Crossover</option>
-                                    <option value="hatchback">Hatchback</option>
-                                    <option value="coupe">Coupe</option>
-                                    <option value="van">Van</option>
-                                    <option value="truck">Truck</option>
-                                    <option value="other">Other</option>
-                                  </select>
-                                </div>
-
-                                <div>
-                                  <label className="form-label" htmlFor={`engine-${car.id}`}>{t.pages.engine}</label>
-                                  <input
-                                    id={`engine-${car.id}`}
-                                    className="form-input"
-                                    value={drafts[car.id]?.engine_type || ''}
-                                    onChange={(e) => handleDraftChange(car.id, 'engine_type', e.target.value)}
-                                  />
-                                </div>
-                              </div>
-
-                              <p className="admin-inline-section-title">{t.pages.sectionMarket}</p>
-                              <div className="admin-inline-grid">
-                                <div>
-                                  <label className="form-label" htmlFor={`price-currency-${car.id}`}>{t.adminPanel.baseCurrency}</label>
-                                  <select
-                                    id={`price-currency-${car.id}`}
-                                    className="form-input"
-                                    value={drafts[car.id]?.currency || 'CNY'}
-                                    onChange={(e) => handlePriceCurrencyChange(car.id, e.target.value)}
-                                  >
-                                    <option value="CNY">¥ CNY</option>
-                                    <option value="USD">$ USD</option>
-                                    <option value="EUR">€ EUR</option>
-                                    <option value="GBP">£ GBP</option>
-                                    <option value="JPY">¥ JPY</option>
-                                    <option value="PLN">zł PLN</option>
-                                    <option value="INR">₹ INR</option>
-                                  </select>
-                                </div>
-
-                                <div>
-                                  <label className="form-label" htmlFor={`price-min-${car.id}`}>{t.adminPanel.priceMinK}</label>
-                                  <input
-                                    id={`price-min-${car.id}`}
-                                    type="number"
-                                    className="form-input"
-                                    value={drafts[car.id]?.price_min || ''}
-                                    onChange={(e) => handleDraftChange(car.id, 'price_min', e.target.value)}
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="form-label" htmlFor={`price-max-${car.id}`}>{t.adminPanel.priceMaxK}</label>
-                                  <input
-                                    id={`price-max-${car.id}`}
-                                    type="number"
-                                    className="form-input"
-                                    value={drafts[car.id]?.price_max || ''}
-                                    onChange={(e) => handleDraftChange(car.id, 'price_max', e.target.value)}
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="form-label" htmlFor={`status-${car.id}`}>{t.pages.productionStatus}</label>
-                                  <select
-                                    id={`status-${car.id}`}
-                                    className="form-input"
-                                    value={drafts[car.id]?.production_status || 'active'}
-                                    onChange={(e) => handleDraftChange(car.id, 'production_status', e.target.value)}
-                                  >
-                                    <option value="active">{t.pages.statusActive}</option>
-                                    <option value="discontinued">{t.pages.statusDiscontinued}</option>
-                                    <option value="upcoming">{t.pages.statusUpcoming}</option>
-                                  </select>
-                                </div>
-                              </div>
-
-                              <label className="form-checkbox-row">
-                                <input
-                                  type="checkbox"
-                                  checked={!!drafts[car.id]?.is_featured}
-                                  onChange={(e) => handleDraftChange(car.id, 'is_featured', e.target.checked)}
-                                />
-                                {t.adminInline.featured}
-                              </label>
-
-                              <button
-                                type="button"
-                                className="btn btn-secondary"
-                                disabled={savingId === car.id}
-                                onClick={() => handleQuickSave(car.id)}
-                              >
-                                {savingId === car.id ? t.pages.loading : t.adminInline.save}
-                              </button>
-
-                              {statusById[car.id] && (
-                                <p className={statusById[car.id] === t.adminInline.saved ? 'form-success' : 'form-error'}>
-                                  {statusById[car.id]}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ))}
+                </article>
+              )
+            })}
           </div>
         )}
       </section>
