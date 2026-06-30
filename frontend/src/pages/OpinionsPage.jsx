@@ -444,7 +444,9 @@ export default function OpinionsPage() {
                                     ) : (
                                       <>
                                         <div className="opinion-list-header">
-                                          <h4 className="opinion-title">{opinion.title}</h4>
+                                          <h4 className="opinion-title">
+                                            <Link to={`/opinions/${opinion.id}`}>{opinion.title}</Link>
+                                          </h4>
                                           <span className="opinion-date">{formatDate(opinion.created_at)}</span>
                                         </div>
                                         <DetailedOpinionCard

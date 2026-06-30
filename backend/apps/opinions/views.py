@@ -41,11 +41,31 @@ class OpinionViewSet(viewsets.ModelViewSet):
             ) / 8.0,
             output_field=FloatField(),
         )
-        return (
+        queryset = (
             Opinion.objects.filter(is_approved=True)
             .select_related('author', 'car_model', 'car_model__brand')
             .annotate(rating_value=rating_value)
         )
+
+        brand_slug = self.request.query_params.get('brand_slug')
+        model_name = self.request.query_params.get('model_name')
+        if brand_slug and model_name:
+            queryset = queryset.filter(
+                car_model__brand__slug=brand_slug,
+                car_model__name__iexact=model_name.strip(),
+            )
+
+        car_model_ids = self.request.query_params.get('car_model__in')
+        if car_model_ids:
+            parsed_ids = [
+                int(value)
+                for value in car_model_ids.split(',')
+                if str(value).strip().isdigit()
+            ]
+            if parsed_ids:
+                queryset = queryset.filter(car_model_id__in=parsed_ids)
+
+        return queryset
 
     def get_permissions(self):
         if self.action in ['update', 'partial_update', 'destroy']:

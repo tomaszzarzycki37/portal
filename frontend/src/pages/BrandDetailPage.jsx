@@ -6,6 +6,7 @@ import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser } from '../utils/auth'
 import { filterCarsForCatalogSearch, parseCatalogSearchParams } from '../utils/catalogSearch'
+import { buildModelFamilyPath } from '../utils/modelSlug'
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -652,7 +653,11 @@ export default function BrandDetailPage() {
                   style={isDarkTheme ? { background: 'linear-gradient(180deg, #2a3039, #232933)', borderColor: '#3f4754' } : undefined}
                 >
                   <div className="brand-lineup-group-header-left">
-                    <h3 className="brand-lineup-group-title" style={isDarkTheme ? { color: '#f3f4f6' } : undefined}>{group.label}</h3>
+                    <h3 className="brand-lineup-group-title" style={isDarkTheme ? { color: '#f3f4f6' } : undefined}>
+                      <Link to={buildModelFamilyPath(slug, group.label)} className="brand-lineup-group-title-link">
+                        {group.label}
+                      </Link>
+                    </h3>
                     <span
                       className="brand-lineup-group-count"
                       style={isDarkTheme ? { background: '#2f353f', borderColor: '#4b5563', color: '#e5e7eb' } : undefined}

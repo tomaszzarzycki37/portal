@@ -38,7 +38,9 @@ class OpinionListSerializer(serializers.ModelSerializer):
     car_id = serializers.IntegerField(source='car_model.id', read_only=True)
     car_name = serializers.CharField(source='car_model.name', read_only=True)
     car_brand_name = serializers.CharField(source='car_model.brand.name', read_only=True)
+    car_brand_slug = serializers.CharField(source='car_model.brand.slug', read_only=True)
     car_year = serializers.IntegerField(source='car_model.year_introduced', read_only=True)
+    car_engine_type = serializers.CharField(source='car_model.engine_type', read_only=True)
     content = serializers.CharField(read_only=True)
     comments_count = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
@@ -47,7 +49,7 @@ class OpinionListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Opinion
-        fields = ['id', 'car_id', 'car_name', 'car_brand_name', 'car_year', 'title', 'content', 'rating',
+        fields = ['id', 'car_id', 'car_name', 'car_brand_name', 'car_brand_slug', 'car_year', 'car_engine_type', 'title', 'content', 'rating',
                   'rating_quality', 'rating_workmanship', 'rating_economy', 'rating_safety',
                   'rating_comfort', 'rating_performance', 'rating_design', 'rating_reliability',
                   'detailed_ratings', 'uses_detailed_ratings',
@@ -70,7 +72,9 @@ class OpinionDetailSerializer(serializers.ModelSerializer):
     car_name = serializers.CharField(source='car_model.name', read_only=True)
     car_id = serializers.IntegerField(source='car_model.id', read_only=True)
     car_brand_name = serializers.CharField(source='car_model.brand.name', read_only=True)
+    car_brand_slug = serializers.CharField(source='car_model.brand.slug', read_only=True)
     car_year = serializers.IntegerField(source='car_model.year_introduced', read_only=True)
+    car_engine_type = serializers.CharField(source='car_model.engine_type', read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     user_vote = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
@@ -79,7 +83,7 @@ class OpinionDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Opinion
-        fields = ['id', 'car_id', 'car_name', 'car_brand_name', 'car_year', 'title', 'content', 'rating',
+        fields = ['id', 'car_id', 'car_name', 'car_brand_name', 'car_brand_slug', 'car_year', 'car_engine_type', 'title', 'content', 'rating',
                   'rating_quality', 'rating_workmanship', 'rating_economy', 'rating_safety',
                   'rating_comfort', 'rating_performance', 'rating_design', 'rating_reliability',
                   'detailed_ratings', 'uses_detailed_ratings',

@@ -1,3 +1,5 @@
+import { slugifyModelName } from './modelSlug'
+
 const parseIntOrNull = (value) => {
   const parsed = Number.parseInt(String(value || '').trim(), 10)
   return Number.isFinite(parsed) ? parsed : null
@@ -67,11 +69,24 @@ export function catalogFiltersToSearchParams(filters) {
 
 export function buildCatalogSearchPath(selectedBrand, brandCatalog, filters) {
   const params = catalogFiltersToSearchParams(filters)
+  const modelSearch = String(filters.modelSearch || '').trim()
+
+  if (modelSearch) {
+    params.delete('model')
+  }
+
   const query = params.toString()
 
   if (selectedBrand && selectedBrand !== 'all') {
     const brand = (brandCatalog || []).find((entry) => entry.name === selectedBrand)
     if (brand?.slug) {
+      if (modelSearch) {
+        const modelSlug = slugifyModelName(modelSearch)
+        const modelParams = catalogFiltersToSearchParams(filters)
+        modelParams.delete('model')
+        const modelQuery = modelParams.toString()
+        return `/cars/brands/${brand.slug}/${modelSlug}${modelQuery ? `?${modelQuery}` : ''}`
+      }
       return `/cars/brands/${brand.slug}${query ? `?${query}` : ''}`
     }
   }

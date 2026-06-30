@@ -4,6 +4,7 @@ import api from '../services/api'
 import { useTranslation } from '../i18n'
 import { createBrandPlaceholderUrl, getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { sortBrandsByName } from '../utils/brands'
+import { buildModelFamilyPath } from '../utils/modelSlug'
 import { filterCarsForCatalogSearch, parseCatalogSearchParams } from '../utils/catalogSearch'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser, isAuthenticatedUser } from '../utils/auth'
@@ -933,7 +934,7 @@ export default function CarsListPage() {
                             </div>
                           </div>
                           <div className="brand-catalog-actions brand-catalog-model-family-actions">
-                            <Link to={`/cars/${primaryVariant.id}`} className="catalog-action-btn">
+                            <Link to={buildModelFamilyPath(brand.slug, family.name)} className="catalog-action-btn">
                               {t.pages.readMore}
                             </Link>
                           </div>
