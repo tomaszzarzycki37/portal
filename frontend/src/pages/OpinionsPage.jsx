@@ -103,7 +103,7 @@ export default function OpinionsPage() {
         setLoading(true)
         const [opinionsResponse, brandsResponse, carsResponse] = await Promise.all([
           api.get('/opinions/?page_size=200&ordering=-created_at'),
-          api.get('/cars/brands/?page_size=200'),
+          api.get('/cars/brands/?ordering=name&page_size=200'),
           api.get('/cars/?page_size=300'),
         ])
 

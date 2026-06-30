@@ -13,12 +13,17 @@ from apps.common.helpers import IsAdminOrReadOnly
 
 class BrandViewSet(viewsets.ModelViewSet):
     """Brand API endpoint"""
-    queryset = Brand.objects.filter(is_active=True).annotate(model_count=Count('models__name', distinct=True))
+    queryset = (
+        Brand.objects.filter(is_active=True)
+        .annotate(model_count=Count('models__name', distinct=True))
+        .order_by('name')
+    )
     serializer_class = BrandSerializer
     lookup_field = 'slug'
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'founded_year', 'created_at']
+    ordering = ['name']
     permission_classes = [IsAdminOrReadOnly]
 
     def perform_create(self, serializer):

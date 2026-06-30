@@ -7,6 +7,7 @@ import api from '../services/api'
 import { getCurrentUser, isAdminUser } from '../utils/auth'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { normalizeMediaUrl } from '../utils/mediaUrl'
+import { sortBrandsByName } from '../utils/brands'
 import { getReviewCategoryLabel } from '../utils/reviewCategory'
 
 const CURRENCY_CONFIG = {
@@ -339,13 +340,13 @@ export default function AdminDashboard() {
   const loadInventoryData = async (preferredSelectedId = '') => {
     const [carsResponse, brandsResponse] = await Promise.all([
       api.get('/cars/?page_size=200'),
-      api.get('/cars/brands/?page_size=200'),
+      api.get('/cars/brands/?ordering=name&page_size=200'),
     ])
 
     const carList = carsResponse.data.results || carsResponse.data || []
     const brandList = brandsResponse.data.results || brandsResponse.data || []
     setCars(carList)
-    setBrands(brandList)
+    setBrands(sortBrandsByName(brandList))
 
     if (brandList.length > 0 && !newModelBrandId) {
       setNewModelBrandId(String(brandList[0].id))

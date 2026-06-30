@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import api from '../services/api'
 import { useTranslation } from '../i18n'
 import { createBrandPlaceholderUrl, getBrandLogoOrPlaceholder } from '../utils/brandLogos'
+import { sortBrandsByName } from '../utils/brands'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser, isAuthenticatedUser } from '../utils/auth'
 
@@ -215,7 +216,7 @@ export default function CarsListPage() {
     let nextCars = []
 
     try {
-      const brandsResponse = await api.get('/cars/brands/')
+      const brandsResponse = await api.get('/cars/brands/?ordering=name&page_size=500')
       const brandsPayload = brandsResponse?.data
       nextBrands = Array.isArray(brandsPayload)
         ? brandsPayload
@@ -250,7 +251,7 @@ export default function CarsListPage() {
       }
     }
 
-    setBrands(nextBrands)
+    setBrands(sortBrandsByName(nextBrands))
     setCars(nextCars)
     if (!silent) {
       setLoading(false)
@@ -388,9 +389,9 @@ export default function CarsListPage() {
       }
 
       const response = await api.patch(`/cars/brands/${logoEditorBrand.slug}/`, formData)
-      setBrands((prev) => prev.map((brand) => (
+      setBrands((prev) => sortBrandsByName(prev.map((brand) => (
         brand.id === logoEditorBrand.id ? { ...brand, logo: response.data.logo } : brand
-      )))
+      ))))
       setLogoEditorMessage(t.pages.brandSaved)
       handleCloseLogoEditor()
     } catch {
@@ -459,7 +460,7 @@ export default function CarsListPage() {
       }
 
       const response = await api.patch(`/cars/brands/${brand.slug}/`, payload)
-      setBrands((prev) => prev.map((item) => (item.id === brand.id ? { ...item, ...response.data } : item)))
+      setBrands((prev) => sortBrandsByName(prev.map((item) => (item.id === brand.id ? { ...item, ...response.data } : item))))
       handleCloseBrandTextEditor()
     } catch {
       setBrandTextError(t.pages.brandSaveError)
@@ -605,18 +606,18 @@ export default function CarsListPage() {
   }, [filteredCars])
 
   const visibleBrands = useMemo(() => {
-    if (
+    const list = (
       !searchTerm.trim() &&
       !engineSearch.trim() &&
       vehicleTypeFilter === 'all' &&
       productionStatusFilter === 'all' &&
       driveTypeFilter === 'all'
-    ) {
-      return brands
-    }
-    return brands.filter(
-      (brand) => (matchedCountByBrand.get(brand.id) || 0) > 0 || brandIdsMatchingSearch.has(brand.id),
     )
+      ? brands
+      : brands.filter(
+        (brand) => (matchedCountByBrand.get(brand.id) || 0) > 0 || brandIdsMatchingSearch.has(brand.id),
+      )
+    return sortBrandsByName(list)
   }, [brands, searchTerm, engineSearch, vehicleTypeFilter, productionStatusFilter, driveTypeFilter, matchedCountByBrand, brandIdsMatchingSearch])
 
   const hasActiveFilters =
