@@ -118,6 +118,7 @@ export default function BrandDetailPage() {
   const [brandSaving, setBrandSaving] = useState(false)
   const [brandMessage, setBrandMessage] = useState('')
   const [brandError, setBrandError] = useState('')
+  const [isBrandEditorOpen, setIsBrandEditorOpen] = useState(false)
   const isDarkTheme = themeMode === 'dark' || (typeof document !== 'undefined' && document.body.classList.contains('app-theme-dark'))
 
   useEffect(() => {
@@ -438,9 +439,28 @@ export default function BrandDetailPage() {
       </section>
 
       {isAdmin && (
-        <section className="admin-form-card">
-          <h2 className="admin-section-heading">{t.pages.brandEditorTitle}</h2>
-          <form onSubmit={handleBrandSave}>
+        <section className="detail-admin-card">
+          <div
+            className="detail-section-header detail-collapsible-header"
+            style={{ marginBottom: isBrandEditorOpen ? '0.75rem' : 0 }}
+          >
+            <h2 className="detail-section-title">{t.pages.brandEditorTitle}</h2>
+            <button
+              type="button"
+              className={`admin-inline-toggle admin-inline-gear ${isBrandEditorOpen ? 'is-open' : ''}`}
+              onClick={() => setIsBrandEditorOpen((prev) => !prev)}
+              aria-expanded={isBrandEditorOpen}
+              aria-label={t.pages.brandEditorTitle}
+              title={t.pages.brandEditorTitle}
+            >
+              <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
+              </svg>
+            </button>
+          </div>
+
+          {isBrandEditorOpen && (
+          <form className="admin-form-card" onSubmit={handleBrandSave}>
             <div className="admin-form-grid">
               <div>
                 <label className="form-label" htmlFor="brand-founded">{t.pages.brandFounded}</label>
@@ -598,6 +618,7 @@ export default function BrandDetailPage() {
               </button>
             </div>
           </form>
+          )}
         </section>
       )}
 
