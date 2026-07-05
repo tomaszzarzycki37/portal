@@ -9,6 +9,7 @@ import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { normalizeMediaUrl } from '../utils/mediaUrl'
 import { sortBrandsByName } from '../utils/brands'
 import { getReviewCategoryLabel } from '../utils/reviewCategory'
+import SelectedImageFilesPreview from '../components/SelectedImageFilesPreview'
 
 const CURRENCY_CONFIG = {
   USD: { symbol: '$', rateToUsd: 1 },
@@ -1229,7 +1230,6 @@ export default function AdminDashboard() {
       Number.isNaN(parsedCarId) ||
       !newReviewTitle.trim() ||
       !normalizedContent ||
-      !newReviewPublication.trim() ||
       !newReviewPublishedAt
     ) {
       setCreateReviewError(t.adminPanel.createReviewValidation)
@@ -1331,7 +1331,6 @@ export default function AdminDashboard() {
       !reviewEditDraft.car_model ||
       !reviewEditDraft.title.trim() ||
       !String(reviewEditDraft.content || '').trim() ||
-      !reviewEditDraft.publication_name.trim() ||
       !reviewEditDraft.published_at
     ) {
       setReviewsError(t.adminPanel.createReviewValidation)
@@ -3281,7 +3280,14 @@ export default function AdminDashboard() {
                     }}
                   />
                   {newReviewFirstSliderFiles.length > 0 && (
-                    <p className="form-info">{newReviewFirstSliderFiles.length} image(s) selected</p>
+                    <SelectedImageFilesPreview
+                      files={newReviewFirstSliderFiles}
+                      countLabel={t.adminPanel.reviewFilesSelected.replace('{count}', String(newReviewFirstSliderFiles.length))}
+                      onRemoveFile={(index) => {
+                        setNewReviewFirstSliderFiles((prev) => prev.filter((_, fileIndex) => fileIndex !== index))
+                      }}
+                      removeLabel={t.adminPanel.removeImage}
+                    />
                   )}
                 </div>
 
@@ -3299,7 +3305,14 @@ export default function AdminDashboard() {
                     }}
                   />
                   {newReviewSecondSliderFiles.length > 0 && (
-                    <p className="form-info">{newReviewSecondSliderFiles.length} image(s) selected</p>
+                    <SelectedImageFilesPreview
+                      files={newReviewSecondSliderFiles}
+                      countLabel={t.adminPanel.reviewFilesSelected.replace('{count}', String(newReviewSecondSliderFiles.length))}
+                      onRemoveFile={(index) => {
+                        setNewReviewSecondSliderFiles((prev) => prev.filter((_, fileIndex) => fileIndex !== index))
+                      }}
+                      removeLabel={t.adminPanel.removeImage}
+                    />
                   )}
                 </div>
               </div>

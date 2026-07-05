@@ -8,6 +8,7 @@ import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { canEditByAuthorId, getCurrentUser, isAuthenticatedUser } from '../utils/auth'
 import { getReviewCategoryLabel } from '../utils/reviewCategory'
+import SelectedImageFilesPreview from '../components/SelectedImageFilesPreview'
 import {
   fetchAllPaginated,
   formatCarSelectOptionLabel,
@@ -35,6 +36,46 @@ const WORD_LIKE_FORMATS = [
   'blockquote', 'code-block',
   'link',
 ]
+
+function stripRichText(html) {
+  return String(html || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\u200B/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function plainTextToHtml(text) {
+  const escaped = String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br>')
+  return `<p>${escaped}</p>`
+}
+
+function resolveReviewArticleContent(content, summary) {
+  if (stripRichText(content)) {
+    return String(content || '').trim()
+  }
+  const summaryText = String(summary || '').trim()
+  if (summaryText) {
+    return plainTextToHtml(summaryText)
+  }
+  return ''
+}
+
+function getCreateReviewValidationErrors(draft, t) {
+  const missing = []
+  if (!draft.car_model) missing.push(t.pages.modelFilterLabel)
+  if (!String(draft.title || '').trim()) missing.push(t.pages.opinionTitle)
+  if (!draft.published_at) missing.push(t.adminPanel.reviewDate)
+  if (!resolveReviewArticleContent(draft.content, draft.summary)) {
+    missing.push(t.adminPanel.reviewContent)
+  }
+  return missing
+}
 
 const INLINE_REVIEW_EDIT_FIELDS = new Set(['title', 'summary', 'overview', 'publication_name', 'author_name', 'tags', 'testResults', 'verdict', 'images', 'secondImages', 'car_model', 'category'])
 const IMAGE_LIMITS = {
@@ -884,7 +925,7 @@ export default function ReviewsPage() {
 
     const { reviewId, field } = sectionEditor
     const normalizedValue = String(sectionValue || '').trim()
-    if ((field === 'title' || field === 'content' || field === 'publication_name') && !normalizedValue) {
+    if ((field === 'title' || field === 'content') && !normalizedValue) {
       setReviewError(t.adminPanel.createReviewValidation)
       return
     }
@@ -1009,16 +1050,20 @@ export default function ReviewsPage() {
     setReviewError('')
     setReviewMessage('')
 
-    if (!newReviewDraft.car_model || !newReviewDraft.title.trim() || !newReviewDraft.content.trim() || !newReviewDraft.publication_name.trim() || !newReviewDraft.published_at) {
-      setReviewError(t.adminPanel.createReviewValidation)
+    const missingFields = getCreateReviewValidationErrors(newReviewDraft, t)
+    if (missingFields.length > 0) {
+      setReviewError(t.adminPanel.createReviewValidationFields.replace('{fields}', missingFields.join(', ')))
       return
     }
+
+    const publicationName = newReviewDraft.publication_name.trim()
+    const articleContent = resolveReviewArticleContent(newReviewDraft.content, newReviewDraft.summary)
 
     setReviewSaving(true)
     try {
       const firstSliderUrls = (await uploadNewReviewImages(newReviewFirstSliderFiles)).filter(Boolean)
       const secondSliderUrls = (await uploadNewReviewImages(newReviewSecondSliderFiles)).filter(Boolean)
-      const parsedContent = parseReviewContent(newReviewDraft.content.trim())
+      const parsedContent = parseReviewContent(articleContent)
       const hasStructuredContent = Boolean(
         parsedContent.overview
         || (parsedContent.images && parsedContent.images.length > 0)
@@ -1030,7 +1075,7 @@ export default function ReviewsPage() {
         ...parsedContent,
         images: firstSliderUrls.length > 0 ? firstSliderUrls : parsedContent.images,
         secondImages: secondSliderUrls.length > 0 ? secondSliderUrls : parsedContent.secondImages,
-      }) : newReviewDraft.content.trim()
+      }) : articleContent
 
       await api.post('/reviews/', {
         car_model: Number.parseInt(newReviewDraft.car_model, 10),
@@ -1039,7 +1084,7 @@ export default function ReviewsPage() {
         content: normalizedContent,
         category: newReviewDraft.category,
         tags: newReviewDraft.tags.trim(),
-        publication_name: newReviewDraft.publication_name.trim(),
+        publication_name: publicationName,
         publication_url: newReviewDraft.publication_url.trim(),
         author_name: newReviewDraft.author_name.trim(),
         published_at: newReviewDraft.published_at,
@@ -1180,12 +1225,16 @@ export default function ReviewsPage() {
               />
             </div>
             <div>
-              <label className="form-label" htmlFor="user-review-publication">{t.adminPanel.reviewPublication}</label>
+              <label className="form-label" htmlFor="user-review-publication">
+                {t.adminPanel.reviewPublication}
+                <span className="form-label-optional"> ({t.pages.optionalLabel})</span>
+              </label>
               <input
                 id="user-review-publication"
                 className="form-input"
                 value={newReviewDraft.publication_name}
                 onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, publication_name: e.target.value }))}
+                placeholder={t.adminPanel.reviewPublicationHint}
               />
             </div>
             <div>
@@ -1277,11 +1326,17 @@ export default function ReviewsPage() {
               >
                 {t.adminPanel.chooseFile}
               </button>
-              <p className="review-slider-limit-note">
-                {newReviewFirstSliderFiles.length > 0
-                  ? t.adminPanel.reviewFilesSelected.replace('{count}', String(newReviewFirstSliderFiles.length))
-                  : t.adminPanel.noFileSelected}
-              </p>
+              {newReviewFirstSliderFiles.length === 0 ? (
+                <p className="review-slider-limit-note">{t.adminPanel.noFileSelected}</p>
+              ) : null}
+              <SelectedImageFilesPreview
+                files={newReviewFirstSliderFiles}
+                countLabel={t.adminPanel.reviewFilesSelected.replace('{count}', String(newReviewFirstSliderFiles.length))}
+                onRemoveFile={(index) => {
+                  setNewReviewFirstSliderFiles((prev) => prev.filter((_, fileIndex) => fileIndex !== index))
+                }}
+                removeLabel={t.adminPanel.removeImage}
+              />
             </div>
             <div className="admin-form-grid-full">
               <label className="form-label" htmlFor="user-review-second-slider">{t.adminPanel.reviewSecondSliderLabel}</label>
@@ -1305,11 +1360,17 @@ export default function ReviewsPage() {
               >
                 {t.adminPanel.chooseFile}
               </button>
-              <p className="review-slider-limit-note">
-                {newReviewSecondSliderFiles.length > 0
-                  ? t.adminPanel.reviewFilesSelected.replace('{count}', String(newReviewSecondSliderFiles.length))
-                  : t.adminPanel.noFileSelected}
-              </p>
+              {newReviewSecondSliderFiles.length === 0 ? (
+                <p className="review-slider-limit-note">{t.adminPanel.noFileSelected}</p>
+              ) : null}
+              <SelectedImageFilesPreview
+                files={newReviewSecondSliderFiles}
+                countLabel={t.adminPanel.reviewFilesSelected.replace('{count}', String(newReviewSecondSliderFiles.length))}
+                onRemoveFile={(index) => {
+                  setNewReviewSecondSliderFiles((prev) => prev.filter((_, fileIndex) => fileIndex !== index))
+                }}
+                removeLabel={t.adminPanel.removeImage}
+              />
             </div>
             <label className="form-checkbox-row admin-form-grid-full">
               <input

@@ -174,7 +174,7 @@ class PressReview(models.Model):
     tags = models.CharField(max_length=300, blank=True, help_text='Comma-separated tags')
     reading_time_minutes = models.PositiveSmallIntegerField(default=0)
     internal_notes = models.TextField(blank=True)
-    publication_name = models.CharField(max_length=180)
+    publication_name = models.CharField(max_length=180, blank=True, default='')
     publication_url = models.URLField(blank=True)
     author_name = models.CharField(max_length=120, blank=True)
     published_at = models.DateField()
@@ -188,7 +188,7 @@ class PressReview(models.Model):
         ordering = ['-is_pinned', '-published_at', '-created_at']
 
     def __str__(self):
-        return f"{self.title} ({self.publication_name})"
+        return self.title if not self.publication_name else f"{self.title} ({self.publication_name})"
 
     def save(self, *args, **kwargs):
         if not self.slug:
