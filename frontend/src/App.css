@@ -1459,6 +1459,10 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	line-height: 1.55;
 }
 
+.review-card-category {
+	font-style: italic;
+}
+
 .review-car-tag {
 	display: block;
 	width: fit-content;

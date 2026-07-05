@@ -1346,7 +1346,7 @@ export default function ReviewsPage() {
                     )}
                     {review.category && (
                       <p
-                        className={`admin-meta ${canManageReview ? 'review-inline-editable-block' : ''}`}
+                        className={`admin-meta review-card-category ${canManageReview ? 'review-inline-editable-block' : ''}`}
                         role={canManageReview ? 'button' : undefined}
                         tabIndex={canManageReview ? 0 : undefined}
                         onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'category') : undefined}
