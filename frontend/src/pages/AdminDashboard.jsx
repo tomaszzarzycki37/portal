@@ -25,16 +25,6 @@ const API_ORIGIN = import.meta.env.VITE_API_URL
     ? 'http://localhost:8000'
     : ''
 
-function estimateReadingTimeMinutes(text) {
-  const words = String(text || '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .split(' ')
-    .filter(Boolean).length
-  if (!words) return 0
-  return Math.max(1, Math.ceil(words / 200))
-}
-
 const WORD_LIKE_MODULES = {
   toolbar: [
     [{ font: [] }, { size: ['small', false, 'large', 'huge'] }],
@@ -248,7 +238,6 @@ export default function AdminDashboard() {
   const [newReviewSlug, setNewReviewSlug] = useState('')
   const [newReviewCategory, setNewReviewCategory] = useState('test')
   const [newReviewTags, setNewReviewTags] = useState('')
-  const [newReviewReadingTime, setNewReviewReadingTime] = useState('')
   const [newReviewInternalNotes, setNewReviewInternalNotes] = useState('')
   const [newReviewVerdict, setNewReviewVerdict] = useState('')
   const [newReviewAuthor, setNewReviewAuthor] = useState('')
@@ -1236,7 +1225,6 @@ export default function AdminDashboard() {
 
     const parsedCarId = Number.parseInt(newReviewCarId, 10)
     const normalizedContent = String(newReviewContent || '').trim()
-    const parsedReadingTime = Number.parseInt(String(newReviewReadingTime || '').trim(), 10)
     if (
       Number.isNaN(parsedCarId) ||
       !newReviewTitle.trim() ||
@@ -1267,7 +1255,6 @@ export default function AdminDashboard() {
         content: contentWithVerdict,
         category: newReviewCategory,
         tags: newReviewTags.trim(),
-        reading_time_minutes: Number.isNaN(parsedReadingTime) ? estimateReadingTimeMinutes(`${newReviewSummary} ${normalizedContent}`) : parsedReadingTime,
         internal_notes: newReviewInternalNotes.trim(),
         publication_name: newReviewPublication.trim(),
         author_name: newReviewAuthor.trim(),
@@ -1284,7 +1271,6 @@ export default function AdminDashboard() {
       setNewReviewSlug('')
       setNewReviewCategory('test')
       setNewReviewTags('')
-      setNewReviewReadingTime('')
       setNewReviewInternalNotes('')
       setNewReviewVerdict('')
       setNewReviewAuthor('')
@@ -1321,7 +1307,6 @@ export default function AdminDashboard() {
         verdict: extractedVerdict,
         category: detail.category || 'test',
         tags: detail.tags || '',
-        reading_time_minutes: String(detail.reading_time_minutes ?? ''),
         internal_notes: detail.internal_notes || '',
         publication_name: detail.publication_name || '',
         author_name: detail.author_name || '',
@@ -1342,7 +1327,6 @@ export default function AdminDashboard() {
 
   const handleSaveReviewEdit = async (reviewId) => {
     if (!reviewEditDraft) return
-    const parsedReadingTime = Number.parseInt(String(reviewEditDraft.reading_time_minutes || '').trim(), 10)
     if (
       !reviewEditDraft.car_model ||
       !reviewEditDraft.title.trim() ||
@@ -1365,9 +1349,6 @@ export default function AdminDashboard() {
         content: contentWithVerdict,
         category: reviewEditDraft.category,
         tags: reviewEditDraft.tags.trim(),
-        reading_time_minutes: Number.isNaN(parsedReadingTime)
-          ? estimateReadingTimeMinutes(`${reviewEditDraft.summary} ${reviewEditDraft.content || ''}`)
-          : parsedReadingTime,
         internal_notes: reviewEditDraft.internal_notes.trim(),
         publication_name: reviewEditDraft.publication_name.trim(),
         author_name: reviewEditDraft.author_name.trim(),
@@ -3026,18 +3007,6 @@ export default function AdminDashboard() {
                           </select>
                         </div>
 
-                        <div>
-                          <label className="form-label" htmlFor={`edit-review-reading-time-${review.id}`}>{t.adminPanel.reviewReadingTime}</label>
-                          <input
-                            id={`edit-review-reading-time-${review.id}`}
-                            type="number"
-                            min="0"
-                            className="form-input"
-                            value={reviewEditDraft.reading_time_minutes}
-                            onChange={(e) => setReviewEditDraft((prev) => ({ ...prev, reading_time_minutes: e.target.value }))}
-                          />
-                        </div>
-
                         <div className="admin-form-grid-full">
                           <label className="form-label" htmlFor={`edit-review-tags-${review.id}`}>{t.adminPanel.reviewTags}</label>
                           <input
@@ -3087,21 +3056,6 @@ export default function AdminDashboard() {
                             compact
                           />
                         </div>
-                      </div>
-
-                      <div className="admin-actions-row admin-auto-tools-row" style={{ justifyContent: 'flex-start' }}>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm admin-auto-tools-btn"
-                          onClick={() => {
-                            setReviewEditDraft((prev) => ({
-                              ...prev,
-                              reading_time_minutes: String(estimateReadingTimeMinutes(`${prev.summary} ${prev.content || ''}`)),
-                            }))
-                          }}
-                        >
-                          {t.adminPanel.reviewAutoTools}
-                        </button>
                       </div>
 
                       <label className="form-checkbox-row">
@@ -3258,18 +3212,6 @@ export default function AdminDashboard() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="form-label" htmlFor="new-review-reading-time">{t.adminPanel.reviewReadingTime}</label>
-                  <input
-                    id="new-review-reading-time"
-                    type="number"
-                    min="0"
-                    className="form-input"
-                    value={newReviewReadingTime}
-                    onChange={(e) => setNewReviewReadingTime(e.target.value)}
-                  />
-                </div>
-
                 <div className="admin-form-grid-full">
                   <label className="form-label" htmlFor="new-review-tags">{t.adminPanel.reviewTags}</label>
                   <input
@@ -3367,7 +3309,6 @@ export default function AdminDashboard() {
                   type="button"
                   className="btn btn-secondary btn-sm admin-auto-tools-btn"
                   onClick={() => {
-                    setNewReviewReadingTime(String(estimateReadingTimeMinutes(`${newReviewSummary} ${newReviewContent || ''}`)))
                     if (!newReviewSlug.trim()) setNewReviewSlug(toSlug(newReviewTitle))
                   }}
                 >

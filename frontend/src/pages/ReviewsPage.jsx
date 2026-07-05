@@ -8,6 +8,11 @@ import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { canEditByAuthorId, getCurrentUser, isAuthenticatedUser } from '../utils/auth'
 import { getReviewCategoryLabel } from '../utils/reviewCategory'
+import {
+  fetchAllPaginated,
+  formatCarSelectOptionLabel,
+  groupCarsByBrand,
+} from '../utils/paginatedApi'
 
 const WORD_LIKE_MODULES = {
   toolbar: [
@@ -611,7 +616,6 @@ export default function ReviewsPage() {
     content: '',
     category: 'test',
     tags: '',
-    reading_time_minutes: '',
     publication_name: '',
     publication_url: '',
     author_name: '',
@@ -623,12 +627,11 @@ export default function ReviewsPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [reviewsResponse, carsResponse] = await Promise.all([
+        const [reviewsResponse, carsList] = await Promise.all([
           api.get('/reviews/?page_size=200&ordering=-published_at'),
-          api.get('/cars/?page_size=400'),
+          fetchAllPaginated(api, '/cars/?ordering=name'),
         ])
         const reviewsList = reviewsResponse.data.results || reviewsResponse.data || []
-        const carsList = carsResponse.data.results || carsResponse.data || []
 
         setReviews(reviewsList)
         setCars(carsList)
@@ -673,6 +676,8 @@ export default function ReviewsPage() {
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name))
   }, [normalizedReviews, selectedBrand])
+
+  const carsByBrand = useMemo(() => groupCarsByBrand(cars), [cars])
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -742,7 +747,6 @@ export default function ReviewsPage() {
            content: detail.content || '',
            category: detail.category || 'test',
         tags: detail.tags || '',
-        reading_time_minutes: String(detail.reading_time_minutes || ''),
         internal_notes: detail.internal_notes || '',
         publication_name: detail.publication_name || '',
         publication_url: detail.publication_url || '',
@@ -1035,7 +1039,6 @@ export default function ReviewsPage() {
         content: normalizedContent,
         category: newReviewDraft.category,
         tags: newReviewDraft.tags.trim(),
-        reading_time_minutes: Number.parseInt(String(newReviewDraft.reading_time_minutes || '0'), 10) || 0,
         publication_name: newReviewDraft.publication_name.trim(),
         publication_url: newReviewDraft.publication_url.trim(),
         author_name: newReviewDraft.author_name.trim(),
@@ -1049,7 +1052,6 @@ export default function ReviewsPage() {
         summary: '',
         content: '',
         tags: '',
-        reading_time_minutes: '',
         publication_name: '',
         publication_url: '',
         author_name: '',
@@ -1157,8 +1159,14 @@ export default function ReviewsPage() {
                 value={newReviewDraft.car_model}
                 onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, car_model: e.target.value }))}
               >
-                {cars.map((car) => (
-                  <option key={car.id} value={car.id}>{car.brand_name} {car.name}</option>
+                {carsByBrand.map(([brand, brandCars]) => (
+                  <optgroup key={brand} label={brand}>
+                    {brandCars.map((car) => (
+                      <option key={car.id} value={car.id}>
+                        {formatCarSelectOptionLabel(car)}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
@@ -1213,17 +1221,6 @@ export default function ReviewsPage() {
                 <option value="guide">{t.adminPanel.reviewCategoryGuide}</option>
                 <option value="opinion">{t.adminPanel.reviewCategoryOpinion}</option>
               </select>
-            </div>
-            <div>
-              <label className="form-label" htmlFor="user-review-reading-time">{t.adminPanel.reviewReadingTime}</label>
-              <input
-                id="user-review-reading-time"
-                className="form-input"
-                type="number"
-                min="0"
-                value={newReviewDraft.reading_time_minutes}
-                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, reading_time_minutes: e.target.value }))}
-              />
             </div>
             <div className="admin-form-grid-full">
               <label className="form-label" htmlFor="user-review-tags">{t.adminPanel.reviewTags}</label>
@@ -1399,7 +1396,6 @@ export default function ReviewsPage() {
                         ) : <span className="review-author-name"> · {review.author_name}</span>
                       )}
                       <span className="review-date-tag"> · {formatDate(review.published_at)}</span>
-                      {review.reading_time_minutes ? <span className="review-date-tag"> · {review.reading_time_minutes} min read</span> : null}
                     </div>
                     <h3 className="review-card-title">
                       {canManageReview ? (
@@ -1593,8 +1589,14 @@ export default function ReviewsPage() {
                   onChange={(event) => setSectionValue(event.target.value)}
                 >
                   <option value="">{t.pages.selectLabel || 'Select'}</option>
-                  {cars.map((car) => (
-                    <option key={car.id} value={car.id}>{car.name}</option>
+                  {carsByBrand.map(([brand, brandCars]) => (
+                    <optgroup key={brand} label={brand}>
+                      {brandCars.map((car) => (
+                        <option key={car.id} value={car.id}>
+                          {formatCarSelectOptionLabel(car)}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </div>
