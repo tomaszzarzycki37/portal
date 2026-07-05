@@ -10,6 +10,15 @@ import { normalizeMediaUrl } from '../utils/mediaUrl'
 import { sortBrandsByName } from '../utils/brands'
 import { getReviewCategoryLabel } from '../utils/reviewCategory'
 import SelectedImageFilesPreview from '../components/SelectedImageFilesPreview'
+import SelectedImageUrlsPreview from '../components/SelectedImageUrlsPreview'
+import TestResultsEditor from '../components/TestResultsEditor'
+import {
+  assembleReviewContentForSave,
+  getSafeOverviewValue,
+  hasStructuredReviewContent,
+  parseReviewContent,
+} from '../utils/reviewContent'
+import { buildTestResultRows } from '../utils/reviewTestResults'
 
 const CURRENCY_CONFIG = {
   USD: { symbol: '$', rateToUsd: 1 },
@@ -260,6 +269,8 @@ export default function AdminDashboard() {
   const [reviewsMessage, setReviewsMessage] = useState('')
   const [editingReviewId, setEditingReviewId] = useState(null)
   const [reviewEditDraft, setReviewEditDraft] = useState(null)
+  const [reviewEditFirstSliderFiles, setReviewEditFirstSliderFiles] = useState([])
+  const [reviewEditSecondSliderFiles, setReviewEditSecondSliderFiles] = useState([])
   const [usersList, setUsersList] = useState([])
   const [activeUsersList, setActiveUsersList] = useState([])
   const [usersLoading, setUsersLoading] = useState(false)
@@ -281,44 +292,6 @@ export default function AdminDashboard() {
   const [usersAuditExporting, setUsersAuditExporting] = useState(false)
   const [recentActions, setRecentActions] = useState([])
   const [recentActionsLoading, setRecentActionsLoading] = useState(false)
-
-  const extractVerdictFromContent = (content) => {
-    const lines = (content || '').split('\n')
-    const verdictLines = []
-    let inVerdictSection = false
-    for (const line of lines) {
-      if (line.trim() === 'Verdict') {
-        inVerdictSection = true
-        continue
-      }
-      if (inVerdictSection && line.trim()) {
-        verdictLines.push(line.trim())
-      }
-    }
-    return verdictLines.join(' ')
-  }
-
-  const removeVerdictFromContent = (content) => {
-    const lines = (content || '').split('\n')
-    const result = []
-    let skipVerdictSection = false
-    for (const line of lines) {
-      if (line.trim() === 'Verdict') {
-        skipVerdictSection = true
-        continue
-      }
-      if (!skipVerdictSection) {
-        result.push(line)
-      }
-    }
-    return result.join('\n').trim()
-  }
-
-  const appendVerdictToContent = (content, verdict) => {
-    if (!verdict || !verdict.trim()) return content
-    const cleanContent = removeVerdictFromContent(content)
-    return `${cleanContent}\n\nVerdict\n${verdict.trim()}`
-  }
 
   const toSlug = (value) => String(value || '')
     .toLowerCase()
@@ -1195,30 +1168,6 @@ export default function AdminDashboard() {
     return urls
   }
 
-  const buildContentWithImages = (baseContent, firstSliderUrls, secondSliderUrls) => {
-    let finalContent = baseContent || ''
-
-    if (firstSliderUrls && firstSliderUrls.length > 0) {
-      const galleryText = 'Example photo gallery\n' + firstSliderUrls.map((url, i) => `${i + 1}. ${url}`).join('\n')
-      if (finalContent.includes('Example photo gallery')) {
-        finalContent = finalContent.replace(/Example photo gallery[\s\S]*?(?=\n[A-Z]|\n\n[A-Z]|$)/, galleryText)
-      } else {
-        finalContent = finalContent.replace(/^Overview\n/, `Overview\n\n${galleryText}\n\n`)
-      }
-    }
-
-    if (secondSliderUrls && secondSliderUrls.length > 0) {
-      const secondGalleryText = 'Second photo gallery\n' + secondSliderUrls.map((url, i) => `${i + 1}. ${url}`).join('\n')
-      if (finalContent.includes('Second photo gallery')) {
-        finalContent = finalContent.replace(/Second photo gallery[\s\S]*?(?=\n[A-Z]|$)/, secondGalleryText)
-      } else {
-        finalContent = finalContent.replace(/Verdict\s*$/, `Second photo gallery\n${secondGalleryText}\n\nVerdict`)
-      }
-    }
-
-    return finalContent
-  }
-
   const handleCreateReview = async (e) => {
     e.preventDefault()
     setCreateReviewMessage('')
@@ -1243,16 +1192,21 @@ export default function AdminDashboard() {
       const firstSliderUrls = await uploadImageFiles(newReviewFirstSliderFiles)
       const secondSliderUrls = await uploadImageFiles(newReviewSecondSliderFiles)
 
-      // Build content with image URLs
-      let finalContent = buildContentWithImages(normalizedContent, firstSliderUrls, secondSliderUrls)
-      const contentWithVerdict = appendVerdictToContent(finalContent, newReviewVerdict)
+      const finalContent = assembleReviewContentForSave({
+        content: normalizedContent,
+        verdict: newReviewVerdict,
+        summary: newReviewSummary,
+        newFirstSliderUrls: firstSliderUrls,
+        newSecondSliderUrls: secondSliderUrls,
+        isStructuredContent: true,
+      })
 
       await api.post('/reviews/', {
         car_model: parsedCarId,
         title: newReviewTitle.trim(),
         slug: newReviewSlug.trim(),
         summary: newReviewSummary.trim(),
-        content: contentWithVerdict,
+        content: finalContent,
         category: newReviewCategory,
         tags: newReviewTags.trim(),
         internal_notes: newReviewInternalNotes.trim(),
@@ -1296,15 +1250,24 @@ export default function AdminDashboard() {
       const response = await api.get(`/reviews/${reviewId}/`)
       const detail = response.data
       const publishedDate = String(detail.published_at || '').slice(0, 10)
-      const contentWithoutVerdict = removeVerdictFromContent(detail.content)
-      const extractedVerdict = extractVerdictFromContent(detail.content)
+      const parsed = parseReviewContent(detail.content)
+      const isStructured = hasStructuredReviewContent(detail.content)
+
       setEditingReviewId(reviewId)
+      setReviewEditFirstSliderFiles([])
+      setReviewEditSecondSliderFiles([])
       setReviewEditDraft({
         car_model: String(detail.car_id || ''),
         title: detail.title || '',
         summary: detail.summary || '',
-        content: contentWithoutVerdict,
-        verdict: extractedVerdict,
+        content: isStructured
+          ? (getSafeOverviewValue(parsed.overview, detail.summary) || parsed.overview || '')
+          : (detail.content || ''),
+        verdict: isStructured ? (parsed.verdict || '') : '',
+        firstSliderImages: isStructured ? (parsed.images || []) : [],
+        secondSliderImages: isStructured ? (parsed.secondImages || []) : [],
+        testResults: buildTestResultRows(isStructured ? parsed.testResults : []),
+        isStructuredContent: isStructured,
         category: detail.category || 'test',
         tags: detail.tags || '',
         internal_notes: detail.internal_notes || '',
@@ -1323,6 +1286,8 @@ export default function AdminDashboard() {
   const handleCancelReviewEdit = () => {
     setEditingReviewId(null)
     setReviewEditDraft(null)
+    setReviewEditFirstSliderFiles([])
+    setReviewEditSecondSliderFiles([])
   }
 
   const handleSaveReviewEdit = async (reviewId) => {
@@ -1330,7 +1295,6 @@ export default function AdminDashboard() {
     if (
       !reviewEditDraft.car_model ||
       !reviewEditDraft.title.trim() ||
-      !String(reviewEditDraft.content || '').trim() ||
       !reviewEditDraft.published_at
     ) {
       setReviewsError(t.adminPanel.createReviewValidation)
@@ -1340,12 +1304,30 @@ export default function AdminDashboard() {
     setReviewsMessage('')
     setReviewsError('')
     try {
-      const contentWithVerdict = appendVerdictToContent(String(reviewEditDraft.content || '').trim(), reviewEditDraft.verdict)
+      const newFirstSliderUrls = await uploadImageFiles(reviewEditFirstSliderFiles)
+      const newSecondSliderUrls = await uploadImageFiles(reviewEditSecondSliderFiles)
+      const finalContent = assembleReviewContentForSave({
+        content: reviewEditDraft.content,
+        verdict: reviewEditDraft.verdict,
+        summary: reviewEditDraft.summary,
+        firstSliderImages: reviewEditDraft.firstSliderImages || [],
+        secondSliderImages: reviewEditDraft.secondSliderImages || [],
+        testResults: reviewEditDraft.testResults || [],
+        newFirstSliderUrls,
+        newSecondSliderUrls,
+        isStructuredContent: !!reviewEditDraft.isStructuredContent,
+      })
+
+      if (!String(finalContent || '').trim()) {
+        setReviewsError(t.adminPanel.createReviewValidation)
+        return
+      }
+
       await api.patch(`/reviews/${reviewId}/`, {
         car_model: Number.parseInt(reviewEditDraft.car_model, 10),
         title: reviewEditDraft.title.trim(),
         summary: reviewEditDraft.summary.trim(),
-        content: contentWithVerdict,
+        content: finalContent,
         category: reviewEditDraft.category,
         tags: reviewEditDraft.tags.trim(),
         internal_notes: reviewEditDraft.internal_notes.trim(),
@@ -1359,6 +1341,8 @@ export default function AdminDashboard() {
       setReviewsMessage(t.adminPanel.reviewUpdated)
       setEditingReviewId(null)
       setReviewEditDraft(null)
+      setReviewEditFirstSliderFiles([])
+      setReviewEditSecondSliderFiles([])
       await loadPressReviews()
     } catch {
       setReviewsError(t.adminPanel.reviewUpdateError)
@@ -3033,6 +3017,96 @@ export default function AdminDashboard() {
                             value={reviewEditDraft.content}
                             onChange={(nextValue) => setReviewEditDraft((prev) => ({ ...prev, content: nextValue }))}
                           />
+                        </div>
+
+                        <div className="admin-form-grid-full">
+                          <label className="form-label" htmlFor={`edit-review-first-slider-${review.id}`}>{t.adminPanel.reviewFirstSliderLabel}</label>
+                          <SelectedImageUrlsPreview
+                            urls={reviewEditDraft.firstSliderImages || []}
+                            countLabel={reviewEditDraft.firstSliderImages?.length
+                              ? t.adminPanel.reviewFilesSelected.replace('{count}', String(reviewEditDraft.firstSliderImages.length))
+                              : ''}
+                            onRemoveUrl={(index) => {
+                              setReviewEditDraft((prev) => ({
+                                ...prev,
+                                firstSliderImages: (prev.firstSliderImages || []).filter((_, imageIndex) => imageIndex !== index),
+                              }))
+                            }}
+                            removeLabel={t.adminPanel.removeImage}
+                          />
+                          <input
+                            id={`edit-review-first-slider-${review.id}`}
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            className="form-input"
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files || [])
+                              if (files.length > 12) {
+                                setReviewsError(t.adminPanel.reviewFirstSliderLimitError)
+                                return
+                              }
+                              setReviewEditFirstSliderFiles(files)
+                            }}
+                          />
+                          {reviewEditFirstSliderFiles.length > 0 && (
+                            <SelectedImageFilesPreview
+                              files={reviewEditFirstSliderFiles}
+                              countLabel={t.adminPanel.reviewFilesSelected.replace('{count}', String(reviewEditFirstSliderFiles.length))}
+                              onRemoveFile={(index) => {
+                                setReviewEditFirstSliderFiles((prev) => prev.filter((_, fileIndex) => fileIndex !== index))
+                              }}
+                              removeLabel={t.adminPanel.removeImage}
+                            />
+                          )}
+                        </div>
+
+                        <div className="admin-form-grid-full">
+                          <label className="form-label">{t.adminPanel.reviewTestResultsLabel}</label>
+                          <TestResultsEditor
+                            rows={reviewEditDraft.testResults || []}
+                            onChange={(nextRows) => setReviewEditDraft((prev) => ({ ...prev, testResults: nextRows }))}
+                            lang={lang}
+                            hint={t.adminPanel.reviewTestResultsHint}
+                            valuePlaceholder={t.adminPanel.reviewTestResultsValuePlaceholder}
+                          />
+                        </div>
+
+                        <div className="admin-form-grid-full">
+                          <label className="form-label" htmlFor={`edit-review-second-slider-${review.id}`}>{t.adminPanel.reviewSecondSliderLabel}</label>
+                          <SelectedImageUrlsPreview
+                            urls={reviewEditDraft.secondSliderImages || []}
+                            countLabel={reviewEditDraft.secondSliderImages?.length
+                              ? t.adminPanel.reviewFilesSelected.replace('{count}', String(reviewEditDraft.secondSliderImages.length))
+                              : ''}
+                            onRemoveUrl={(index) => {
+                              setReviewEditDraft((prev) => ({
+                                ...prev,
+                                secondSliderImages: (prev.secondSliderImages || []).filter((_, imageIndex) => imageIndex !== index),
+                              }))
+                            }}
+                            removeLabel={t.adminPanel.removeImage}
+                          />
+                          <input
+                            id={`edit-review-second-slider-${review.id}`}
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            className="form-input"
+                            onChange={(e) => {
+                              setReviewEditSecondSliderFiles(Array.from(e.target.files || []))
+                            }}
+                          />
+                          {reviewEditSecondSliderFiles.length > 0 && (
+                            <SelectedImageFilesPreview
+                              files={reviewEditSecondSliderFiles}
+                              countLabel={t.adminPanel.reviewFilesSelected.replace('{count}', String(reviewEditSecondSliderFiles.length))}
+                              onRemoveFile={(index) => {
+                                setReviewEditSecondSliderFiles((prev) => prev.filter((_, fileIndex) => fileIndex !== index))
+                              }}
+                              removeLabel={t.adminPanel.removeImage}
+                            />
+                          )}
                         </div>
 
                         <div className="admin-form-grid-full">
