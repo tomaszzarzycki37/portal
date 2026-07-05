@@ -1363,7 +1363,7 @@ export default function ReviewsPage() {
                         onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'tags') : undefined}
                         onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'tags')) : undefined}
                       >
-                        {review.tags}
+                        {t.pages.reviewTagsLabel} {review.tags}
                       </p>
                     )}
                   </div>

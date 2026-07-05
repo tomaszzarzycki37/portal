@@ -333,6 +333,7 @@ const baseTranslations = {
       admin: 'Admin dashboard',
       testResults: 'Test Results',
       verdict: 'Verdict',
+      reviewTagsLabel: 'Tags:',
     },
     auth: {
       loginTitle: 'Login',
@@ -1002,6 +1003,7 @@ const baseTranslations = {
       admin: 'Panel administratora',
       testResults: 'Wyniki testów',
       verdict: 'Werdykt',
+      reviewTagsLabel: 'Tag:',
     },
     auth: {
       loginTitle: 'Logowanie',
