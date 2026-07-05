@@ -9,6 +9,7 @@ import { aggregateOpinionRatings } from '../utils/aggregateOpinionRatings'
 import { modelNameFromSlug } from '../utils/modelSlug'
 import { formatStarDisplay, OPINION_RATING_SECTIONS } from '../constants/opinionRatings'
 import StarRating from '../components/StarRating'
+import { formatEngineVariantCount, formatVariantSelectLabel } from '../utils/carLabels'
 
 function stripHtml(value) {
   return String(value || '')
@@ -176,7 +177,7 @@ export default function ModelFamilyPage() {
               </div>
             </div>
             <p className="model-family-variant-count">
-              {filteredVariants.length} {filteredVariants.length === 1 ? t.pages.modelFamilyVariantSingle : t.pages.modelFamilyVariantPlural}
+              {formatEngineVariantCount(filteredVariants.length, t, lang)}
             </p>
           </div>
         </div>
@@ -195,7 +196,7 @@ export default function ModelFamilyPage() {
         >
           {filteredVariants.map((variant) => (
             <option key={variant.id} value={variant.id}>
-              {variant.year_introduced} · {variant.engine_type || t.pages.engineUnknown} · {variant.vehicle_type} · {variant.production_status}
+              {formatVariantSelectLabel(variant, t)}
             </option>
           ))}
         </select>

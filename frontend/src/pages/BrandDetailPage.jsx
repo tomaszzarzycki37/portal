@@ -7,6 +7,7 @@ import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser } from '../utils/auth'
 import { filterCarsForCatalogSearch, parseCatalogSearchParams } from '../utils/catalogSearch'
 import { buildModelFamilyPath } from '../utils/modelSlug'
+import { formatEngineVariantCount, formatVehicleType } from '../utils/carLabels'
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -567,11 +568,11 @@ export default function BrandDetailPage() {
                         </Link>
                       </h3>
                       <p className="brand-lineup-model-meta">
-                        {primaryVariant.vehicle_type || '-'}
+                        {formatVehicleType(primaryVariant.vehicle_type, t)}
                         {familyYears ? ` · ${familyYears}` : ''}
                       </p>
                       <p className="brand-lineup-model-meta">
-                        {group.cars.length} {group.cars.length === 1 ? t.pages.modelFamilyVariantSingle : t.pages.modelFamilyVariantPlural}
+                        {formatEngineVariantCount(group.cars.length, t, lang)}
                         {' · '}
                         ★ {avgRating.toFixed(1)}
                         {' · '}
