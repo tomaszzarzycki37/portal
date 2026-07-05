@@ -1317,6 +1317,23 @@ export default function ReviewsPage() {
                         </button>
                       ) : review.title}
                     </h3>
+                    {(review.car_brand_name || review.car_name) && (
+                      <div
+                        className={`review-car-tag ${canManageReview ? 'review-inline-editable-block' : ''}`}
+                        role={canManageReview ? 'button' : undefined}
+                        tabIndex={canManageReview ? 0 : undefined}
+                        onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'car_model') : undefined}
+                        onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'car_model')) : undefined}
+                      >
+                        {canManageReview ? (
+                          <span>{review.car_brand_name} {review.car_name}</span>
+                        ) : review.car_id ? (
+                          <Link to={`/cars/${review.car_id}`}>{review.car_brand_name} {review.car_name}</Link>
+                        ) : (
+                          <span>{review.car_brand_name} {review.car_name}</span>
+                        )}
+                      </div>
+                    )}
                     {review.summary && (
                       <p
                         className={`review-card-summary ${canManageReview ? 'review-inline-editable-block' : ''}`}
@@ -1348,23 +1365,6 @@ export default function ReviewsPage() {
                       >
                         {review.tags}
                       </p>
-                    )}
-                    {(review.car_brand_name || review.car_name) && (
-                      <div
-                        className={`review-car-tag ${canManageReview ? 'review-inline-editable-block' : ''}`}
-                        role={canManageReview ? 'button' : undefined}
-                        tabIndex={canManageReview ? 0 : undefined}
-                        onClick={canManageReview ? () => handleOpenSectionEditor(review.id, 'car_model') : undefined}
-                        onKeyDown={canManageReview ? (event) => handleEditableKeyDown(event, () => handleOpenSectionEditor(review.id, 'car_model')) : undefined}
-                      >
-                        {canManageReview ? (
-                          <span>{review.car_brand_name} {review.car_name}</span>
-                        ) : review.car_id ? (
-                          <Link to={`/cars/${review.car_id}`}>{review.car_brand_name} {review.car_name}</Link>
-                        ) : (
-                          <span>{review.car_brand_name} {review.car_name}</span>
-                        )}
-                      </div>
                     )}
                   </div>
 
