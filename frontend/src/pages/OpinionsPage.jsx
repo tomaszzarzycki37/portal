@@ -80,6 +80,7 @@ function formatRatingDisplay(value) {
 export default function OpinionsPage() {
   const { t, lang } = useTranslation()
   const [opinions, setOpinions] = useState([])
+  const [topOpinions, setTopOpinions] = useState([])
   const [brandCatalog, setBrandCatalog] = useState([])
   const [carBrandById, setCarBrandById] = useState({})
   const [carsById, setCarsById] = useState({})
@@ -101,13 +102,15 @@ export default function OpinionsPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [opinionsResponse, brandsResponse, carsResponse] = await Promise.all([
+        const [opinionsResponse, brandsResponse, carsResponse, topOpinionsResponse] = await Promise.all([
           api.get('/opinions/?page_size=200&ordering=-created_at'),
           api.get('/cars/brands/?ordering=name&page_size=200'),
           api.get('/cars/?page_size=300'),
+          api.get('/opinions/top_rated/'),
         ])
 
         const opinionsList = opinionsResponse.data.results || opinionsResponse.data || []
+        const topOpinionsList = topOpinionsResponse.data.results || topOpinionsResponse.data || []
         const brandsList = brandsResponse.data.results || brandsResponse.data || []
         const carsList = carsResponse.data.results || carsResponse.data || []
 
@@ -120,6 +123,7 @@ export default function OpinionsPage() {
         })
 
         setOpinions(opinionsList)
+        setTopOpinions(topOpinionsList)
         setBrandCatalog(brandsList)
         setCarBrandById(nextCarBrandById)
         setCarsById(nextCarsById)
@@ -132,6 +136,17 @@ export default function OpinionsPage() {
 
     fetchData()
   }, [])
+
+  const normalizedTopOpinions = useMemo(() => {
+    return topOpinions.map((opinion) => {
+      const fallbackBrandName = carBrandById[opinion.car_id] || ''
+      const brandName = String(opinion.car_brand_name || fallbackBrandName || '').trim()
+      return {
+        ...opinion,
+        _brandName: brandName,
+      }
+    })
+  }, [topOpinions, carBrandById])
 
   const normalizedOpinions = useMemo(() => {
     return opinions.map((opinion) => {
@@ -232,9 +247,14 @@ export default function OpinionsPage() {
   }
 
   const reloadOpinions = async () => {
-    const opinionsResponse = await api.get('/opinions/?page_size=200&ordering=-created_at')
+    const [opinionsResponse, topOpinionsResponse] = await Promise.all([
+      api.get('/opinions/?page_size=200&ordering=-created_at'),
+      api.get('/opinions/top_rated/'),
+    ])
     const opinionsList = opinionsResponse.data.results || opinionsResponse.data || []
+    const topOpinionsList = topOpinionsResponse.data.results || topOpinionsResponse.data || []
     setOpinions(opinionsList)
+    setTopOpinions(topOpinionsList)
   }
 
   const handleToggleComments = async (opinionId) => {
@@ -360,11 +380,50 @@ export default function OpinionsPage() {
       ) : groupedByBrandAndModel.length === 0 ? (
         <div className="page-card">{t.pages.noOpinionsInCatalog}</div>
       ) : (
-        <div className="brand-catalog-list">
-          <p className="admin-subtitle" style={{ marginBottom: '0.5rem' }}>
-            {t.pages.allOpinionsLabel}: {normalizedOpinions.length}
-          </p>
+        <>
+          {normalizedTopOpinions.length > 0 && (
+            <section className="opinions-top-section">
+              <h2 className="opinions-section-heading">{t.pages.topOpinionsTitle}</h2>
+              <p className="admin-subtitle">{t.pages.topOpinionsHint}</p>
+              <div className="opinions-top-grid">
+                {normalizedTopOpinions.map((opinion, index) => (
+                  <article key={opinion.id} className="opinion-top-card">
+                    <span className="opinion-top-rank">{index + 1}</span>
+                    <img
+                      src={getCarImage(carsById[opinion.car_id] || { name: opinion.car_name, brand_name: opinion.car_brand_name })}
+                      alt={`${opinion._brandName || ''} ${opinion.car_name || ''}`.trim() || 'Car model'}
+                      className="opinion-top-image"
+                      loading="lazy"
+                      onError={handleCarImageError}
+                    />
+                    <h3 className="opinion-top-title">
+                      <Link to={`/opinions/${opinion.id}`}>{opinion.title}</Link>
+                    </h3>
+                    <div className="opinion-top-meta">
+                      <span>{opinion._brandName || t.pages.unknownBrand}</span>
+                      <span>{opinion.car_name || '-'}</span>
+                      <span>{formatDate(opinion.created_at)}</span>
+                    </div>
+                    <div className="opinion-top-stats">
+                      <span className="opinion-rating">{formatRatingDisplay(opinion.rating)}</span>
+                      <span className="opinion-meta">👍 {opinion.helpful_count || 0}</span>
+                    </div>
+                    <Link to={`/opinions/${opinion.id}`} className="opinion-top-read-link">
+                      {t.pages.readMore} →
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
 
+          <section className="opinions-all-section">
+            <h2 className="opinions-section-heading">{t.pages.allOpinionsSectionTitle}</h2>
+            <p className="admin-subtitle" style={{ marginBottom: '0.5rem' }}>
+              {t.pages.allOpinionsLabel}: {normalizedOpinions.length}
+            </p>
+
+            <div className="brand-catalog-list">
           {groupedByBrandAndModel.map((brandGroup) => {
             const logo = getBrandLogoOrPlaceholder(logoByBrandName.get(brandGroup.brandName) || '', brandGroup.brandName)
             const brandOpinionCount = brandGroup.models.reduce((acc, m) => acc + m.opinions.length, 0)
@@ -559,7 +618,9 @@ export default function OpinionsPage() {
               </section>
             )
           })}
-        </div>
+            </div>
+          </section>
+        </>
       )}
     </div>
   )
