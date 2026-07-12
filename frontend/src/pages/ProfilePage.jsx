@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
+import MarqueePlaceholderInput from '../components/MarqueePlaceholderInput'
 
 export default function ProfilePage() {
   const { t } = useTranslation()
@@ -263,14 +264,13 @@ export default function ProfilePage() {
               <label htmlFor="phone" className="profile-label">
                 { t.profile.phone || 'Phone' }
               </label>
-              <input
+              <MarqueePlaceholderInput
                 id="phone"
                 type="tel"
                 name="phone"
-                value={ formData.phone }
-                onChange={ handleInputChange }
-                className="form-input"
-                placeholder={ t.profile.phonePlaceholder || '+1 (555) 123-4567' }
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder={t.profile.phonePlaceholder || '+1 (555) 123-4567'}
               />
             </div>
 
@@ -278,14 +278,13 @@ export default function ProfilePage() {
               <label htmlFor="location" className="profile-label">
                 { t.profile.location || 'Location' }
               </label>
-              <input
+              <MarqueePlaceholderInput
                 id="location"
                 type="text"
                 name="location"
-                value={ formData.location }
-                onChange={ handleInputChange }
-                className="form-input"
-                placeholder={ t.profile.locationPlaceholder || 'City, Country' }
+                value={formData.location}
+                onChange={handleInputChange}
+                placeholder={t.profile.locationPlaceholder || 'City, Country'}
               />
             </div>
           </section>

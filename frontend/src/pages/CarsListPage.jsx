@@ -8,6 +8,7 @@ import { buildModelFamilyPath } from '../utils/modelSlug'
 import { filterCarsForCatalogSearch, parseCatalogSearchParams } from '../utils/catalogSearch'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser, isAuthenticatedUser } from '../utils/auth'
+import MarqueePlaceholderInput from '../components/MarqueePlaceholderInput'
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -700,9 +701,8 @@ export default function CarsListPage() {
             <div className="admin-fields-grid">
               <div>
                 <label className="form-label" htmlFor="catalog-search">{t.pages.searchModels}</label>
-                <input
+                <MarqueePlaceholderInput
                   id="catalog-search"
-                  className="form-input"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder={t.pages.searchModelsPlaceholder}
@@ -710,9 +710,8 @@ export default function CarsListPage() {
               </div>
               <div>
                 <label className="form-label" htmlFor="catalog-engine">{t.pages.engineFilter}</label>
-                <input
+                <MarqueePlaceholderInput
                   id="catalog-engine"
-                  className="form-input"
                   value={engineSearch}
                   onChange={(e) => setEngineSearch(e.target.value)}
                   placeholder={t.pages.engineFilterPlaceholder}

@@ -10,6 +10,7 @@ import { canEditByAuthorId, getCurrentUser, isAuthenticatedUser } from '../utils
 import { getReviewCategoryLabel } from '../utils/reviewCategory'
 import SelectedImageFilesPreview from '../components/SelectedImageFilesPreview'
 import TestResultsEditor from '../components/TestResultsEditor'
+import MarqueePlaceholderInput from '../components/MarqueePlaceholderInput'
 import {
   fetchAllPaginated,
   formatCarSelectOptionLabel,
@@ -800,9 +801,7 @@ export default function ReviewsPage() {
       <div className="opinions-filters">
         <div className="filter-group">
           <label className="form-label">{t.pages.searchModels}</label>
-          <input
-            type="text"
-            className="form-input"
+          <MarqueePlaceholderInput
             placeholder={t.pages.searchModelsPlaceholder}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -906,9 +905,8 @@ export default function ReviewsPage() {
                 {t.adminPanel.reviewPublication}
                 <span className="form-label-optional"> ({t.pages.optionalLabel})</span>
               </label>
-              <input
+              <MarqueePlaceholderInput
                 id="user-review-publication"
-                className="form-input"
                 value={newReviewDraft.publication_name}
                 onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, publication_name: e.target.value }))}
                 placeholder={t.adminPanel.reviewPublicationHint}

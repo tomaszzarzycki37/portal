@@ -19,6 +19,7 @@ import {
   parseReviewContent,
 } from '../utils/reviewContent'
 import { buildTestResultRows } from '../utils/reviewTestResults'
+import MarqueePlaceholderInput from '../components/MarqueePlaceholderInput'
 
 const CURRENCY_CONFIG = {
   USD: { symbol: '$', rateToUsd: 1 },
@@ -1923,9 +1924,8 @@ export default function AdminDashboard() {
           <aside className="admin-form-card">
             <h2 className="admin-section-heading">{t.adminPanel.inventory}</h2>
             <label className="form-label" htmlFor="admin-search">{t.adminPanel.searchCars}</label>
-            <input
+            <MarqueePlaceholderInput
               id="admin-search"
-              className="form-input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={t.adminPanel.searchPlaceholder}
@@ -2415,8 +2415,7 @@ export default function AdminDashboard() {
             <p className="admin-subtitle">{t.adminPanel.usersModerationSubtitle}</p>
 
             <div className="admin-actions-row" style={{ justifyContent: 'flex-start', marginTop: '0.85rem' }}>
-              <input
-                className="form-input"
+              <MarqueePlaceholderInput
                 style={{ minWidth: '280px' }}
                 placeholder={t.adminPanel.usersSearchPlaceholder}
                 value={usersSearch}
@@ -2728,8 +2727,7 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <label className="form-label">{t.adminPanel.usersFieldNewPassword}</label>
-                        <input
-                          className="form-input"
+                        <MarqueePlaceholderInput
                           type="password"
                           value={userEditDraft.new_password}
                           onChange={(e) => handleUserDraftChange('new_password', e.target.value)}
@@ -2739,8 +2737,7 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <label className="form-label">{t.adminPanel.usersFieldConfirmPassword}</label>
-                        <input
-                          className="form-input"
+                        <MarqueePlaceholderInput
                           type="password"
                           value={userEditDraft.confirm_password}
                           onChange={(e) => handleUserDraftChange('confirm_password', e.target.value)}
@@ -3287,9 +3284,8 @@ export default function AdminDashboard() {
 
                 <div className="admin-form-grid-full">
                   <label className="form-label" htmlFor="new-review-tags">{t.adminPanel.reviewTags}</label>
-                  <input
+                  <MarqueePlaceholderInput
                     id="new-review-tags"
-                    className="form-input"
                     value={newReviewTags}
                     onChange={(e) => setNewReviewTags(e.target.value)}
                     placeholder={t.adminPanel.reviewTagsPlaceholder}
@@ -3823,9 +3819,8 @@ export default function AdminDashboard() {
           <div id="admin-footer-settings-content">
             <div className="admin-form-grid-full">
               <label className="form-label" htmlFor="footer-email">{t.adminPanel.footerEmailLabel}</label>
-              <input
+              <MarqueePlaceholderInput
                 id="footer-email"
-                className="form-input"
                 value={footerEmail}
                 onChange={(e) => setFooterEmail(e.target.value)}
                 placeholder={t.adminPanel.footerEmailPlaceholder}
@@ -3834,9 +3829,8 @@ export default function AdminDashboard() {
 
             <div className="admin-form-grid-full">
               <label className="form-label" htmlFor="footer-phone">{t.adminPanel.footerPhoneLabel}</label>
-              <input
+              <MarqueePlaceholderInput
                 id="footer-phone"
-                className="form-input"
                 value={footerPhone}
                 onChange={(e) => setFooterPhone(e.target.value)}
                 placeholder={t.adminPanel.footerPhonePlaceholder}

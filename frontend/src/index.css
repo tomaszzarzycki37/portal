@@ -9,13 +9,17 @@ body {
   color: #0f172a;
   font-family: 'Source Sans 3', 'Trebuchet MS', sans-serif;
   line-height: 1.45;
-  background: #f8fafc;
+  background: linear-gradient(165deg, #fff7ed 0%, #fffbeb 35%, #f8fafc 70%, #f1f5f9 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body.app-theme-dark {
-  background: #1c1f24;
+  background: linear-gradient(165deg, #1f2329 0%, #1c1f24 50%, #171b22 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
   color: #e5e7eb;
 }
 

@@ -11,6 +11,7 @@ import {
   buildCatalogSearchPath,
   filterCarsForCatalogSearch,
 } from '../utils/catalogSearch'
+import MarqueePlaceholderInput from '../components/MarqueePlaceholderInput'
 
 const FALLBACK_HERO_IMAGE = 'https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&w=1800&q=80'
 const HERO_BACKGROUND_CONTENT_KEY = 'home.heroSearchBackgroundUrl'
@@ -518,9 +519,7 @@ export default function HomePage() {
 
                   <div className="home-filter-section">
                     <label className="home-filter-label">{t.pages.modelFilterLabel}</label>
-                    <input
-                      type="text"
-                      className="form-input"
+                    <MarqueePlaceholderInput
                       value={modelSearch}
                       onChange={(e) => setModelSearch(e.target.value)}
                       placeholder={t.pages.modelSearchPlaceholder}
@@ -593,9 +592,7 @@ export default function HomePage() {
 
                 <div className="home-filter-section">
                   <label className="home-filter-label">{t.pages.searchModels}</label>
-                  <input
-                    type="text"
-                    className="form-input"
+                  <MarqueePlaceholderInput
                     value={keywordSearch}
                     onChange={(e) => setKeywordSearch(e.target.value)}
                     placeholder={t.pages.searchModelsPlaceholder}
@@ -605,9 +602,7 @@ export default function HomePage() {
                 <div className="home-search-advanced-grid">
                   <div className="home-filter-section">
                     <label className="home-filter-label">{t.pages.engineFilter}</label>
-                    <input
-                      type="text"
-                      className="form-input"
+                    <MarqueePlaceholderInput
                       value={engineSearch}
                       onChange={(e) => setEngineSearch(e.target.value)}
                       placeholder={t.pages.engineFilterPlaceholder}
@@ -726,9 +721,7 @@ export default function HomePage() {
                 <div className="home-search-advanced-grid home-search-advanced-grid-secondary">
                   <div className="home-filter-section">
                     <label className="home-filter-label">{t.pages.fuelConsumptionLabel}</label>
-                    <input
-                      type="text"
-                      className="form-input"
+                    <MarqueePlaceholderInput
                       value={fuelConsumptionSearch}
                       onChange={(e) => setFuelConsumptionSearch(e.target.value)}
                       placeholder={t.pages.fuelConsumptionPlaceholder}
