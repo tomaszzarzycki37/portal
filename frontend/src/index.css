@@ -4,19 +4,22 @@
   box-sizing: border-box;
 }
 
+html {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   color: #0f172a;
   font-family: 'Source Sans 3', 'Trebuchet MS', sans-serif;
   line-height: 1.45;
-  background-color: #eef2f7;
+  background-color: #dce8f5;
   background-image:
-    radial-gradient(circle at 14% 16%, rgba(251, 191, 36, 0.2) 0, transparent 40%),
-    radial-gradient(circle at 86% 20%, rgba(59, 130, 246, 0.16) 0, transparent 36%),
-    radial-gradient(circle at 78% 82%, rgba(245, 158, 11, 0.14) 0, transparent 34%),
-    radial-gradient(circle at 22% 78%, rgba(96, 165, 250, 0.12) 0, transparent 38%),
-    radial-gradient(circle at 52% 48%, rgba(255, 255, 255, 0.55) 0, transparent 52%),
-    linear-gradient(145deg, #eef2f7 0%, #f2f0eb 45%, #f8f4ee 100%);
+    radial-gradient(circle at 8% 10%, rgba(251, 191, 36, 0.45) 0, transparent 46%),
+    radial-gradient(circle at 94% 12%, rgba(59, 130, 246, 0.4) 0, transparent 44%),
+    radial-gradient(circle at 88% 90%, rgba(245, 158, 11, 0.34) 0, transparent 42%),
+    radial-gradient(circle at 6% 88%, rgba(96, 165, 250, 0.36) 0, transparent 46%),
+    linear-gradient(145deg, #dce8f5 0%, #e8eef6 38%, #f0e8dc 72%, #faf4ee 100%);
   background-attachment: fixed;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -26,12 +29,12 @@ body {
 body.app-theme-dark {
   background-color: #0f172a;
   background-image:
-    radial-gradient(ellipse 80% 50% at 12% 18%, rgba(56, 189, 248, 0.24) 0, transparent 54%),
-    radial-gradient(ellipse 65% 45% at 88% 14%, rgba(168, 85, 247, 0.28) 0, transparent 50%),
-    radial-gradient(ellipse 70% 55% at 78% 88%, rgba(244, 114, 182, 0.2) 0, transparent 52%),
-    radial-gradient(ellipse 55% 42% at 22% 72%, rgba(34, 211, 238, 0.16) 0, transparent 48%),
-    radial-gradient(ellipse 90% 70% at 50% 105%, rgba(99, 102, 241, 0.22) 0, transparent 58%),
-    linear-gradient(165deg, #0f172a 0%, #1e1b4b 42%, #312e81 72%, #0f172a 100%);
+    radial-gradient(ellipse 90% 60% at 8% 12%, rgba(56, 189, 248, 0.48) 0, transparent 56%),
+    radial-gradient(ellipse 75% 52% at 94% 10%, rgba(168, 85, 247, 0.52) 0, transparent 54%),
+    radial-gradient(ellipse 80% 62% at 82% 92%, rgba(244, 114, 182, 0.4) 0, transparent 56%),
+    radial-gradient(ellipse 65% 48% at 12% 78%, rgba(34, 211, 238, 0.36) 0, transparent 52%),
+    radial-gradient(ellipse 100% 80% at 50% 108%, rgba(99, 102, 241, 0.44) 0, transparent 62%),
+    linear-gradient(165deg, #0f172a 0%, #1e1b4b 38%, #4338ca 62%, #312e81 82%, #0f172a 100%);
   background-attachment: fixed;
   min-height: 100vh;
   color: #e5e7eb;
