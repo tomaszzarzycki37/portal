@@ -9,23 +9,14 @@ body {
   color: #0f172a;
   font-family: 'Source Sans 3', 'Trebuchet MS', sans-serif;
   line-height: 1.45;
-  background-color: #e8d4bb;
+  background-color: #eef2f7;
   background-image:
-    repeating-linear-gradient(
-      93deg,
-      transparent 0 11px,
-      rgba(145, 108, 68, 0.09) 11px 12px
-    ),
-    repeating-linear-gradient(
-      3deg,
-      transparent 0 7px,
-      rgba(165, 128, 88, 0.07) 7px 8px
-    ),
-    radial-gradient(ellipse 90% 55% at 22% 8%, rgba(255, 248, 238, 0.72), transparent 52%),
-    radial-gradient(ellipse 80% 60% at 78% 92%, rgba(155, 118, 78, 0.14), transparent 54%),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9 1.15' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.86 0 0 0 0 0.8 0 0 0 0 0.7 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
-  background-repeat: repeat, repeat, no-repeat, no-repeat, repeat;
-  background-size: 24px 24px, 16px 16px, 100% 100%, 100% 100%, 180px 180px;
+    radial-gradient(circle at 14% 16%, rgba(251, 191, 36, 0.2) 0, transparent 40%),
+    radial-gradient(circle at 86% 20%, rgba(59, 130, 246, 0.16) 0, transparent 36%),
+    radial-gradient(circle at 78% 82%, rgba(245, 158, 11, 0.14) 0, transparent 34%),
+    radial-gradient(circle at 22% 78%, rgba(96, 165, 250, 0.12) 0, transparent 38%),
+    radial-gradient(circle at 52% 48%, rgba(255, 255, 255, 0.55) 0, transparent 52%),
+    linear-gradient(145deg, #eef2f7 0%, #f2f0eb 45%, #f8f4ee 100%);
   background-attachment: fixed;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -33,7 +24,14 @@ body {
 }
 
 body.app-theme-dark {
-  background: linear-gradient(165deg, #1f2329 0%, #1c1f24 50%, #171b22 100%);
+  background-color: #0f172a;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 12% 18%, rgba(56, 189, 248, 0.24) 0, transparent 54%),
+    radial-gradient(ellipse 65% 45% at 88% 14%, rgba(168, 85, 247, 0.28) 0, transparent 50%),
+    radial-gradient(ellipse 70% 55% at 78% 88%, rgba(244, 114, 182, 0.2) 0, transparent 52%),
+    radial-gradient(ellipse 55% 42% at 22% 72%, rgba(34, 211, 238, 0.16) 0, transparent 48%),
+    radial-gradient(ellipse 90% 70% at 50% 105%, rgba(99, 102, 241, 0.22) 0, transparent 58%),
+    linear-gradient(165deg, #0f172a 0%, #1e1b4b 42%, #312e81 72%, #0f172a 100%);
   background-attachment: fixed;
   min-height: 100vh;
   color: #e5e7eb;
