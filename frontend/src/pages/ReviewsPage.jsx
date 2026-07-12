@@ -72,10 +72,11 @@ function resolveReviewArticleContent(content, summary) {
     return String(content || '').trim()
   }
   const summaryText = String(summary || '').trim()
-  if (summaryText) {
-    return plainTextToHtml(summaryText)
+  if (!summaryText) return ''
+  if (/<\/?[a-z][\s\S]*>/i.test(summaryText)) {
+    return summaryText
   }
-  return ''
+  return plainTextToHtml(summaryText)
 }
 
 function getCreateReviewValidationErrors(draft, t) {
@@ -957,13 +958,12 @@ export default function ReviewsPage() {
               />
             </div>
             <div className="admin-form-grid-full">
-              <label className="form-label" htmlFor="user-review-summary">{t.adminPanel.reviewSummary}</label>
-              <textarea
+              <RichTextEditor
                 id="user-review-summary"
-                className="form-input form-textarea"
-                rows={3}
+                label={t.adminPanel.reviewSummary}
                 value={newReviewDraft.summary}
-                onChange={(e) => setNewReviewDraft((prev) => ({ ...prev, summary: e.target.value }))}
+                onChange={(val) => setNewReviewDraft((prev) => ({ ...prev, summary: val }))}
+                placeholder={t.adminPanel.reviewEditorPlaceholder}
               />
             </div>
             <div className="admin-form-grid-full">
@@ -1327,7 +1327,7 @@ export default function ReviewsPage() {
         <div className="review-inline-editor-backdrop" onClick={handleCloseSectionEditor}>
           <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
             <h3 className="review-inline-editor-title">{t.pages.editLabel}: {getInlineFieldLabel(sectionEditor.field)}</h3>
-            {sectionEditor.field === 'content' || sectionEditor.field === 'overview' || sectionEditor.field === 'verdict' ? (
+            {sectionEditor.field === 'content' || sectionEditor.field === 'overview' || sectionEditor.field === 'summary' || sectionEditor.field === 'verdict' ? (
               <RichTextEditor
                 id={`review-inline-editor-${sectionEditor.reviewId}-${sectionEditor.field}`}
                 label={getInlineFieldLabel(sectionEditor.field)}
@@ -1447,18 +1447,6 @@ export default function ReviewsPage() {
                 hint={t.adminPanel.reviewTestResultsHint}
                 valuePlaceholder={t.adminPanel.reviewTestResultsValuePlaceholder}
               />
-            ) : sectionEditor.field === 'summary' ? (
-              <div>
-                <label className="form-label" htmlFor="review-inline-textarea">{getInlineFieldLabel(sectionEditor.field)}</label>
-                <textarea
-                  id="review-inline-textarea"
-                  className="form-input form-textarea"
-                  rows={4}
-                  value={sectionValue}
-                  onChange={(event) => setSectionValue(event.target.value)}
-                  placeholder=""
-                />
-              </div>
             ) : (
               <div>
                 <label className="form-label" htmlFor="review-inline-value">{getInlineFieldLabel(sectionEditor.field)}</label>

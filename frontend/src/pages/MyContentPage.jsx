@@ -107,7 +107,10 @@ export default function MyContentPage() {
                       <span>{review.publication_name}</span>
                       <span>{formatDate(review.published_at)}</span>
                     </div>
-                    <p className="opinion-content">{review.summary || review.content}</p>
+                    <div
+                      className="opinion-content"
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(review.summary || review.content) }}
+                    />
                     <div className="opinion-list-footer">
                       <span className="opinion-votes">
                         {review.is_published ? t.adminPanel.reviewPublished : t.pages.yourDraftLabel}

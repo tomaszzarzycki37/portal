@@ -16,6 +16,7 @@ import {
   buildOpinionPayload,
   validateOpinionDraft,
 } from '../constants/opinionRatings'
+import { getSafeOverviewValue, parseReviewContent } from '../utils/reviewContent'
 
 function createEmptyOpinionDraft() {
   return {
@@ -50,7 +51,29 @@ const WORD_LIKE_FORMATS = [
 ]
 
 function sanitizeRichHtml(value) {
-  return DOMPurify.sanitize(String(value || ''))
+  return DOMPurify.sanitize(decodeHtmlEntities(value))
+}
+
+function getReviewSummaryHtml(review) {
+  const summary = String(review?.summary || '').trim()
+  if (summary) {
+    return sanitizeRichHtml(summary)
+  }
+
+  const rawContent = String(review?.content || '').trim()
+  if (!rawContent) return ''
+
+  const parsed = parseReviewContent(rawContent)
+  const overview = getSafeOverviewValue(parsed.overview, '')
+  if (overview) {
+    return sanitizeRichHtml(overview)
+  }
+
+  if (/<\/?[a-z][\s\S]*>/i.test(rawContent)) {
+    return sanitizeRichHtml(rawContent)
+  }
+
+  return sanitizeRichHtml(getMeaningfulRichText(rawContent))
 }
 
 function decodeHtmlEntities(value) {
@@ -771,9 +794,10 @@ export default function CarDetailPage() {
                             {review.publication_name}
                             {review.author_name ? ` - ${review.author_name}` : ''}
                           </p>
-                          <p className="home-featured-review-summary">
-                            {decodeHtmlEntities(review.summary || String(review.content || '').slice(0, 220))}
-                          </p>
+                          <div
+                            className="home-featured-review-summary"
+                            dangerouslySetInnerHTML={{ __html: getReviewSummaryHtml(review) }}
+                          />
                         </div>
                       </Link>
                     </div>
