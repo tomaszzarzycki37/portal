@@ -96,7 +96,7 @@ body.app-theme-dark .form-label,
 body.app-theme-dark .form-checkbox-row,
 body.app-theme-dark .spec-item span,
 body.app-theme-dark .spec-item strong {
-  color: #cbd5e1;
+  color: #e2e8f0;
 }
 
 body.app-theme-dark .form-input {
@@ -141,7 +141,7 @@ body.app-theme-dark .detail-description,
 body.app-theme-dark .detail-kicker,
 body.app-theme-dark .detail-section-subtitle,
 body.app-theme-dark .detail-kv-row span {
-  color: #cbd5e1;
+  color: #e2e8f0;
 }
 
 body.app-theme-dark .brand-catalog-badge {
@@ -152,9 +152,10 @@ body.app-theme-dark .brand-catalog-badge {
 body.app-theme-dark .brand-catalog-meta-pill,
 body.app-theme-dark .car-count-badge,
 body.app-theme-dark .detail-badge,
-body.app-theme-dark .detail-kv-row {
-  background: #2f353f;
-  border-color: #4b5563;
+body.app-theme-dark .detail-kv-row,
+body.app-theme-dark .spec-item {
+  background: #3a4554;
+  border-color: #5d6b7d;
   color: #e5e7eb;
 }
 
@@ -175,8 +176,14 @@ body.app-theme-dark .detail-hero,
 body.app-theme-dark .detail-specs-card,
 body.app-theme-dark .detail-reviews-card,
 body.app-theme-dark .detail-opinions {
-  background: #22262d;
-  border-color: #3b414b;
+  background: #2e3642;
+  border-color: #4d5868;
+  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.32);
+}
+
+body.app-theme-dark .detail-kv-row strong,
+body.app-theme-dark .spec-item strong {
+  color: #f8fafc;
 }
 
 body.app-theme-dark .brand-lineup-group-header {
