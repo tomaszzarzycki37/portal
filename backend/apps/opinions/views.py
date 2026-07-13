@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, F, FloatField, ExpressionWrapper
-from apps.common.helpers import IsOwnerOrAdminOrReadOnly
+from apps.common.helpers import IsOwnerOrAdminOrReadOnly, IsApprovedContributor
 from apps.common.audit import log_admin_action
 from apps.common.models import AdminActionLog
 from .models import Opinion, Comment, Vote, PressReview
@@ -71,7 +71,7 @@ class OpinionViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'partial_update', 'destroy']:
             permission_classes = [IsOwnerOrAdminOrReadOnly]
         elif self.action in ['create', 'vote', 'add_comment']:
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsApprovedContributor]
         else:
             permission_classes = [IsAuthenticatedOrReadOnly]
         return [permission() for permission in permission_classes]
@@ -86,7 +86,7 @@ class OpinionViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post'], permission_classes=[IsApprovedContributor])
     def add_comment(self, request, pk=None):
         """Add a comment to an opinion"""
         opinion = self.get_object()
@@ -99,7 +99,7 @@ class OpinionViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post'], permission_classes=[IsApprovedContributor])
     def vote(self, request, pk=None):
         """Vote on an opinion (helpful/unhelpful)"""
         opinion = self.get_object()
@@ -146,6 +146,13 @@ class CommentViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at']
     ordering = ['created_at']
 
+    def get_permissions(self):
+        if self.action in ['create']:
+            permission_classes = [IsApprovedContributor]
+        else:
+            permission_classes = [IsAuthenticatedOrReadOnly]
+        return [permission() for permission in permission_classes]
+
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return CommentCreateSerializer
@@ -169,7 +176,7 @@ class PressReviewViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'partial_update', 'destroy']:
             permission_classes = [IsOwnerOrAdminOrReadOnly]
         elif self.action in ['create']:
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsApprovedContributor]
         else:
             permission_classes = [IsAuthenticatedOrReadOnly]
         return [permission() for permission in permission_classes]

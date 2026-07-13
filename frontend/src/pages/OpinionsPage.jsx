@@ -7,7 +7,7 @@ import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
-import { canEditByAuthorId, isAuthenticatedUser } from '../utils/auth'
+import { canEditByAuthorId, isApprovedContributor, isAuthenticatedUser } from '../utils/auth'
 import DetailedOpinionCard from '../components/DetailedOpinionCard'
 import DetailedOpinionForm from '../components/DetailedOpinionForm'
 import {
@@ -97,6 +97,8 @@ export default function OpinionsPage() {
   const [commentSaving, setCommentSaving] = useState({})
   const [opinionMessage, setOpinionMessage] = useState('')
   const [opinionError, setOpinionError] = useState('')
+  const isLoggedIn = isAuthenticatedUser()
+  const canContribute = isApprovedContributor()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -348,8 +350,8 @@ export default function OpinionsPage() {
 
   const handleVoteOpinion = async (opinionId, voteType) => {
     if (!['helpful', 'unhelpful'].includes(voteType)) return
-    if (!isAuthenticatedUser()) {
-      setOpinionError(t.pages.loginToContribute)
+    if (!canContribute) {
+      setOpinionError(isLoggedIn ? t.pages.pendingApproval : t.pages.loginToContribute)
       return
     }
 
@@ -577,7 +579,7 @@ export default function OpinionsPage() {
                                               ))
                                             )}
                                             <div className="comment-add-row">
-                                              {isAuthenticatedUser() ? (
+                                              {canContribute ? (
                                                 <>
                                                   <input
                                                     className="form-input comment-input"
@@ -600,7 +602,7 @@ export default function OpinionsPage() {
                                                   </button>
                                                 </>
                                               ) : (
-                                                <p className="admin-meta">{t.pages.loginToContribute}</p>
+                                                <p className="admin-meta">{isLoggedIn ? t.pages.pendingApproval : t.pages.loginToContribute}</p>
                                               )}
                                             </div>
                                           </div>

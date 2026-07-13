@@ -6,7 +6,7 @@ import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
-import { canEditByAuthorId, getCurrentUser, isAuthenticatedUser } from '../utils/auth'
+import { canEditByAuthorId, getCurrentUser, isApprovedContributor, isAuthenticatedUser } from '../utils/auth'
 import { getReviewCategoryLabel } from '../utils/reviewCategory'
 import SelectedImageFilesPreview from '../components/SelectedImageFilesPreview'
 import TestResultsEditor from '../components/TestResultsEditor'
@@ -307,6 +307,7 @@ export default function ReviewsPage() {
   const location = useLocation()
   const currentUser = useMemo(() => getCurrentUser(), [])
   const isLoggedIn = useMemo(() => isAuthenticatedUser(), [])
+  const canContribute = useMemo(() => isApprovedContributor(), [])
   const [reviews, setReviews] = useState([])
   const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(true)
@@ -846,7 +847,7 @@ export default function ReviewsPage() {
         </div>
       </div>
 
-      {isLoggedIn ? (
+      {canContribute ? (
         <section className="admin-form-card" style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: isCreateReviewSectionOpen ? '0.5rem' : 0, minHeight: '2rem' }}>
             <h2 className="admin-section-heading" style={{ margin: 0, flex: 1 }}>{t.pages.createReviewTitle}</h2>
@@ -1081,7 +1082,10 @@ export default function ReviewsPage() {
           )}
         </section>
       ) : (
-        <p className="admin-subtitle" style={{ marginBottom: '1rem' }}>{t.pages.loginToContribute}</p>
+        <div style={{ marginBottom: '1rem' }}>
+          <p className="admin-subtitle">{isLoggedIn ? t.pages.pendingApproval : t.pages.loginToContribute}</p>
+          {isLoggedIn && <p className="admin-meta">{t.pages.pendingApprovalHint}</p>}
+        </div>
       )}
 
       {reviewMessage && <p className="form-success">{reviewMessage}</p>}

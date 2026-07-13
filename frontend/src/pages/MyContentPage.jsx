@@ -3,7 +3,7 @@ import DOMPurify from 'dompurify'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
-import { getCurrentUser, isAuthenticatedUser } from '../utils/auth'
+import { getCurrentUser, isApprovedContributor, isAuthenticatedUser } from '../utils/auth'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { getReviewCategoryLabel } from '../utils/reviewCategory'
 
@@ -15,6 +15,7 @@ export default function MyContentPage() {
   const { t, lang } = useTranslation()
   const currentUser = useMemo(() => getCurrentUser(), [])
   const isLoggedIn = useMemo(() => isAuthenticatedUser(), [])
+  const canContribute = useMemo(() => isApprovedContributor(), [])
   const [reviews, setReviews] = useState([])
   const [opinions, setOpinions] = useState([])
   const [carsById, setCarsById] = useState({})
@@ -66,12 +67,16 @@ export default function MyContentPage() {
     })
   }
 
-  if (!isLoggedIn) {
+  if (!canContribute) {
     return (
       <div className="opinions-page-wrap">
         <h1 className="page-title">{t.pages.myContentTitle}</h1>
-        <p className="admin-subtitle">{t.pages.loginToContribute}</p>
-        <Link to="/login" className="btn btn-primary btn-sm">{t.nav.login}</Link>
+        <p className="admin-subtitle">{isLoggedIn ? t.pages.pendingApproval : t.pages.loginToContribute}</p>
+        {isLoggedIn ? (
+          <p className="admin-meta">{t.pages.pendingApprovalHint}</p>
+        ) : (
+          <Link to="/login" className="btn btn-primary btn-sm">{t.nav.login}</Link>
+        )}
       </div>
     )
   }

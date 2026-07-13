@@ -8,7 +8,7 @@ import api from '../services/api'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { normalizeMediaUrl } from '../utils/mediaUrl'
-import { canEditByAuthorId, isAdminUser, isAuthenticatedUser } from '../utils/auth'
+import { canEditByAuthorId, isAdminUser, isApprovedContributor, isAuthenticatedUser } from '../utils/auth'
 import DetailedOpinionCard from '../components/DetailedOpinionCard'
 import DetailedOpinionForm from '../components/DetailedOpinionForm'
 import {
@@ -320,6 +320,7 @@ export default function CarDetailPage() {
   const [adminError, setAdminError] = useState('')
   const isAdmin = isAdminUser()
   const isLoggedIn = isAuthenticatedUser()
+  const canContribute = isApprovedContributor()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -643,7 +644,7 @@ export default function CarDetailPage() {
 
   const handleAdminOpinionCreate = async (e) => {
     e.preventDefault()
-    if (!isLoggedIn || !car) return
+    if (!canContribute || !car) return
 
     if (!validateOpinionDraft(adminOpinionDraft)) {
       setAdminOpinionMessage('')
@@ -735,8 +736,8 @@ export default function CarDetailPage() {
 
   const handleVoteOpinion = async (opinionId, voteType) => {
     if (!['helpful', 'unhelpful'].includes(voteType)) return
-    if (!isLoggedIn) {
-      setAdminOpinionError(t.pages.loginToContribute)
+    if (!canContribute) {
+      setAdminOpinionError(isLoggedIn ? t.pages.pendingApproval : t.pages.loginToContribute)
       return
     }
 
@@ -1042,7 +1043,7 @@ export default function CarDetailPage() {
           <h2 className="detail-section-title">{t.pages.carOpinions}</h2>
         </div>
 
-        {isLoggedIn ? (
+        {canContribute ? (
           <div className="admin-form-card" style={{ marginBottom: '1.1rem' }}>
             <div className="detail-section-header detail-collapsible-header" style={{ marginBottom: isAddOpinionOpen ? '0.9rem' : 0 }}>
               <span style={{ fontWeight: 700 }}>{t.pages.addOpinionTitle}</span>
@@ -1075,7 +1076,10 @@ export default function CarDetailPage() {
             )}
           </div>
         ) : (
-          <p className="admin-subtitle">{t.pages.loginToContribute}</p>
+          <div>
+            <p className="admin-subtitle">{isLoggedIn ? t.pages.pendingApproval : t.pages.loginToContribute}</p>
+            {isLoggedIn && <p className="admin-meta">{t.pages.pendingApprovalHint}</p>}
+          </div>
         )}
 
         {adminOpinionMessage && <p className="form-success">{adminOpinionMessage}</p>}
@@ -1172,7 +1176,7 @@ export default function CarDetailPage() {
                       ))
                     )}
                     <div className="comment-add-row">
-                      {isLoggedIn ? (
+                      {canContribute ? (
                         <>
                           <input
                             className="form-input comment-input"
@@ -1195,7 +1199,7 @@ export default function CarDetailPage() {
                           </button>
                         </>
                       ) : (
-                        <p className="admin-meta">{t.pages.loginToContribute}</p>
+                        <p className="admin-meta">{isLoggedIn ? t.pages.pendingApproval : t.pages.loginToContribute}</p>
                       )}
                     </div>
                   </div>

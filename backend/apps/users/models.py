@@ -13,6 +13,10 @@ class UserProfile(models.Model):
     location = models.CharField(max_length=100, blank=True)
     phone = models.CharField(max_length=20, blank=True)
     email_verified = models.BooleanField(default=False)
+    is_approved = models.BooleanField(
+        default=False,
+        help_text='When False, the user can log in but cannot publish opinions or reviews until an admin approves.',
+    )
     is_car_owner = models.BooleanField(default=False)
     last_seen = models.DateTimeField(blank=True, null=True)
     force_password_reset = models.BooleanField(default=False)

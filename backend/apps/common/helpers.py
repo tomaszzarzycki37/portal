@@ -41,3 +41,20 @@ class IsOwnerOrAdminOrReadOnly(BasePermission):
         if request.method in ['GET', 'HEAD', 'OPTIONS']:
             return True
         return bool(request.user and request.user.is_authenticated and (obj.author == request.user or request.user.is_staff))
+
+
+class IsApprovedContributor(BasePermission):
+    """
+    Allow content creation only for authenticated users approved by an admin.
+    Staff accounts are always treated as approved.
+    """
+    message = 'Your account is pending admin approval before you can publish content.'
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if user.is_staff or user.is_superuser:
+            return True
+        profile = getattr(user, 'profile', None)
+        return bool(profile and profile.is_approved)

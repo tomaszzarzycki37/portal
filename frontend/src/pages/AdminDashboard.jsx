@@ -426,6 +426,28 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleApproveUser = async (user) => {
+    if (!user) return
+    if (user.is_staff || user.is_superuser || user.profile?.is_approved) return
+
+    setUsersError('')
+    setUsersMessage('')
+    try {
+      await api.patch(`/users/${user.id}/`, {
+        email: user.email || '',
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        is_active: !!user.is_active,
+        is_staff: !!user.is_staff,
+        profile_is_approved: true,
+      })
+      await loadUsers()
+      setUsersMessage(t.adminPanel.usersApproved)
+    } catch {
+      setUsersError(t.adminPanel.usersUpdateError)
+    }
+  }
+
   const handleToggleUserActive = async (user) => {
     if (!user) return
     if (currentUser?.id === user.id) {
@@ -784,6 +806,9 @@ export default function AdminDashboard() {
     const byStatus = byRole.filter((user) => {
       if (usersStatusFilter === 'all') return true
       if (usersStatusFilter === 'active') return !!user.is_active
+      if (usersStatusFilter === 'pending') {
+        return !!user.is_active && !user.is_staff && !user.profile?.is_approved
+      }
       return !user.is_active
     })
 
@@ -809,7 +834,10 @@ export default function AdminDashboard() {
     const admins = usersList.filter((user) => user.is_staff).length
     const active = usersList.filter((user) => user.is_active).length
     const blocked = total - active
-    return { total, admins, active, blocked }
+    const pending = usersList.filter(
+      (user) => user.is_active && !user.is_staff && !user.profile?.is_approved,
+    ).length
+    return { total, admins, active, blocked, pending }
   }, [usersList])
 
   const formatUserDate = (value) => {
@@ -2439,6 +2467,7 @@ export default function AdminDashboard() {
               >
                 <option value="all">{t.adminPanel.usersStatusAll}</option>
                 <option value="active">{t.adminPanel.usersStatusActiveOnly}</option>
+                <option value="pending">{t.adminPanel.usersStatusPendingOnly}</option>
                 <option value="blocked">{t.adminPanel.usersStatusBlockedOnly}</option>
               </select>
               <select
@@ -2469,6 +2498,7 @@ export default function AdminDashboard() {
               <span className="admin-meta"><strong>{t.adminPanel.usersStatAdmins}:</strong> {usersStats.admins}</span>
               <span className="admin-meta"><strong>{t.adminPanel.usersStatActive}:</strong> {usersStats.active}</span>
               <span className="admin-meta"><strong>{t.adminPanel.usersStatBlocked}:</strong> {usersStats.blocked}</span>
+              <span className="admin-meta"><strong>{t.adminPanel.usersStatPending}:</strong> {usersStats.pending}</span>
               <span className="admin-meta"><strong>{t.adminPanel.usersStatOnlineNow}:</strong> {activeUsersList.length}</span>
             </div>
 
@@ -2605,6 +2635,14 @@ export default function AdminDashboard() {
                         {user.is_staff ? t.nav.roleAdmin : t.nav.roleUser}
                         {' • '}
                         {user.is_active ? t.adminPanel.userStatusActive : t.adminPanel.userStatusBlocked}
+                        {!user.is_staff && user.is_active ? (
+                          <>
+                            {' • '}
+                            {user.profile?.is_approved
+                              ? t.adminPanel.userStatusApproved
+                              : t.adminPanel.userStatusPending}
+                          </>
+                        ) : ''}
                         {user.is_superuser ? ` • ${t.adminPanel.usersSuperuserLabel}` : ''}
                         {currentUser?.id === user.id ? ` • ${t.adminPanel.usersYouLabel}` : ''}
                       </p>
@@ -2625,6 +2663,16 @@ export default function AdminDashboard() {
                       >
                         {expandedUserId === user.id ? t.adminPanel.usersHideDetails : t.adminPanel.usersEditDetails}
                       </button>
+                      {!user.is_superuser && !user.is_staff && !user.profile?.is_approved && (
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={() => handleApproveUser(user)}
+                          disabled={usersLoading}
+                        >
+                          {t.adminPanel.usersApprove}
+                        </button>
+                      )}
                       {!user.is_superuser && (
                         <button
                           type="button"

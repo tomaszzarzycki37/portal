@@ -17,6 +17,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'phone',
             'last_seen',
             'email_verified',
+            'is_approved',
             'is_car_owner',
             'force_password_reset',
             'password_changed_at',
@@ -78,10 +79,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password2')
-        user = User(**validated_data)
         password = validated_data.pop('password')
+        user = User(**validated_data)
         user.set_password(password)
         user.save()
+        profile = user.profile
+        profile.is_approved = False
+        profile.save(update_fields=['is_approved'])
         return user
 
 
@@ -90,6 +94,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     profile_phone = serializers.CharField(required=False, allow_blank=True, max_length=20)
     profile_location = serializers.CharField(required=False, allow_blank=True, max_length=100)
     profile_bio = serializers.CharField(required=False, allow_blank=True)
+    profile_is_approved = serializers.BooleanField(required=False)
     force_password_reset = serializers.BooleanField(required=False)
 
     class Meta:
@@ -104,6 +109,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             'profile_phone',
             'profile_location',
             'profile_bio',
+            'profile_is_approved',
             'force_password_reset',
         ]
 
@@ -113,6 +119,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         profile_phone = validated_data.pop('profile_phone', None)
         profile_location = validated_data.pop('profile_location', None)
         profile_bio = validated_data.pop('profile_bio', None)
+        profile_is_approved = validated_data.pop('profile_is_approved', None)
         force_password_reset = validated_data.pop('force_password_reset', None)
 
         for attr, value in validated_data.items():
@@ -133,6 +140,9 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             profile.location = profile_location
         if profile_bio is not None:
             profile.bio = profile_bio
+
+        if profile_is_approved is not None:
+            profile.is_approved = bool(profile_is_approved)
 
         if force_password_reset is not None:
             profile.force_password_reset = bool(force_password_reset)
