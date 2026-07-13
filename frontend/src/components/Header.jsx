@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from '../i18n'
 import { isAdminUser } from '../utils/auth'
 import api from '../services/api'
@@ -270,29 +271,32 @@ export default function Header() {
         </div>
       )}
 
-      {isAdmin && isTaglineEditorOpen && (
-        <div className="review-inline-editor-backdrop" onClick={() => setIsTaglineEditorOpen(false)}>
-          <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
-            <h3 className="review-inline-editor-title">{t.adminInline.quickEdit}</h3>
-            <label className="form-label" htmlFor="header-brand-tagline-editor">Tagline</label>
-            <textarea
-              id="header-brand-tagline-editor"
-              className="form-input form-textarea"
-              rows={4}
-              value={taglineDraft}
-              onChange={(event) => setTaglineDraft(event.target.value)}
-            />
-            {taglineMessage && <p className="form-success">{taglineMessage}</p>}
-            {taglineError && <p className="form-error">{taglineError}</p>}
-            <div className="admin-actions-row">
-              <button type="button" className="btn btn-secondary" onClick={() => setIsTaglineEditorOpen(false)}>{t.pages.cancelLabel}</button>
-              <button type="button" className="btn btn-primary" disabled={taglineSaving} onClick={handleSaveTagline}>
-                {taglineSaving ? t.pages.loading : t.adminInline.save}
-              </button>
+      {isAdmin && isTaglineEditorOpen && typeof document !== 'undefined'
+        ? createPortal(
+          <div className="review-inline-editor-backdrop" onClick={() => setIsTaglineEditorOpen(false)}>
+            <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
+              <h3 className="review-inline-editor-title">{t.adminInline.quickEdit}</h3>
+              <label className="form-label" htmlFor="header-brand-tagline-editor">Tagline</label>
+              <textarea
+                id="header-brand-tagline-editor"
+                className="form-input form-textarea"
+                rows={4}
+                value={taglineDraft}
+                onChange={(event) => setTaglineDraft(event.target.value)}
+              />
+              {taglineMessage && <p className="form-success">{taglineMessage}</p>}
+              {taglineError && <p className="form-error">{taglineError}</p>}
+              <div className="admin-actions-row">
+                <button type="button" className="btn btn-secondary" onClick={() => setIsTaglineEditorOpen(false)}>{t.pages.cancelLabel}</button>
+                <button type="button" className="btn btn-primary" disabled={taglineSaving} onClick={handleSaveTagline}>
+                  {taglineSaving ? t.pages.loading : t.adminInline.save}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )
+        : null}
 
       {isMenuOpen && (
         <div className="mobile-nav-wrap mobile-only">
