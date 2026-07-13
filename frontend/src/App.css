@@ -1799,16 +1799,7 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	align-items: flex-start;
 	justify-content: center;
 	padding: clamp(1rem, 6vh, 4rem) 1rem 1rem;
-	background: transparent;
-	isolation: isolate;
-}
-
-.review-inline-editor-backdrop::before {
-	content: '';
-	position: absolute;
-	inset: 0;
-	pointer-events: none;
-	background: rgba(15, 23, 42, 0.7);
+	background: rgba(15, 23, 42, 0.66);
 	-webkit-backdrop-filter: blur(22px);
 	backdrop-filter: blur(22px);
 }
