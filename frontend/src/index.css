@@ -2601,6 +2601,10 @@ body.app-theme-dark .detail-brand-logo {
   padding: 1rem;
 }
 
+.detail-opinions .opinions-grid {
+  grid-template-columns: 1fr;
+}
+
 .detail-section-header {
   display: flex;
   align-items: flex-start;
