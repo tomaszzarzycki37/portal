@@ -399,18 +399,20 @@ export default function OpinionsPage() {
                     <h3 className="opinion-top-title">
                       <Link to={`/opinions/${opinion.id}`}>{opinion.title}</Link>
                     </h3>
-                    <div className="opinion-top-meta">
-                      <span>{opinion._brandName || t.pages.unknownBrand}</span>
-                      <span>{opinion.car_name || '-'}</span>
-                      <span>{formatDate(opinion.created_at)}</span>
+                    <div className="opinion-top-footer">
+                      <div className="opinion-top-meta">
+                        <span>{opinion._brandName || t.pages.unknownBrand}</span>
+                        <span>{opinion.car_name || '-'}</span>
+                        <span>{formatDate(opinion.created_at)}</span>
+                      </div>
+                      <div className="opinion-top-stats">
+                        <span className="opinion-rating">{formatRatingDisplay(opinion.rating)}</span>
+                        <span className="opinion-meta">👍 {opinion.helpful_count || 0}</span>
+                      </div>
+                      <Link to={`/opinions/${opinion.id}`} className="opinion-top-read-link">
+                        {t.pages.readMore} →
+                      </Link>
                     </div>
-                    <div className="opinion-top-stats">
-                      <span className="opinion-rating">{formatRatingDisplay(opinion.rating)}</span>
-                      <span className="opinion-meta">👍 {opinion.helpful_count || 0}</span>
-                    </div>
-                    <Link to={`/opinions/${opinion.id}`} className="opinion-top-read-link">
-                      {t.pages.readMore} →
-                    </Link>
                   </article>
                 ))}
               </div>
