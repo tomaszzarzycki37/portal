@@ -185,9 +185,9 @@ export default function Footer() {
         <div className="review-inline-editor-backdrop" onClick={closeEditor}>
           <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
             <h3 className="review-inline-editor-title">{t.adminInline.quickEdit}</h3>
-            <label className="form-label" htmlFor="footer-inline-editor-input">{editorField}</label>
             <textarea
               id="footer-inline-editor-input"
+              aria-label={t.adminInline.quickEdit}
               className="form-input form-textarea"
               rows={4}
               value={editorValue}
