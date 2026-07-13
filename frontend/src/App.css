@@ -1796,9 +1796,9 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	inset: 0;
 	z-index: 1500;
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: center;
-	padding: 1rem;
+	padding: clamp(1rem, 6vh, 4rem) 1rem 1rem;
 	background: rgba(15, 23, 42, 0.42);
 	-webkit-backdrop-filter: blur(12px);
 	backdrop-filter: blur(12px);
