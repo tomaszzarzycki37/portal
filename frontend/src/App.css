@@ -2848,19 +2848,6 @@ body.app-theme-dark .admin-rich-editor-compact .ql-editor {
 	margin: 0;
 }
 
-.model-family-breadcrumbs {
-	font-size: 0.92rem;
-	color: #64748b;
-}
-
-.model-family-breadcrumbs a {
-	color: #b45309;
-	text-decoration: none;
-}
-
-.model-family-breadcrumbs a:hover {
-	text-decoration: underline;
-}
 
 .model-family-hero-grid {
 	display: grid;
@@ -2886,6 +2873,16 @@ body.app-theme-dark .admin-rich-editor-compact .ql-editor {
 	width: 3.5rem;
 	height: 3.5rem;
 	object-fit: contain;
+	border-radius: 0.65rem;
+	border: 1px solid #dbe4f0;
+	background: #fff;
+	padding: 0.35rem;
+	flex-shrink: 0;
+}
+
+body.app-theme-dark .model-family-brand-logo {
+	background: #eef2f7;
+	border-color: #64748b;
 }
 
 .model-family-brand-name {
@@ -3201,10 +3198,6 @@ body.app-theme-dark .admin-rich-editor-compact .ql-editor {
 }
 
 /* Model family + brand lineup — dark theme */
-body.app-theme-dark .model-family-breadcrumbs {
-	color: #94a3b8;
-}
-
 body.app-theme-dark .model-family-hero-image,
 body.app-theme-dark .brand-lineup-model-image {
 	border-color: #4b5563;

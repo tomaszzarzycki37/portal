@@ -2209,21 +2209,25 @@ body.app-theme-dark .brand-anecdote-text {
   background: rgba(30, 41, 59, 0.96);
 }
 
-.breadcrumbs {
+.breadcrumbs,
+.model-family-breadcrumbs {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.45rem;
+  font-size: 0.92rem;
   color: #64748b;
-  font-size: 0.9rem;
 }
 
-.breadcrumbs-link {
-  color: #475569;
+.breadcrumbs-link,
+.model-family-breadcrumbs a {
+  color: #b45309;
+  text-decoration: none;
 }
 
-.breadcrumbs-link:hover {
-  color: #1d4ed8;
+.breadcrumbs-link:hover,
+.model-family-breadcrumbs a:hover {
+  text-decoration: underline;
 }
 
 .breadcrumbs-separator {
@@ -2231,8 +2235,31 @@ body.app-theme-dark .brand-anecdote-text {
 }
 
 .breadcrumbs-current {
-  color: #0f172a;
+  color: #64748b;
   font-weight: 700;
+}
+
+body.app-theme-dark .breadcrumbs,
+body.app-theme-dark .model-family-breadcrumbs {
+  color: #94a3b8;
+}
+
+body.app-theme-dark .breadcrumbs-link,
+body.app-theme-dark .model-family-breadcrumbs a {
+  color: #f59e0b;
+}
+
+body.app-theme-dark .breadcrumbs-link:hover,
+body.app-theme-dark .model-family-breadcrumbs a:hover {
+  color: #fbbf24;
+}
+
+body.app-theme-dark .breadcrumbs-current {
+  color: #e2e8f0;
+}
+
+body.app-theme-dark .breadcrumbs-separator {
+  color: #64748b;
 }
 
 .car-card-item {
@@ -2461,6 +2488,28 @@ body.app-theme-dark .brand-anecdote-text {
   text-transform: uppercase;
   font-size: 0.75rem;
   letter-spacing: 0.04em;
+}
+
+.detail-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.detail-brand-logo {
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
+  border-radius: 0.65rem;
+  border: 1px solid #dbe4f0;
+  background: #fff;
+  padding: 0.35rem;
+  flex-shrink: 0;
+}
+
+body.app-theme-dark .detail-brand-logo {
+  background: #eef2f7;
+  border-color: #64748b;
 }
 
 .detail-title {

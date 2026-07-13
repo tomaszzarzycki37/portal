@@ -6,6 +6,7 @@ import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
+import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { normalizeMediaUrl } from '../utils/mediaUrl'
 import { canEditByAuthorId, isAdminUser, isAuthenticatedUser } from '../utils/auth'
 import DetailedOpinionCard from '../components/DetailedOpinionCard'
@@ -577,6 +578,7 @@ export default function CarDetailPage() {
   const modelAge = car.year_introduced ? Math.max(currentYear - car.year_introduced, 0) : null
   const latestOpinions = opinions.slice(0, 10)
   const activeOpinion = latestOpinions[opinionSlideIndex] || null
+  const brandLogo = getBrandLogoOrPlaceholder(car.brand?.logo || '', car.brand?.name)
 
   return (
     <div className="detail-wrap">
@@ -596,8 +598,13 @@ export default function CarDetailPage() {
 
       <section className="detail-hero">
         <div className="detail-copy">
-          <p className="detail-kicker">{car.brand?.name || ''}</p>
-          <h1 className="page-title detail-title">{car.name}</h1>
+          <div className="detail-brand-row">
+            <img src={brandLogo} alt={car.brand?.name || ''} className="detail-brand-logo" />
+            <div>
+              <p className="detail-kicker">{car.brand?.name || ''}</p>
+              <h1 className="page-title detail-title">{car.name}</h1>
+            </div>
+          </div>
           <p className="detail-description">{car.description}</p>
 
           <div className="detail-badges">
