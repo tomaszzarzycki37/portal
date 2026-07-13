@@ -7,7 +7,8 @@ import { useTranslation } from '../i18n'
 import api from '../services/api'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
-import { canEditByAuthorId, isApprovedContributor, isAuthenticatedUser } from '../utils/auth'
+import { canEditByAuthorId } from '../utils/auth'
+import { useAuthSession } from '../hooks/useAuthSession'
 import DetailedOpinionCard from '../components/DetailedOpinionCard'
 import DetailedOpinionForm from '../components/DetailedOpinionForm'
 import {
@@ -49,6 +50,17 @@ function getMeaningfulRichText(value) {
     .replace(/&nbsp;/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+function createEmptyOpinionDraft() {
+  return {
+    car_model: '',
+    title: '',
+    content: '',
+    detailed_ratings: buildEmptyDetailedRatings(),
+    fuel_consumption_min: '',
+    fuel_consumption_max: '',
+  }
 }
 
 function RichTextEditor({ id, label, value, onChange, placeholder }) {
@@ -97,8 +109,10 @@ export default function OpinionsPage() {
   const [commentSaving, setCommentSaving] = useState({})
   const [opinionMessage, setOpinionMessage] = useState('')
   const [opinionError, setOpinionError] = useState('')
-  const isLoggedIn = isAuthenticatedUser()
-  const canContribute = isApprovedContributor()
+  const [isCreateOpinionOpen, setIsCreateOpinionOpen] = useState(false)
+  const [newOpinionDraft, setNewOpinionDraft] = useState(createEmptyOpinionDraft)
+  const [createOpinionSaving, setCreateOpinionSaving] = useState(false)
+  const { isLoggedIn, canContribute } = useAuthSession()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -259,6 +273,32 @@ export default function OpinionsPage() {
     setTopOpinions(topOpinionsList)
   }
 
+  const handleCreateOpinion = async (e) => {
+    e.preventDefault()
+    if (!canContribute) return
+
+    if (!validateOpinionDraft(newOpinionDraft, { requireCarModel: true })) {
+      setOpinionMessage('')
+      setOpinionError(t.pages.opinionCreateValidation)
+      return
+    }
+
+    try {
+      setCreateOpinionSaving(true)
+      setOpinionMessage('')
+      setOpinionError('')
+      await api.post('/opinions/', buildOpinionPayload(newOpinionDraft))
+      setNewOpinionDraft(createEmptyOpinionDraft())
+      setIsCreateOpinionOpen(false)
+      await reloadOpinions()
+      setOpinionMessage(t.pages.opinionCreated)
+    } catch {
+      setOpinionError(t.pages.opinionCreateError)
+    } finally {
+      setCreateOpinionSaving(false)
+    }
+  }
+
   const handleToggleComments = async (opinionId) => {
     setExpandedOpinions((prev) => {
       const next = new Set(prev)
@@ -376,6 +416,42 @@ export default function OpinionsPage() {
       <p className="admin-subtitle">{t.pages.opinionsCatalogIntro}</p>
       {opinionMessage && <p className="form-success">{opinionMessage}</p>}
       {opinionError && <p className="form-error">{opinionError}</p>}
+
+      {canContribute ? (
+        <section className="admin-form-card" style={{ marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: isCreateOpinionOpen ? '0.75rem' : 0 }}>
+            <h2 className="admin-section-heading" style={{ margin: 0 }}>{t.pages.addOpinionTitle}</h2>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => setIsCreateOpinionOpen((prev) => !prev)}
+              aria-expanded={isCreateOpinionOpen}
+            >
+              {isCreateOpinionOpen ? t.pages.cancelLabel : t.pages.addOpinionSubmit}
+            </button>
+          </div>
+          {isCreateOpinionOpen && (
+            <form onSubmit={handleCreateOpinion}>
+              <DetailedOpinionForm
+                draft={newOpinionDraft}
+                onChange={setNewOpinionDraft}
+                t={t}
+                RichTextEditorComponent={RichTextEditor}
+                showCarSelect
+                cars={allCars}
+              />
+              <button type="submit" className="btn btn-primary" disabled={createOpinionSaving}>
+                {createOpinionSaving ? t.pages.loading : t.pages.addOpinionSubmit}
+              </button>
+            </form>
+          )}
+        </section>
+      ) : (
+        <div style={{ marginBottom: '1rem' }}>
+          <p className="admin-subtitle">{isLoggedIn ? t.pages.pendingApproval : t.pages.loginToContribute}</p>
+          {isLoggedIn && <p className="admin-meta">{t.pages.pendingApprovalHint}</p>}
+        </div>
+      )}
 
       {loading ? (
         <div className="page-loading">{t.pages.loading}</div>

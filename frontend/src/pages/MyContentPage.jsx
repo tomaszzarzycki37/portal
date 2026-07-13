@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
-import { getCurrentUser, isApprovedContributor, isAuthenticatedUser } from '../utils/auth'
+import { useAuthSession } from '../hooks/useAuthSession'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { getReviewCategoryLabel } from '../utils/reviewCategory'
 
@@ -13,9 +13,7 @@ function sanitizeRichHtml(value) {
 
 export default function MyContentPage() {
   const { t, lang } = useTranslation()
-  const currentUser = useMemo(() => getCurrentUser(), [])
-  const isLoggedIn = useMemo(() => isAuthenticatedUser(), [])
-  const canContribute = useMemo(() => isApprovedContributor(), [])
+  const { user, isLoggedIn, canContribute } = useAuthSession()
   const [reviews, setReviews] = useState([])
   const [opinions, setOpinions] = useState([])
   const [carsById, setCarsById] = useState({})
@@ -24,7 +22,7 @@ export default function MyContentPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!isLoggedIn || !currentUser?.id) {
+      if (!isLoggedIn || !user?.id) {
         setLoading(false)
         return
       }
@@ -33,8 +31,8 @@ export default function MyContentPage() {
         setLoading(true)
         setError('')
         const [reviewsResponse, opinionsResponse, carsResponse] = await Promise.all([
-          api.get(`/reviews/?author=${currentUser.id}&page_size=200&ordering=-published_at`),
-          api.get(`/opinions/?author=${currentUser.id}&page_size=200&ordering=-created_at`),
+          api.get(`/reviews/?author=${user.id}&page_size=200&ordering=-published_at`),
+          api.get(`/opinions/?author=${user.id}&page_size=200&ordering=-created_at`),
           api.get('/cars/?page_size=300'),
         ])
 
@@ -56,7 +54,7 @@ export default function MyContentPage() {
     }
 
     fetchData()
-  }, [currentUser?.id, isLoggedIn, t.adminPanel.loadError])
+  }, [user?.id, isLoggedIn, t.adminPanel.loadError])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)

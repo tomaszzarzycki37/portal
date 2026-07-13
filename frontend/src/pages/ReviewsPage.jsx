@@ -6,7 +6,8 @@ import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
-import { canEditByAuthorId, getCurrentUser, isApprovedContributor, isAuthenticatedUser } from '../utils/auth'
+import { canEditByAuthorId, getCurrentUser } from '../utils/auth'
+import { useAuthSession } from '../hooks/useAuthSession'
 import { getReviewCategoryLabel } from '../utils/reviewCategory'
 import SelectedImageFilesPreview from '../components/SelectedImageFilesPreview'
 import TestResultsEditor from '../components/TestResultsEditor'
@@ -306,8 +307,7 @@ export default function ReviewsPage() {
   const { t, lang } = useTranslation()
   const location = useLocation()
   const currentUser = useMemo(() => getCurrentUser(), [])
-  const isLoggedIn = useMemo(() => isAuthenticatedUser(), [])
-  const canContribute = useMemo(() => isApprovedContributor(), [])
+  const { isLoggedIn, canContribute } = useAuthSession()
   const [reviews, setReviews] = useState([])
   const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(true)

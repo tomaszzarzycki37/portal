@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from '../i18n'
 import api from '../services/api'
+import { notifyAuthSessionChanged } from '../utils/auth'
 
 export default function LoginPage() {
   const { t } = useTranslation()
@@ -22,6 +23,7 @@ export default function LoginPage() {
       const meResponse = await api.get('/users/me/')
       const currentUser = meResponse.data
       localStorage.setItem('current_user', JSON.stringify(currentUser))
+      notifyAuthSessionChanged()
 
       const mustResetPassword = !!(tokenResponse.data.force_password_reset || currentUser?.profile?.force_password_reset)
       if (mustResetPassword) {
