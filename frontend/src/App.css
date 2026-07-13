@@ -1653,6 +1653,12 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	cursor: pointer;
 }
 
+.spec-item strong.review-inline-editable-block,
+.detail-kv-row strong.review-inline-editable-block,
+.detail-description.review-inline-editable-block {
+	display: inline-block;
+}
+
 .review-inline-tags {
 	display: block;
 }

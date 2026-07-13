@@ -183,6 +183,88 @@ function formatRatingDisplay(value) {
   return `${stars} (${numericLabel})`
 }
 
+const VEHICLE_TYPE_OPTIONS = ['sedan', 'suv', 'crossover', 'hatchback', 'coupe', 'van', 'truck', 'other']
+const PRODUCTION_STATUS_OPTIONS = ['active', 'discontinued', 'upcoming']
+const CURRENCY_OPTIONS = ['CNY', 'USD', 'EUR', 'GBP', 'JPY', 'PLN', 'INR']
+
+function toIntOrNull(value) {
+  const trimmed = String(value || '').trim()
+  if (!trimmed) return null
+  const parsed = Number.parseInt(trimmed, 10)
+  return Number.isNaN(parsed) ? null : parsed
+}
+
+function toDecimalOrNull(value) {
+  const trimmed = String(value || '').trim()
+  if (!trimmed) return null
+  const parsed = Number.parseFloat(trimmed)
+  return Number.isNaN(parsed) ? null : parsed
+}
+
+function getCarFieldDraftValue(car, field) {
+  if (!car) return ''
+  switch (field) {
+    case 'description':
+      return car.description || ''
+    case 'year_introduced':
+      return car.year_introduced !== null && car.year_introduced !== undefined ? String(car.year_introduced) : ''
+    case 'vehicle_type':
+      return car.vehicle_type || 'sedan'
+    case 'engine_type':
+      return car.engine_type || ''
+    case 'horsepower':
+      return car.horsepower !== null && car.horsepower !== undefined ? String(car.horsepower) : ''
+    case 'acceleration':
+      return car.acceleration || ''
+    case 'top_speed':
+      return car.top_speed !== null && car.top_speed !== undefined ? String(car.top_speed) : ''
+    case 'length_mm':
+      return car.length_mm !== null && car.length_mm !== undefined ? String(car.length_mm) : ''
+    case 'width_mm':
+      return car.width_mm !== null && car.width_mm !== undefined ? String(car.width_mm) : ''
+    case 'height_mm':
+      return car.height_mm !== null && car.height_mm !== undefined ? String(car.height_mm) : ''
+    case 'fuel_consumption':
+      return car.fuel_consumption || ''
+    case 'price_min':
+      return car.price_min ? String(car.price_min) : ''
+    case 'price_max':
+      return car.price_max ? String(car.price_max) : ''
+    case 'currency':
+      return car.currency || 'CNY'
+    case 'production_status':
+      return car.production_status || 'active'
+    case 'is_featured':
+      return car.is_featured ? 'true' : 'false'
+    default:
+      return ''
+  }
+}
+
+function EditableCarField({ isAdmin, field, label, display, quickEditLabel, onOpen }) {
+  const content = display ?? '-'
+  if (!isAdmin) return <strong>{content}</strong>
+
+  return (
+    <strong
+      className="review-inline-editable-block"
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(field, label)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onOpen(field, label)
+        }
+      }}
+      aria-label={`${quickEditLabel}: ${label}`}
+      title={`${quickEditLabel}: ${label}`}
+    >
+      {content}
+    </strong>
+  )
+}
+
 export default function CarDetailPage() {
   const { t } = useTranslation()
   const { id } = useParams()
@@ -225,9 +307,14 @@ export default function CarDetailPage() {
   const [commentSaving, setCommentSaving] = useState({})
   const [voteSaving, setVoteSaving] = useState({})
   const [reviewSlideIndex, setReviewSlideIndex] = useState(0)
-  const [opinionSlideIndex, setOpinionSlideIndex] = useState(0)
   const [isAddOpinionOpen, setIsAddOpinionOpen] = useState(false)
   const [isAdminDetailEditorOpen, setIsAdminDetailEditorOpen] = useState(false)
+  const [carFieldEditor, setCarFieldEditor] = useState(null)
+  const [carFieldDraft, setCarFieldDraft] = useState('')
+  const [carFieldDraftSecondary, setCarFieldDraftSecondary] = useState('')
+  const [carFieldDraftTertiary, setCarFieldDraftTertiary] = useState('')
+  const [carFieldSaving, setCarFieldSaving] = useState(false)
+  const [carFieldError, setCarFieldError] = useState('')
   const [adminSaving, setAdminSaving] = useState(false)
   const [adminMessage, setAdminMessage] = useState('')
   const [adminError, setAdminError] = useState('')
@@ -307,17 +394,6 @@ export default function CarDetailPage() {
       setReviewSlideIndex(0)
     }
   }, [reviewArticles, reviewSlideIndex])
-
-  useEffect(() => {
-    const visibleOpinionsCount = Math.min(opinions.length, 10)
-    if (visibleOpinionsCount === 0) {
-      setOpinionSlideIndex(0)
-      return
-    }
-    if (opinionSlideIndex >= visibleOpinionsCount) {
-      setOpinionSlideIndex(0)
-    }
-  }, [opinions, opinionSlideIndex])
 
   useEffect(() => {
     if (!adminImage) {
@@ -453,6 +529,118 @@ export default function CarDetailPage() {
     setHeroImageError('')
   }
 
+  const syncAdminFieldsFromCar = (carData) => {
+    setAdminDescription(carData.description || '')
+    setAdminYearIntroduced(carData.year_introduced ? String(carData.year_introduced) : '')
+    setAdminVehicleType(carData.vehicle_type || 'sedan')
+    setAdminEngineType(carData.engine_type || '')
+    setAdminHorsepower(
+      carData.horsepower !== null && carData.horsepower !== undefined ? String(carData.horsepower) : '',
+    )
+    setAdminAcceleration(carData.acceleration || '')
+    setAdminTopSpeed(
+      carData.top_speed !== null && carData.top_speed !== undefined ? String(carData.top_speed) : '',
+    )
+    setAdminLengthMm(
+      carData.length_mm !== null && carData.length_mm !== undefined ? String(carData.length_mm) : '',
+    )
+    setAdminWidthMm(
+      carData.width_mm !== null && carData.width_mm !== undefined ? String(carData.width_mm) : '',
+    )
+    setAdminHeightMm(
+      carData.height_mm !== null && carData.height_mm !== undefined ? String(carData.height_mm) : '',
+    )
+    setAdminFuelConsumption(carData.fuel_consumption || '')
+    setAdminPriceMin(carData.price_min ? String(carData.price_min) : '')
+    setAdminPriceMax(carData.price_max ? String(carData.price_max) : '')
+    setAdminCurrency(carData.currency || 'CNY')
+    setAdminProductionStatus(carData.production_status || 'active')
+    setAdminFeatured(!!carData.is_featured)
+  }
+
+  const handleOpenCarFieldEditor = (field, label) => {
+    if (!isAdmin || !car) return
+
+    if (field === 'price_range') {
+      setCarFieldDraft(car.price_min ? String(car.price_min) : '')
+      setCarFieldDraftSecondary(car.price_max ? String(car.price_max) : '')
+      setCarFieldDraftTertiary(car.currency || 'CNY')
+    } else {
+      setCarFieldDraft(getCarFieldDraftValue(car, field))
+      setCarFieldDraftSecondary('')
+      setCarFieldDraftTertiary('')
+    }
+
+    setCarFieldEditor({ field, label })
+    setCarFieldError('')
+  }
+
+  const handleCloseCarFieldEditor = () => {
+    setCarFieldEditor(null)
+    setCarFieldDraft('')
+    setCarFieldDraftSecondary('')
+    setCarFieldDraftTertiary('')
+    setCarFieldError('')
+  }
+
+  const handleSaveCarField = async () => {
+    if (!isAdmin || !car || !carFieldEditor) return
+
+    const { field } = carFieldEditor
+    const payload = {}
+
+    try {
+      setCarFieldSaving(true)
+      setCarFieldError('')
+
+      if (field === 'description') {
+        payload.description = carFieldDraft
+      } else if (field === 'year_introduced') {
+        const parsedYear = toIntOrNull(carFieldDraft)
+        if (parsedYear === null) {
+          setCarFieldError(t.adminInline.saveError)
+          return
+        }
+        payload.year_introduced = parsedYear
+      } else if (field === 'vehicle_type') {
+        payload.vehicle_type = carFieldDraft
+      } else if (field === 'engine_type') {
+        payload.engine_type = carFieldDraft
+      } else if (field === 'horsepower') {
+        payload.horsepower = toIntOrNull(carFieldDraft)
+      } else if (field === 'acceleration') {
+        payload.acceleration = carFieldDraft
+      } else if (field === 'top_speed') {
+        payload.top_speed = toIntOrNull(carFieldDraft)
+      } else if (field === 'length_mm') {
+        payload.length_mm = toIntOrNull(carFieldDraft)
+      } else if (field === 'width_mm') {
+        payload.width_mm = toIntOrNull(carFieldDraft)
+      } else if (field === 'height_mm') {
+        payload.height_mm = toIntOrNull(carFieldDraft)
+      } else if (field === 'fuel_consumption') {
+        payload.fuel_consumption = carFieldDraft
+      } else if (field === 'production_status') {
+        payload.production_status = carFieldDraft
+      } else if (field === 'is_featured') {
+        payload.is_featured = carFieldDraft === 'true'
+      } else if (field === 'price_range') {
+        payload.price_min = toDecimalOrNull(carFieldDraft)
+        payload.price_max = toDecimalOrNull(carFieldDraftSecondary)
+        payload.currency = carFieldDraftTertiary || 'CNY'
+      }
+
+      const response = await api.patch(`/cars/${id}/`, payload)
+      setCar(response.data)
+      syncAdminFieldsFromCar(response.data)
+      handleCloseCarFieldEditor()
+    } catch (error) {
+      setCarFieldError(extractApiErrorMessage(error, t.adminInline.saveError))
+    } finally {
+      setCarFieldSaving(false)
+    }
+  }
+
   const handleAdminOpinionCreate = async (e) => {
     e.preventDefault()
     if (!isLoggedIn || !car) return
@@ -576,9 +764,8 @@ export default function CarDetailPage() {
 
   const currentYear = new Date().getFullYear()
   const modelAge = car.year_introduced ? Math.max(currentYear - car.year_introduced, 0) : null
-  const latestOpinions = opinions.slice(0, 10)
-  const activeOpinion = latestOpinions[opinionSlideIndex] || null
   const brandLogo = getBrandLogoOrPlaceholder(car.brand?.logo || '', car.brand?.name)
+  const openCarFieldEditor = handleOpenCarFieldEditor
 
   return (
     <div className="detail-wrap">
@@ -605,7 +792,26 @@ export default function CarDetailPage() {
               <h1 className="page-title detail-title">{car.name}</h1>
             </div>
           </div>
-          <p className="detail-description">{car.description}</p>
+          {isAdmin ? (
+            <p
+              className="detail-description review-inline-editable-block"
+              role="button"
+              tabIndex={0}
+              onClick={() => openCarFieldEditor('description', t.adminPanel.description)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  openCarFieldEditor('description', t.adminPanel.description)
+                }
+              }}
+              aria-label={`${t.adminInline.quickEdit}: ${t.adminPanel.description}`}
+              title={`${t.adminInline.quickEdit}: ${t.adminPanel.description}`}
+            >
+              {car.description}
+            </p>
+          ) : (
+            <p className="detail-description">{car.description}</p>
+          )}
 
           <div className="detail-badges">
             <span className="detail-badge">{car.vehicle_type}</span>
@@ -639,17 +845,17 @@ export default function CarDetailPage() {
       <section className="detail-specs-card">
         <h2 className="detail-section-title">{t.pages.specs}</h2>
         <div className="detail-specs-grid">
-          <div className="spec-item"><span>{t.pages.year}</span><strong>{car.year_introduced || '-'}</strong></div>
-          <div className="spec-item"><span>{t.pages.type}</span><strong>{car.vehicle_type || '-'}</strong></div>
-          <div className="spec-item"><span>{t.pages.engine}</span><strong>{car.engine_type || '-'}</strong></div>
-          <div className="spec-item"><span>{t.pages.horsepower}</span><strong>{car.horsepower || '-'} hp</strong></div>
-          <div className="spec-item"><span>{t.pages.acceleration}</span><strong>{car.acceleration || '-'}</strong></div>
-          <div className="spec-item"><span>{t.pages.topSpeed}</span><strong>{car.top_speed || '-'} km/h</strong></div>
-          <div className="spec-item"><span>{t.pages.length}</span><strong>{car.length_mm ? `${car.length_mm} mm` : '-'}</strong></div>
-          <div className="spec-item"><span>{t.pages.width}</span><strong>{car.width_mm ? `${car.width_mm} mm` : '-'}</strong></div>
-          <div className="spec-item"><span>{t.pages.height}</span><strong>{car.height_mm ? `${car.height_mm} mm` : '-'}</strong></div>
-          <div className="spec-item"><span>{t.pages.fuelConsumption}</span><strong>{car.fuel_consumption || '-'}</strong></div>
-          <div className="spec-item"><span>{t.pages.price}</span><strong>{car.price_range_display || '-'}</strong></div>
+          <div className="spec-item"><span>{t.pages.year}</span><EditableCarField isAdmin={isAdmin} field="year_introduced" label={t.pages.year} display={car.year_introduced || '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} /></div>
+          <div className="spec-item"><span>{t.pages.type}</span><EditableCarField isAdmin={isAdmin} field="vehicle_type" label={t.pages.type} display={car.vehicle_type || '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} /></div>
+          <div className="spec-item"><span>{t.pages.engine}</span><EditableCarField isAdmin={isAdmin} field="engine_type" label={t.pages.engine} display={car.engine_type || '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} /></div>
+          <div className="spec-item"><span>{t.pages.horsepower}</span><EditableCarField isAdmin={isAdmin} field="horsepower" label={t.pages.horsepower} display={car.horsepower ? `${car.horsepower} hp` : '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} /></div>
+          <div className="spec-item"><span>{t.pages.acceleration}</span><EditableCarField isAdmin={isAdmin} field="acceleration" label={t.pages.acceleration} display={car.acceleration || '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} /></div>
+          <div className="spec-item"><span>{t.pages.topSpeed}</span><EditableCarField isAdmin={isAdmin} field="top_speed" label={t.pages.topSpeed} display={car.top_speed ? `${car.top_speed} km/h` : '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} /></div>
+          <div className="spec-item"><span>{t.pages.length}</span><EditableCarField isAdmin={isAdmin} field="length_mm" label={t.pages.length} display={car.length_mm ? `${car.length_mm} mm` : '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} /></div>
+          <div className="spec-item"><span>{t.pages.width}</span><EditableCarField isAdmin={isAdmin} field="width_mm" label={t.pages.width} display={car.width_mm ? `${car.width_mm} mm` : '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} /></div>
+          <div className="spec-item"><span>{t.pages.height}</span><EditableCarField isAdmin={isAdmin} field="height_mm" label={t.pages.height} display={car.height_mm ? `${car.height_mm} mm` : '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} /></div>
+          <div className="spec-item"><span>{t.pages.fuelConsumption}</span><EditableCarField isAdmin={isAdmin} field="fuel_consumption" label={t.pages.fuelConsumption} display={car.fuel_consumption || '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} /></div>
+          <div className="spec-item"><span>{t.pages.price}</span><EditableCarField isAdmin={isAdmin} field="price_range" label={t.pages.price} display={car.price_range_display || '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} /></div>
         </div>
       </section>
 
@@ -659,19 +865,19 @@ export default function CarDetailPage() {
           <div className="detail-kv-list">
             <div className="detail-kv-row">
               <span>{t.pages.horsepower}</span>
-              <strong>{car.horsepower || '-'} hp</strong>
+              <EditableCarField isAdmin={isAdmin} field="horsepower" label={t.pages.horsepower} display={car.horsepower ? `${car.horsepower} hp` : '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} />
             </div>
             <div className="detail-kv-row">
               <span>{t.pages.acceleration}</span>
-              <strong>{car.acceleration || '-'}</strong>
+              <EditableCarField isAdmin={isAdmin} field="acceleration" label={t.pages.acceleration} display={car.acceleration || '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} />
             </div>
             <div className="detail-kv-row">
               <span>{t.pages.topSpeed}</span>
-              <strong>{car.top_speed || '-'} km/h</strong>
+              <EditableCarField isAdmin={isAdmin} field="top_speed" label={t.pages.topSpeed} display={car.top_speed ? `${car.top_speed} km/h` : '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} />
             </div>
             <div className="detail-kv-row">
               <span>{t.pages.fuelConsumption}</span>
-              <strong>{car.fuel_consumption || '-'}</strong>
+              <EditableCarField isAdmin={isAdmin} field="fuel_consumption" label={t.pages.fuelConsumption} display={car.fuel_consumption || '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} />
             </div>
           </div>
         </article>
@@ -681,15 +887,15 @@ export default function CarDetailPage() {
           <div className="detail-kv-list">
             <div className="detail-kv-row">
               <span>{t.pages.length}</span>
-              <strong>{car.length_mm ? `${car.length_mm} mm` : '-'}</strong>
+              <EditableCarField isAdmin={isAdmin} field="length_mm" label={t.pages.length} display={car.length_mm ? `${car.length_mm} mm` : '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} />
             </div>
             <div className="detail-kv-row">
               <span>{t.pages.width}</span>
-              <strong>{car.width_mm ? `${car.width_mm} mm` : '-'}</strong>
+              <EditableCarField isAdmin={isAdmin} field="width_mm" label={t.pages.width} display={car.width_mm ? `${car.width_mm} mm` : '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} />
             </div>
             <div className="detail-kv-row">
               <span>{t.pages.height}</span>
-              <strong>{car.height_mm ? `${car.height_mm} mm` : '-'}</strong>
+              <EditableCarField isAdmin={isAdmin} field="height_mm" label={t.pages.height} display={car.height_mm ? `${car.height_mm} mm` : '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} />
             </div>
             <div className="detail-kv-row">
               <span>{t.pages.dimensionsSummary}</span>
@@ -707,11 +913,11 @@ export default function CarDetailPage() {
           <div className="detail-kv-list">
             <div className="detail-kv-row">
               <span>{t.pages.price}</span>
-              <strong>{car.price_range_display || '-'}</strong>
+              <EditableCarField isAdmin={isAdmin} field="price_range" label={t.pages.price} display={car.price_range_display || '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} />
             </div>
             <div className="detail-kv-row">
               <span>{t.pages.productionStatus}</span>
-              <strong>{car.production_status || '-'}</strong>
+              <EditableCarField isAdmin={isAdmin} field="production_status" label={t.pages.productionStatus} display={car.production_status || '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} />
             </div>
             <div className="detail-kv-row">
               <span>{t.pages.modelAge}</span>
@@ -719,7 +925,7 @@ export default function CarDetailPage() {
             </div>
             <div className="detail-kv-row">
               <span>{t.pages.featuredModel}</span>
-              <strong>{car.is_featured ? t.pages.yes : t.pages.no}</strong>
+              <EditableCarField isAdmin={isAdmin} field="is_featured" label={t.pages.featuredModel} display={car.is_featured ? t.pages.yes : t.pages.no} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} />
             </div>
           </div>
         </article>
@@ -733,7 +939,7 @@ export default function CarDetailPage() {
             </div>
             <div className="detail-kv-row">
               <span>{t.pages.type}</span>
-              <strong>{car.vehicle_type || '-'}</strong>
+              <EditableCarField isAdmin={isAdmin} field="vehicle_type" label={t.pages.type} display={car.vehicle_type || '-'} quickEditLabel={t.adminInline.quickEdit} onOpen={openCarFieldEditor} />
             </div>
             <div className="detail-kv-row">
               <span>{t.pages.averageRating}</span>
@@ -834,25 +1040,6 @@ export default function CarDetailPage() {
       <section className="detail-opinions">
         <div className="detail-section-header" style={{ marginBottom: '0.9rem' }}>
           <h2 className="detail-section-title">{t.pages.carOpinions}</h2>
-          {latestOpinions.length > 1 && (
-            <div className="admin-actions-row" style={{ margin: 0 }}>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => setOpinionSlideIndex((prev) => (prev - 1 + latestOpinions.length) % latestOpinions.length)}
-              >
-                ‹
-              </button>
-              <span className="admin-meta">{opinionSlideIndex + 1}/{latestOpinions.length}</span>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => setOpinionSlideIndex((prev) => (prev + 1) % latestOpinions.length)}
-              >
-                ›
-              </button>
-            </div>
-          )}
         </div>
 
         {isLoggedIn ? (
@@ -894,13 +1081,13 @@ export default function CarDetailPage() {
         {adminOpinionMessage && <p className="form-success">{adminOpinionMessage}</p>}
         {adminOpinionError && <p className="form-error">{adminOpinionError}</p>}
 
-        {latestOpinions.length === 0 ? (
+        {opinions.length === 0 ? (
           <div className="page-card">{t.pages.noOpinions}</div>
         ) : (
           <div className="opinions-grid">
-            {activeOpinion && (
-              <article key={activeOpinion.id} className="opinion-card-item">
-                {editingOpinionId === activeOpinion.id && editingOpinionDraft ? (
+            {opinions.map((opinion) => (
+              <article key={opinion.id} className="opinion-card-item">
+                {editingOpinionId === opinion.id && editingOpinionDraft ? (
                   <div className="admin-form-card" style={{ marginBottom: '0.5rem' }}>
                     <DetailedOpinionForm
                       draft={editingOpinionDraft}
@@ -912,71 +1099,72 @@ export default function CarDetailPage() {
                       <button type="button" className="btn btn-secondary" onClick={() => { setEditingOpinionId(null); setEditingOpinionDraft(null) }}>
                         {t.pages.cancelLabel}
                       </button>
-                      <button type="button" className="btn btn-primary" disabled={opinionActionLoading} onClick={() => handleSaveOpinionEdit(activeOpinion.id)}>
+                      <button type="button" className="btn btn-primary" disabled={opinionActionLoading} onClick={() => handleSaveOpinionEdit(opinion.id)}>
                         {opinionActionLoading ? t.pages.loading : t.pages.saveLabel}
                       </button>
                     </div>
                   </div>
                 ) : (
                   <>
-                    <h3 className="opinion-title">{activeOpinion.title}</h3>
+                    <h3 className="opinion-title">
+                      <Link to={`/opinions/${opinion.id}`}>{opinion.title}</Link>
+                    </h3>
                     <DetailedOpinionCard
                       opinion={{
-                        ...activeOpinion,
+                        ...opinion,
                         car_year: car?.year_introduced,
-                        content: sanitizeRichHtml(activeOpinion.content),
+                        content: sanitizeRichHtml(opinion.content),
                       }}
                       t={t}
-                      showHeader={false}
                     />
                     <div className="opinion-rating-row">
                       <div className="opinion-votes" role="group" aria-label="Opinion votes">
                         <button
                           type="button"
                           className="opinion-vote-btn"
-                          disabled={!!voteSaving[activeOpinion.id]}
-                          onClick={() => handleVoteOpinion(activeOpinion.id, 'helpful')}
+                          disabled={!!voteSaving[opinion.id]}
+                          onClick={() => handleVoteOpinion(opinion.id, 'helpful')}
                           title="Helpful"
                         >
-                          👍 {activeOpinion.helpful_count}
+                          👍 {opinion.helpful_count}
                         </button>
                         <span className="opinion-vote-separator">|</span>
                         <button
                           type="button"
                           className="opinion-vote-btn"
-                          disabled={!!voteSaving[activeOpinion.id]}
-                          onClick={() => handleVoteOpinion(activeOpinion.id, 'unhelpful')}
+                          disabled={!!voteSaving[opinion.id]}
+                          onClick={() => handleVoteOpinion(opinion.id, 'unhelpful')}
                           title="Unhelpful"
                         >
-                          👎 {activeOpinion.unhelpful_count}
+                          👎 {opinion.unhelpful_count}
                         </button>
                       </div>
                       <button
                         type="button"
                         className="btn-comment-toggle"
-                        onClick={() => handleToggleComments(activeOpinion.id)}
+                        onClick={() => handleToggleComments(opinion.id)}
                       >
-                        {expandedOpinions.has(activeOpinion.id) ? '−' : '+'} {activeOpinion.comments_count || 0} {t.pages.showComments}
+                        {expandedOpinions.has(opinion.id) ? '−' : '+'} {opinion.comments_count || 0} {t.pages.showComments}
                       </button>
                     </div>
                   </>
                 )}
-                {canEditByAuthorId(activeOpinion.author?.id) && editingOpinionId !== activeOpinion.id && (
+                {canEditByAuthorId(opinion.author?.id) && editingOpinionId !== opinion.id && (
                   <div className="admin-actions-row" style={{ marginTop: '0.4rem' }}>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleStartOpinionEdit(activeOpinion)}>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleStartOpinionEdit(opinion)}>
                       {t.pages.editLabel}
                     </button>
-                    <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteOpinion(activeOpinion.id)}>
+                    <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteOpinion(opinion.id)}>
                       {t.pages.deleteLabel}
                     </button>
                   </div>
                 )}
-                {expandedOpinions.has(activeOpinion.id) && (
+                {expandedOpinions.has(opinion.id) && (
                   <div className="opinion-comments">
-                    {(opinionComments[activeOpinion.id] || []).length === 0 ? (
+                    {(opinionComments[opinion.id] || []).length === 0 ? (
                       <p className="opinion-no-comments">{t.pages.noComments}</p>
                     ) : (
-                      (opinionComments[activeOpinion.id] || []).map((c) => (
+                      (opinionComments[opinion.id] || []).map((c) => (
                         <div key={c.id} className="comment-item">
                           <span className="comment-author">{c.author?.username}</span>
                           <span className="comment-text">{c.content}</span>
@@ -989,19 +1177,19 @@ export default function CarDetailPage() {
                           <input
                             className="form-input comment-input"
                             placeholder={t.pages.commentPlaceholder}
-                            value={commentTexts[activeOpinion.id] || ''}
+                            value={commentTexts[opinion.id] || ''}
                             onChange={(e) =>
-                              setCommentTexts((prev) => ({ ...prev, [activeOpinion.id]: e.target.value }))
+                              setCommentTexts((prev) => ({ ...prev, [opinion.id]: e.target.value }))
                             }
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleAddComment(activeOpinion.id)
+                              if (e.key === 'Enter') handleAddComment(opinion.id)
                             }}
                           />
                           <button
                             type="button"
                             className="btn btn-primary btn-sm"
-                            disabled={commentSaving[activeOpinion.id]}
-                            onClick={() => handleAddComment(activeOpinion.id)}
+                            disabled={commentSaving[opinion.id]}
+                            onClick={() => handleAddComment(opinion.id)}
                           >
                             {t.pages.commentSubmit}
                           </button>
@@ -1013,7 +1201,7 @@ export default function CarDetailPage() {
                   </div>
                 )}
               </article>
-            )}
+            ))}
           </div>
         )}
       </section>
@@ -1255,6 +1443,118 @@ export default function CarDetailPage() {
           </form>
           )}
         </section>
+      )}
+
+      {isAdmin && carFieldEditor && (
+        <div className="review-inline-editor-backdrop" onClick={handleCloseCarFieldEditor}>
+          <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
+            <h3 className="review-inline-editor-title">
+              {t.adminInline.quickEdit}: {carFieldEditor.label}
+            </h3>
+
+            {carFieldEditor.field === 'description' && (
+              <textarea
+                className="form-input form-textarea"
+                value={carFieldDraft}
+                onChange={(event) => setCarFieldDraft(event.target.value)}
+                rows={5}
+                aria-label={carFieldEditor.label}
+              />
+            )}
+
+            {carFieldEditor.field === 'vehicle_type' && (
+              <select className="form-input" value={carFieldDraft} onChange={(event) => setCarFieldDraft(event.target.value)}>
+                {VEHICLE_TYPE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            )}
+
+            {carFieldEditor.field === 'production_status' && (
+              <select className="form-input" value={carFieldDraft} onChange={(event) => setCarFieldDraft(event.target.value)}>
+                {PRODUCTION_STATUS_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            )}
+
+            {carFieldEditor.field === 'is_featured' && (
+              <select className="form-input" value={carFieldDraft} onChange={(event) => setCarFieldDraft(event.target.value)}>
+                <option value="true">{t.pages.yes}</option>
+                <option value="false">{t.pages.no}</option>
+              </select>
+            )}
+
+            {carFieldEditor.field === 'price_range' && (
+              <div className="admin-fields-grid">
+                <div>
+                  <label className="form-label" htmlFor="car-field-price-min">{t.adminPanel.priceMinK}</label>
+                  <input
+                    id="car-field-price-min"
+                    type="number"
+                    className="form-input"
+                    value={carFieldDraft}
+                    onChange={(event) => setCarFieldDraft(event.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="form-label" htmlFor="car-field-price-max">{t.adminPanel.priceMaxK}</label>
+                  <input
+                    id="car-field-price-max"
+                    type="number"
+                    className="form-input"
+                    value={carFieldDraftSecondary}
+                    onChange={(event) => setCarFieldDraftSecondary(event.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="form-label" htmlFor="car-field-currency">{t.adminPanel.baseCurrency}</label>
+                  <select
+                    id="car-field-currency"
+                    className="form-input"
+                    value={carFieldDraftTertiary}
+                    onChange={(event) => setCarFieldDraftTertiary(event.target.value)}
+                  >
+                    {CURRENCY_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {![
+              'description',
+              'vehicle_type',
+              'production_status',
+              'is_featured',
+              'price_range',
+            ].includes(carFieldEditor.field) && (
+              <input
+                className="form-input"
+                type={['year_introduced', 'horsepower', 'top_speed', 'length_mm', 'width_mm', 'height_mm'].includes(carFieldEditor.field) ? 'number' : 'text'}
+                value={carFieldDraft}
+                onChange={(event) => setCarFieldDraft(event.target.value)}
+                aria-label={carFieldEditor.label}
+              />
+            )}
+
+            {carFieldError && <p className="form-error">{carFieldError}</p>}
+            <div className="admin-actions-row">
+              <button type="button" className="btn btn-secondary" onClick={handleCloseCarFieldEditor}>
+                {t.pages.cancelLabel}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={carFieldSaving}
+                onClick={handleSaveCarField}
+              >
+                {carFieldSaving ? t.pages.loading : t.pages.saveLabel}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {isAdmin && isHeroImageEditorOpen && (
