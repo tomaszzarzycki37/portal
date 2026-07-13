@@ -978,9 +978,9 @@ export default function HomePage() {
         <div className="review-inline-editor-backdrop" onClick={closeHomeFeatureEditor}>
           <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
             <h3 className="review-inline-editor-title">{t.adminInline.quickEdit}</h3>
-            <label className="form-label" htmlFor="home-feature-inline-editor">{homeFeatureEditorKey}</label>
             <textarea
               id="home-feature-inline-editor"
+              aria-label={t.adminInline.quickEdit}
               className="form-input form-textarea"
               rows={4}
               value={homeFeatureEditorValue}
