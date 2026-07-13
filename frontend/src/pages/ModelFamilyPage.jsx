@@ -254,13 +254,13 @@ export default function ModelFamilyPage() {
       </section>
 
       <section className="page-card model-family-variant-picker">
-        <h2 className="detail-section-title">{t.pages.modelFamilyVariantTitle}</h2>
+        <h2 id="model-family-variant-heading" className="detail-section-title">{t.pages.modelFamilyVariantTitle}</h2>
         <p className="admin-subtitle">{t.pages.modelFamilyVariantHint}</p>
 
-        <label className="form-label" htmlFor="model-family-variant-select">{t.pages.modelFamilyVariantTitle}</label>
         <select
           id="model-family-variant-select"
           className="form-input model-family-variant-select"
+          aria-labelledby="model-family-variant-heading"
           value={selectedVariant?.id || ''}
           onChange={(event) => handleVariantChange(event.target.value)}
         >
