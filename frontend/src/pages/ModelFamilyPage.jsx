@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import { useTranslation } from '../i18n'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { filterCarsForCatalogSearch, parseCatalogSearchParams } from '../utils/catalogSearch'
 import { aggregateOpinionRatings } from '../utils/aggregateOpinionRatings'
-import { modelNameFromSlug } from '../utils/modelSlug'
+import { buildModelFamilyPath, modelNameFromSlug } from '../utils/modelSlug'
 import { formatStarDisplay, OPINION_RATING_SECTIONS } from '../constants/opinionRatings'
 import StarRating from '../components/StarRating'
 import { formatEngineVariantCount, formatVariantSelectLabel } from '../utils/carLabels'
+import { isAdminUser } from '../utils/auth'
 
 function stripHtml(value) {
   return String(value || '')
@@ -31,16 +32,30 @@ function formatVariantLabel(variant, t) {
   return parts.join(' · ')
 }
 
+function extractApiErrorMessage(error, fallbackMessage) {
+  const payload = error?.response?.data
+  if (!payload) return fallbackMessage
+  if (typeof payload === 'string') return payload
+  if (typeof payload.detail === 'string' && payload.detail.trim()) return payload.detail.trim()
+  return fallbackMessage
+}
+
 export default function ModelFamilyPage() {
   const { slug, modelSlug } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const { t, lang } = useTranslation()
+  const isAdmin = isAdminUser()
 
   const [brand, setBrand] = useState(null)
   const [variants, setVariants] = useState([])
   const [opinions, setOpinions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [isModelNameEditorOpen, setIsModelNameEditorOpen] = useState(false)
+  const [modelNameDraft, setModelNameDraft] = useState('')
+  const [modelNameSaving, setModelNameSaving] = useState(false)
+  const [modelNameError, setModelNameError] = useState('')
 
   const catalogFilters = useMemo(
     () => parseCatalogSearchParams(searchParams),
@@ -125,6 +140,42 @@ export default function ModelFamilyPage() {
     setSearchParams(next, { replace: true })
   }
 
+  const handleOpenModelNameEditor = () => {
+    if (!isAdmin) return
+    setModelNameDraft(modelName)
+    setModelNameError('')
+    setIsModelNameEditorOpen(true)
+  }
+
+  const handleCloseModelNameEditor = () => {
+    setIsModelNameEditorOpen(false)
+    setModelNameDraft('')
+    setModelNameError('')
+  }
+
+  const handleSaveModelName = async () => {
+    const trimmedName = modelNameDraft.trim()
+    if (!trimmedName || variants.length === 0) return
+
+    try {
+      setModelNameSaving(true)
+      setModelNameError('')
+
+      await Promise.all(
+        variants.map((variant) => api.patch(`/cars/${variant.id}/`, { name: trimmedName })),
+      )
+
+      const query = searchParams.toString()
+      const nextPath = buildModelFamilyPath(slug, trimmedName, query ? `?${query}` : '')
+      handleCloseModelNameEditor()
+      navigate(nextPath, { replace: true })
+    } catch (saveError) {
+      setModelNameError(extractApiErrorMessage(saveError, t.adminInline.saveError))
+    } finally {
+      setModelNameSaving(false)
+    }
+  }
+
   if (loading) {
     return <div className="page-loading">{t.pages.loading}</div>
   }
@@ -173,7 +224,26 @@ export default function ModelFamilyPage() {
               <img src={brandLogo} alt={brand.name} className="model-family-brand-logo" />
               <div>
                 <p className="model-family-brand-name">{brand.name}</p>
-                <h1 className="page-title model-family-title">{modelName}</h1>
+                {isAdmin ? (
+                  <h1
+                    className="page-title model-family-title review-inline-editable-block"
+                    role="button"
+                    tabIndex={0}
+                    onClick={handleOpenModelNameEditor}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        handleOpenModelNameEditor()
+                      }
+                    }}
+                    aria-label={`${t.adminInline.quickEdit}: ${t.adminInline.modelName}`}
+                    title={`${t.adminInline.quickEdit}: ${t.adminInline.modelName}`}
+                  >
+                    {modelName}
+                  </h1>
+                ) : (
+                  <h1 className="page-title model-family-title">{modelName}</h1>
+                )}
               </div>
             </div>
             <p className="model-family-variant-count">
@@ -294,6 +364,36 @@ export default function ModelFamilyPage() {
           </div>
         )}
       </section>
+
+      {isAdmin && isModelNameEditorOpen && (
+        <div className="review-inline-editor-backdrop" onClick={handleCloseModelNameEditor}>
+          <div className="review-inline-editor-modal" onClick={(event) => event.stopPropagation()}>
+            <h3 className="review-inline-editor-title">
+              {t.adminInline.quickEdit}: {t.adminInline.modelName}
+            </h3>
+            <input
+              className="form-input"
+              value={modelNameDraft}
+              onChange={(event) => setModelNameDraft(event.target.value)}
+              aria-label={t.adminInline.modelName}
+            />
+            {modelNameError && <p className="form-error">{modelNameError}</p>}
+            <div className="admin-actions-row">
+              <button type="button" className="btn btn-secondary" onClick={handleCloseModelNameEditor}>
+                {t.pages.cancelLabel}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!modelNameDraft.trim() || modelNameSaving}
+                onClick={handleSaveModelName}
+              >
+                {modelNameSaving ? t.pages.loading : t.pages.saveLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

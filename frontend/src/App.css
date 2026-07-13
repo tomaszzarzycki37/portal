@@ -1659,6 +1659,10 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	display: inline-block;
 }
 
+.model-family-title.review-inline-editable-block {
+	width: fit-content;
+}
+
 .review-inline-tags {
 	display: block;
 }
