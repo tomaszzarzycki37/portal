@@ -418,7 +418,7 @@ export default function OpinionsPage() {
       {opinionError && <p className="form-error">{opinionError}</p>}
 
       {canContribute ? (
-        <section className="admin-form-card" style={{ marginBottom: '1rem' }}>
+        <section className="admin-form-card" style={{ marginTop: '1.25rem', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: isCreateOpinionOpen ? '0.75rem' : 0 }}>
             <h2 className="admin-section-heading" style={{ margin: 0 }}>{t.pages.addOpinionTitle}</h2>
             <button
@@ -447,7 +447,7 @@ export default function OpinionsPage() {
           )}
         </section>
       ) : (
-        <div style={{ marginBottom: '1rem' }}>
+        <div style={{ marginTop: '1.25rem', marginBottom: '1rem' }}>
           <p className="admin-subtitle">{isLoggedIn ? t.pages.pendingApproval : t.pages.loginToContribute}</p>
           {isLoggedIn && <p className="admin-meta">{t.pages.pendingApprovalHint}</p>}
         </div>
