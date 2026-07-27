@@ -10,6 +10,7 @@ from .owner_views import (
     OwnerHealthView,
     OwnerOverviewView,
     OwnerSecurityView,
+    OwnerTrafficLiveView,
     OwnerTrafficView,
 )
 
@@ -22,6 +23,7 @@ urlpatterns = [
     path('site-status/', SiteStatusView.as_view(), name='site-status'),
     path('owner/overview/', OwnerOverviewView.as_view(), name='owner-overview'),
     path('owner/traffic/', OwnerTrafficView.as_view(), name='owner-traffic'),
+    path('owner/traffic/live/', OwnerTrafficLiveView.as_view(), name='owner-traffic-live'),
     path('owner/security/', OwnerSecurityView.as_view(), name='owner-security'),
     path('owner/health/', OwnerHealthView.as_view(), name='owner-health'),
     path('owner/content-intel/', OwnerContentIntelView.as_view(), name='owner-content-intel'),

@@ -53,6 +53,119 @@ function StatPill({ label, value }) {
   )
 }
 
+function formatRate(kbps) {
+  const value = Number(kbps) || 0
+  if (value >= 1000) return `${(value / 1000).toFixed(2)} Mbps`
+  return `${value.toFixed(1)} kbps`
+}
+
+function LiveThroughputChart({ labels }) {
+  const [live, setLive] = useState(null)
+  const [liveError, setLiveError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    let timer = null
+
+    const poll = async () => {
+      const result = await safeGet('/common/owner/traffic/live/?seconds=60')
+      if (cancelled) return
+      if (result.ok) {
+        setLive(result.data)
+        setLiveError('')
+      } else {
+        setLiveError(result.error)
+      }
+    }
+
+    poll()
+    timer = window.setInterval(poll, 1000)
+    return () => {
+      cancelled = true
+      if (timer) window.clearInterval(timer)
+    }
+  }, [])
+
+  const points = live?.points || []
+  const width = 640
+  const height = 160
+  const padX = 8
+  const padY = 12
+  const maxKbps = Math.max(1, ...(points.map((p) => Number(p.kbps) || 0)), Number(live?.peak_kbps) || 0)
+  const usableW = width - padX * 2
+  const usableH = height - padY * 2
+
+  const coords = points.map((point, index) => {
+    const x = padX + (points.length <= 1 ? usableW / 2 : (index / (points.length - 1)) * usableW)
+    const y = padY + usableH - ((Number(point.kbps) || 0) / maxKbps) * usableH
+    return `${x},${y}`
+  })
+  const polyline = coords.join(' ')
+  const areaPath = coords.length > 1
+    ? `M ${padX},${padY + usableH} L ${coords.join(' L ')} L ${padX + usableW},${padY + usableH} Z`
+    : ''
+
+  return (
+    <div className="admin-form-card" style={{ marginBottom: '1rem', background: 'rgba(15,23,42,0.04)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <div>
+          <h3 className="admin-section-caption" style={{ marginBottom: '0.35rem' }}>{labels.ownerLiveTrafficTitle}</h3>
+          <p className="admin-meta">{labels.ownerLiveTrafficHint}</p>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1.1, color: '#ea580c' }}>
+            {formatRate(live?.current_kbps)}
+          </div>
+          <div className="admin-meta">
+            {labels.ownerLivePeak}: {formatRate(live?.peak_kbps)}
+            {' • '}
+            {labels.ownerLiveHits}: {live?.latest_hits ?? 0}/s
+          </div>
+        </div>
+      </div>
+
+      {liveError ? (
+        <p className="form-error" style={{ marginTop: '0.75rem' }}>{liveError}</p>
+      ) : (
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          width="100%"
+          height={height}
+          role="img"
+          aria-label={labels.ownerLiveTrafficTitle}
+          style={{ marginTop: '0.75rem', display: 'block', background: 'linear-gradient(180deg, rgba(15,23,42,0.06), transparent)' }}
+        >
+          {[0.25, 0.5, 0.75, 1].map((ratio) => {
+            const y = padY + usableH - ratio * usableH
+            return (
+              <g key={ratio}>
+                <line x1={padX} x2={padX + usableW} y1={y} y2={y} stroke="rgba(148,163,184,0.35)" strokeWidth="1" />
+                <text x={padX + 2} y={y - 2} fill="rgba(100,116,139,0.9)" fontSize="10">
+                  {formatRate(maxKbps * ratio)}
+                </text>
+              </g>
+            )
+          })}
+          {areaPath && <path d={areaPath} fill="rgba(249,115,22,0.18)" />}
+          {polyline && (
+            <polyline
+              points={polyline}
+              fill="none"
+              stroke="#ea580c"
+              strokeWidth="2.5"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          )}
+        </svg>
+      )}
+      <div className="admin-meta" style={{ marginTop: '0.35rem' }}>
+        {labels.ownerLiveWindow}: {live?.window_seconds || 60}s
+      </div>
+    </div>
+  )
+}
+
 async function safeGet(url) {
   try {
     const response = await api.get(url)
@@ -216,6 +329,7 @@ export default function OwnerSupervisionPanel({ t }) {
 
               <div className="admin-form-card" style={{ marginBottom: '1rem' }}>
                 <h3 className="admin-section-caption">{labels.ownerTrafficTitle}</h3>
+                <LiveThroughputChart labels={labels} />
                 <p className="admin-meta" style={{ marginBottom: '0.75rem' }}>
                   {labels.ownerHits}: {traffic?.total_hits ?? 0}
                   {' • '}

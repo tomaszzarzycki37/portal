@@ -16,6 +16,7 @@ SKIP_PREFIXES = (
     '/api/schema',
     '/api/docs',
     '/api/redoc',
+    '/api/common/owner/',
 )
 
 

@@ -4,8 +4,8 @@ import os
 import shutil
 
 from django.contrib.auth.models import User
-from django.db.models import Avg, Count, Q
-from django.db.models.functions import TruncDate, TruncHour
+from django.db.models import Avg, Count, Q, Sum
+from django.db.models.functions import TruncDate, TruncHour, TruncSecond
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.response import Response
@@ -140,6 +140,83 @@ class OwnerTrafficView(APIView):
             'top_paths': top_paths,
             'top_referers': top_referers,
             'status_breakdown': status_breakdown,
+        })
+
+
+class OwnerTrafficLiveView(APIView):
+    """Live throughput samples for Task-Manager-like chart (kbps/Mbps)."""
+    permission_classes = [IsPortalOwner]
+
+    def get(self, request):
+        try:
+            window = int(request.query_params.get('seconds', '60'))
+        except (TypeError, ValueError):
+            window = 60
+        window = max(15, min(window, 300))
+
+        now = timezone.now()
+        since = now - timedelta(seconds=window)
+        qs = SiteRequestLog.objects.filter(created_at__gte=since, is_bot=False)
+
+        rows = list(
+            qs.annotate(bucket=TruncSecond('created_at'))
+            .values('bucket')
+            .annotate(
+                hits=Count('id'),
+                bytes_in=Sum('request_bytes'),
+                bytes_out=Sum('response_bytes'),
+            )
+            .order_by('bucket')
+        )
+
+        by_second = {}
+        for row in rows:
+            bucket = row['bucket']
+            if not bucket:
+                continue
+            key = bucket.replace(microsecond=0)
+            by_second[key] = {
+                'hits': row['hits'] or 0,
+                'bytes_in': row['bytes_in'] or 0,
+                'bytes_out': row['bytes_out'] or 0,
+            }
+
+        points = []
+        cursor = since.replace(microsecond=0)
+        end = now.replace(microsecond=0)
+        while cursor <= end:
+            sample = by_second.get(cursor, {'hits': 0, 'bytes_in': 0, 'bytes_out': 0})
+            bytes_total = sample['bytes_in'] + sample['bytes_out']
+            # 1 second bucket => bytes/s; convert to bits/s then kbps/Mbps
+            bps = bytes_total * 8
+            points.append({
+                't': cursor.isoformat(),
+                'hits': sample['hits'],
+                'bytes_in': sample['bytes_in'],
+                'bytes_out': sample['bytes_out'],
+                'bytes_total': bytes_total,
+                'kbps': round(bps / 1000, 2),
+                'mbps': round(bps / 1_000_000, 4),
+            })
+            cursor += timedelta(seconds=1)
+
+        latest = points[-1] if points else {
+            'hits': 0, 'bytes_total': 0, 'kbps': 0, 'mbps': 0,
+        }
+        # Smooth-ish current rate: average of last 3 seconds
+        recent = points[-3:] if points else []
+        avg_kbps = round(sum(p['kbps'] for p in recent) / max(len(recent), 1), 2)
+        avg_mbps = round(sum(p['mbps'] for p in recent) / max(len(recent), 1), 4)
+        peak_kbps = max((p['kbps'] for p in points), default=0)
+
+        return Response({
+            'window_seconds': window,
+            'server_time': now.isoformat(),
+            'current_kbps': avg_kbps,
+            'current_mbps': avg_mbps,
+            'peak_kbps': peak_kbps,
+            'latest_hits': latest.get('hits', 0),
+            'points': points,
         })
 
 

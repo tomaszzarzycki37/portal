@@ -89,6 +89,8 @@ class SiteRequestLog(models.Model):
 	referer = models.CharField(max_length=400, blank=True)
 	is_bot = models.BooleanField(default=False, db_index=True)
 	response_ms = models.PositiveIntegerField(blank=True, null=True)
+	request_bytes = models.PositiveIntegerField(default=0)
+	response_bytes = models.PositiveIntegerField(default=0)
 	user = models.ForeignKey(
 		settings.AUTH_USER_MODEL,
 		on_delete=models.SET_NULL,
