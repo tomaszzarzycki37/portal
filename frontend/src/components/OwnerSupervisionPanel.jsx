@@ -383,6 +383,28 @@ export default function OwnerSupervisionPanel({ t }) {
     }
   }, [open])
 
+  useEffect(() => {
+    if (!open) return undefined
+    let cancelled = false
+    let timer = null
+
+    const pollTraffic = async () => {
+      const [trafficRes, overviewRes] = await Promise.all([
+        safeGet('/common/owner/traffic/?days=14'),
+        safeGet('/common/owner/overview/'),
+      ])
+      if (cancelled) return
+      if (trafficRes.ok) setTraffic(trafficRes.data)
+      if (overviewRes.ok) setOverview(overviewRes.data)
+    }
+
+    timer = window.setInterval(pollTraffic, 5 * 60 * 1000)
+    return () => {
+      cancelled = true
+      if (timer) window.clearInterval(timer)
+    }
+  }, [open])
+
   const trafficBars = useMemo(() => traffic?.by_day || [], [traffic])
   const hourBars = useMemo(
     () => (traffic ? padLast24Hours(traffic.by_hour_24h || []) : []),
@@ -484,6 +506,7 @@ export default function OwnerSupervisionPanel({ t }) {
 
               <div className="admin-form-card" style={{ marginBottom: '1rem' }}>
                 <h3 className="admin-section-caption">{labels.ownerTrafficTitle}</h3>
+                <p className="admin-meta" style={{ marginTop: 0 }}>{labels.ownerTrafficRefreshHint}</p>
                 <LiveThroughputChart labels={labels} />
                 <p className="admin-meta" style={{ marginBottom: '0.75rem' }}>
                   {labels.ownerHits}: {traffic?.total_hits ?? 0}
