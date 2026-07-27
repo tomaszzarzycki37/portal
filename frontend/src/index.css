@@ -3659,6 +3659,7 @@ body.app-theme-dark .detailed-opinion-fuel-avg-preview {
 
 .owner-process-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.78rem;
 }
@@ -3669,6 +3670,8 @@ body.app-theme-dark .detailed-opinion-fuel-avg-preview {
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .owner-process-table th {
@@ -3682,21 +3685,27 @@ body.app-theme-dark .detailed-opinion-fuel-avg-preview {
   z-index: 1;
 }
 
-.owner-process-table td:nth-child(2),
-.owner-process-table td:nth-child(3) {
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.owner-process-table th:nth-child(1),
+.owner-process-table td:nth-child(1) {
+  width: 12%;
 }
 
-.owner-process-table td:nth-child(4),
-.owner-process-table td:nth-child(5) {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
+.owner-process-table th:nth-child(2),
+.owner-process-table td:nth-child(2) {
+  width: 38%;
+}
+
+.owner-process-table th:nth-child(3),
+.owner-process-table td:nth-child(3) {
+  width: 26%;
 }
 
 .owner-process-table th:nth-child(4),
-.owner-process-table th:nth-child(5) {
+.owner-process-table td:nth-child(4),
+.owner-process-table th:nth-child(5),
+.owner-process-table td:nth-child(5) {
+  width: 12%;
+  font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
