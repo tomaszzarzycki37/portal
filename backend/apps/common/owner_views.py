@@ -1,7 +1,8 @@
 """Owner-only monitoring and god-mode APIs."""
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 import os
 import shutil
+import time
 
 from django.contrib.auth.models import User
 from django.db.models import Avg, Count, Max, Q, Sum
@@ -338,6 +339,66 @@ class OwnerBlockedIPViewSet(viewsets.ViewSet):
         return Response({'ok': True})
 
 
+def _format_uptime(seconds):
+    seconds = max(0, int(seconds or 0))
+    days, rem = divmod(seconds, 86400)
+    hours, rem = divmod(rem, 3600)
+    minutes, _ = divmod(rem, 60)
+    parts = []
+    if days:
+        parts.append(f'{days}d')
+    if hours or days:
+        parts.append(f'{hours}h')
+    parts.append(f'{minutes}m')
+    return ' '.join(parts)
+
+
+def _host_metrics():
+    try:
+        import psutil
+    except ImportError:
+        return None
+
+    try:
+        mem = psutil.virtual_memory()
+        swap = psutil.swap_memory()
+        boot_ts = psutil.boot_time()
+        uptime_seconds = max(0, int(time.time() - boot_ts))
+        load = None
+        try:
+            load = [round(x, 2) for x in os.getloadavg()]
+        except (AttributeError, OSError):
+            load = None
+
+        net = psutil.net_io_counters()
+        return {
+            'cpu_percent': round(psutil.cpu_percent(interval=0.2), 1),
+            'cpu_count': psutil.cpu_count(logical=True) or 1,
+            'memory': {
+                'total_gb': round(mem.total / (1024 ** 3), 2),
+                'used_gb': round(mem.used / (1024 ** 3), 2),
+                'available_gb': round(mem.available / (1024 ** 3), 2),
+                'percent': round(mem.percent, 1),
+            },
+            'swap': {
+                'total_gb': round(swap.total / (1024 ** 3), 2),
+                'used_gb': round(swap.used / (1024 ** 3), 2),
+                'percent': round(swap.percent, 1),
+            },
+            'load_average': load,
+            'uptime_seconds': uptime_seconds,
+            'uptime_human': _format_uptime(uptime_seconds),
+            'boot_time': datetime.fromtimestamp(boot_ts, tz=dt_timezone.utc).isoformat(),
+            'process_count': len(psutil.pids()),
+            'network': {
+                'bytes_sent_gb': round(net.bytes_sent / (1024 ** 3), 2),
+                'bytes_recv_gb': round(net.bytes_recv / (1024 ** 3), 2),
+            },
+        }
+    except Exception:
+        return None
+
+
 class OwnerHealthView(APIView):
     permission_classes = [IsPortalOwner]
 
@@ -372,6 +433,8 @@ class OwnerHealthView(APIView):
             response_ms__isnull=False,
         ).aggregate(avg=Avg('response_ms'))['avg']
 
+        host = _host_metrics()
+
         return Response({
             'server_time': now.isoformat(),
             'database_ok': True,
@@ -379,6 +442,7 @@ class OwnerHealthView(APIView):
             'errors_4xx_24h': client_errors_24h,
             'avg_response_ms_24h': round(avg_ms or 0, 1),
             'disk': disk,
+            'host': host,
             'media_root_exists': bool(media_root and os.path.isdir(str(media_root))),
             'request_logs_total': SiteRequestLog.objects.count(),
             'security_events_total': SecurityEvent.objects.count(),

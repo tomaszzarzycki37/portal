@@ -476,14 +476,66 @@ export default function OwnerSupervisionPanel({ t }) {
 
               <div className="admin-form-card" style={{ marginBottom: '1rem' }}>
                 <h3 className="admin-section-caption">{labels.ownerHealthTitle}</h3>
-                <div className="admin-actions-row" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
-                  <StatPill label="5xx/24h" value={health?.errors_5xx_24h ?? '—'} />
-                  <StatPill label="4xx/24h" value={health?.errors_4xx_24h ?? '—'} />
-                  <StatPill label={labels.ownerAvgMs} value={health?.avg_response_ms_24h ?? '—'} />
+                <p className="admin-meta" style={{ marginTop: 0 }}>{labels.ownerHostMetrics}</p>
+                <div className="admin-actions-row" style={{ flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  <StatPill
+                    label={labels.ownerCpu}
+                    value={
+                      health?.host
+                        ? `${health.host.cpu_percent}% / ${health.host.cpu_count} CPU`
+                        : '—'
+                    }
+                  />
+                  <StatPill
+                    label={labels.ownerRam}
+                    value={
+                      health?.host?.memory
+                        ? `${health.host.memory.percent}% (${health.host.memory.used_gb}/${health.host.memory.total_gb} GB)`
+                        : '—'
+                    }
+                  />
+                  <StatPill
+                    label={labels.ownerSwap}
+                    value={
+                      health?.host?.swap
+                        ? `${health.host.swap.percent}% (${health.host.swap.used_gb} GB)`
+                        : '—'
+                    }
+                  />
+                  <StatPill
+                    label={labels.ownerLoad}
+                    value={
+                      Array.isArray(health?.host?.load_average)
+                        ? health.host.load_average.join(' / ')
+                        : '—'
+                    }
+                  />
+                  <StatPill
+                    label={labels.ownerUptime}
+                    value={health?.host?.uptime_human ?? '—'}
+                  />
+                  <StatPill
+                    label={labels.ownerProcesses}
+                    value={health?.host?.process_count ?? '—'}
+                  />
                   <StatPill
                     label={labels.ownerDisk}
                     value={health?.disk ? `${health.disk.used_percent}% (${health.disk.free_gb} GB free)` : '—'}
                   />
+                  <StatPill
+                    label={labels.ownerNetIo}
+                    value={
+                      health?.host?.network
+                        ? `↓${health.host.network.bytes_recv_gb} / ↑${health.host.network.bytes_sent_gb} GB`
+                        : '—'
+                    }
+                  />
+                </div>
+                <p className="admin-meta">{labels.ownerAppMetrics}</p>
+                <div className="admin-actions-row" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <StatPill label="5xx/24h" value={health?.errors_5xx_24h ?? '—'} />
+                  <StatPill label="4xx/24h" value={health?.errors_4xx_24h ?? '—'} />
+                  <StatPill label={labels.ownerAvgMs} value={health?.avg_response_ms_24h ?? '—'} />
                 </div>
               </div>
 
