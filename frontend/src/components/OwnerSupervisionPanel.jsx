@@ -53,6 +53,76 @@ function StatPill({ label, value }) {
   )
 }
 
+function meterTone(percent) {
+  const value = Number(percent)
+  if (!Number.isFinite(value)) return 'ok'
+  if (value >= 85) return 'critical'
+  if (value >= 65) return 'warn'
+  return 'ok'
+}
+
+function HealthMeter({ label, percent, detail, tone }) {
+  const hasValue = Number.isFinite(Number(percent))
+  const safePercent = hasValue ? Math.max(0, Math.min(100, Number(percent))) : 0
+  const resolvedTone = tone || (hasValue ? meterTone(safePercent) : 'neutral')
+  return (
+    <div className={`owner-health-meter owner-health-meter--${resolvedTone}`}>
+      <div className="owner-health-meter__head">
+        <span className="owner-health-meter__label">{label}</span>
+        <strong className="owner-health-meter__value">{hasValue ? `${Math.round(safePercent)}%` : '—'}</strong>
+      </div>
+      <div className="owner-health-meter__track" aria-hidden="true">
+        <div className="owner-health-meter__fill" style={{ width: `${safePercent}%` }} />
+      </div>
+      {detail ? <p className="owner-health-meter__detail">{detail}</p> : null}
+    </div>
+  )
+}
+
+function HealthInfoCard({ label, value, detail, tone = 'neutral' }) {
+  return (
+    <div className={`owner-health-info owner-health-info--${tone}`}>
+      <span className="owner-health-info__label">{label}</span>
+      <strong className="owner-health-info__value">{value}</strong>
+      {detail ? <span className="owner-health-info__detail">{detail}</span> : null}
+    </div>
+  )
+}
+
+function LoadMeters({ loadAverage, cpuCount, label }) {
+  const cpus = Math.max(1, Number(cpuCount) || 1)
+  const loads = Array.isArray(loadAverage) ? loadAverage : []
+  const windows = ['1m', '5m', '15m']
+  return (
+    <div className="owner-health-meter owner-health-meter--ok">
+      <div className="owner-health-meter__head">
+        <span className="owner-health-meter__label">{label}</span>
+        <strong className="owner-health-meter__value">
+          {loads.length ? loads.map((v) => Number(v).toFixed(2)).join(' / ') : '—'}
+        </strong>
+      </div>
+      <div className="owner-health-load">
+        {windows.map((windowLabel, index) => {
+          const load = Number(loads[index]) || 0
+          const percent = Math.max(0, Math.min(100, (load / cpus) * 100))
+          const tone = meterTone(percent)
+          return (
+            <div key={windowLabel} className="owner-health-load__item">
+              <div className="owner-health-load__meta">
+                <span>{windowLabel}</span>
+                <span>{load.toFixed(2)}</span>
+              </div>
+              <div className={`owner-health-meter__track owner-health-meter__track--${tone}`} aria-hidden="true">
+                <div className={`owner-health-meter__fill owner-health-meter__fill--${tone}`} style={{ width: `${percent}%` }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function formatRate(kbps) {
   const value = Number(kbps) || 0
   if (value >= 1000) return `${(value / 1000).toFixed(2)} Mbps`
@@ -477,65 +547,90 @@ export default function OwnerSupervisionPanel({ t }) {
               <div className="admin-form-card" style={{ marginBottom: '1rem' }}>
                 <h3 className="admin-section-caption">{labels.ownerHealthTitle}</h3>
                 <p className="admin-meta" style={{ marginTop: 0 }}>{labels.ownerHostMetrics}</p>
-                <div className="admin-actions-row" style={{ flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                  <StatPill
+                <div className="owner-health-grid">
+                  <HealthMeter
                     label={labels.ownerCpu}
-                    value={
-                      health?.host
-                        ? `${health.host.cpu_percent}% / ${health.host.cpu_count} CPU`
-                        : '—'
-                    }
+                    percent={health?.host?.cpu_percent}
+                    detail={health?.host ? `${health.host.cpu_count} CPU` : '—'}
                   />
-                  <StatPill
+                  <HealthMeter
                     label={labels.ownerRam}
-                    value={
+                    percent={health?.host?.memory?.percent}
+                    detail={
                       health?.host?.memory
-                        ? `${health.host.memory.percent}% (${health.host.memory.used_gb}/${health.host.memory.total_gb} GB)`
+                        ? `${health.host.memory.used_gb} / ${health.host.memory.total_gb} GB`
                         : '—'
                     }
                   />
-                  <StatPill
+                  <HealthMeter
                     label={labels.ownerSwap}
-                    value={
+                    percent={health?.host?.swap?.percent}
+                    detail={
                       health?.host?.swap
-                        ? `${health.host.swap.percent}% (${health.host.swap.used_gb} GB)`
+                        ? `${health.host.swap.used_gb} / ${health.host.swap.total_gb} GB`
                         : '—'
                     }
                   />
-                  <StatPill
+                  <HealthMeter
+                    label={labels.ownerDisk}
+                    percent={health?.disk?.used_percent}
+                    detail={
+                      health?.disk
+                        ? `${health.disk.free_gb} GB free · ${health.disk.total_gb} GB`
+                        : '—'
+                    }
+                  />
+                  <LoadMeters
                     label={labels.ownerLoad}
-                    value={
-                      Array.isArray(health?.host?.load_average)
-                        ? health.host.load_average.join(' / ')
-                        : '—'
-                    }
+                    loadAverage={health?.host?.load_average}
+                    cpuCount={health?.host?.cpu_count}
                   />
-                  <StatPill
+                  <HealthInfoCard
                     label={labels.ownerUptime}
                     value={health?.host?.uptime_human ?? '—'}
                   />
-                  <StatPill
+                  <HealthInfoCard
                     label={labels.ownerProcesses}
                     value={health?.host?.process_count ?? '—'}
                   />
-                  <StatPill
-                    label={labels.ownerDisk}
-                    value={health?.disk ? `${health.disk.used_percent}% (${health.disk.free_gb} GB free)` : '—'}
-                  />
-                  <StatPill
+                  <HealthInfoCard
                     label={labels.ownerNetIo}
                     value={
                       health?.host?.network
-                        ? `↓${health.host.network.bytes_recv_gb} / ↑${health.host.network.bytes_sent_gb} GB`
+                        ? `↓ ${health.host.network.bytes_recv_gb} GB`
                         : '—'
+                    }
+                    detail={
+                      health?.host?.network
+                        ? `↑ ${health.host.network.bytes_sent_gb} GB`
+                        : null
                     }
                   />
                 </div>
-                <p className="admin-meta">{labels.ownerAppMetrics}</p>
-                <div className="admin-actions-row" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
-                  <StatPill label="5xx/24h" value={health?.errors_5xx_24h ?? '—'} />
-                  <StatPill label="4xx/24h" value={health?.errors_4xx_24h ?? '—'} />
-                  <StatPill label={labels.ownerAvgMs} value={health?.avg_response_ms_24h ?? '—'} />
+                <p className="admin-meta" style={{ marginTop: '0.85rem' }}>{labels.ownerAppMetrics}</p>
+                <div className="owner-health-app-grid">
+                  <HealthInfoCard
+                    label="5xx / 24h"
+                    value={health?.errors_5xx_24h ?? '—'}
+                    tone={Number(health?.errors_5xx_24h) > 0 ? 'critical' : 'ok'}
+                  />
+                  <HealthInfoCard
+                    label="4xx / 24h"
+                    value={health?.errors_4xx_24h ?? '—'}
+                    tone={Number(health?.errors_4xx_24h) > 50 ? 'warn' : 'ok'}
+                  />
+                  <HealthInfoCard
+                    label={labels.ownerAvgMs}
+                    value={health?.avg_response_ms_24h ?? '—'}
+                    detail="ms"
+                    tone={
+                      Number(health?.avg_response_ms_24h) >= 500
+                        ? 'critical'
+                        : Number(health?.avg_response_ms_24h) >= 200
+                          ? 'warn'
+                          : 'ok'
+                    }
+                  />
                 </div>
               </div>
 
