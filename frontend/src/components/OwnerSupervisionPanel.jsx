@@ -371,6 +371,43 @@ export default function OwnerSupervisionPanel({ t }) {
 
               <div className="admin-form-card" style={{ marginBottom: '1rem' }}>
                 <h3 className="admin-section-caption">{labels.ownerSecurityTitle}</h3>
+
+                <p className="admin-meta" style={{ marginBottom: '0.35rem' }}>
+                  <strong>{labels.ownerActiveIps}</strong>
+                  {' '}
+                  ({labels.ownerActiveIpsWindow.replace('{minutes}', String(security?.active_minutes || 15))})
+                </p>
+                {(security?.active_ips || []).length === 0 ? (
+                  <p className="admin-meta" style={{ marginBottom: '0.85rem' }}>{labels.ownerNoActiveIps}</p>
+                ) : (
+                  <ul className="admin-meta" style={{ margin: '0 0 0.85rem', paddingLeft: '1.1rem', maxHeight: 180, overflow: 'auto' }}>
+                    {(security?.active_ips || []).map((row) => (
+                      <li key={`active-${row.ip_address}`}>
+                        <strong>{row.ip_address}</strong>
+                        {' — '}
+                        {row.hits} {labels.ownerHits.toLowerCase()}
+                        {' • '}
+                        {labels.ownerLastSeen}: {row.last_seen ? new Date(row.last_seen).toLocaleString() : '—'}
+                        {row.bot_hits > 0 ? ` • bot:${row.bot_hits}` : ''}
+                        {row.is_blocked ? ` • ${labels.ownerAlreadyBlocked}` : ''}
+                        {!row.is_blocked && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{ marginLeft: 8 }}
+                            onClick={() => {
+                              setBlockIp(row.ip_address)
+                              setBlockReason('Active IP block')
+                            }}
+                          >
+                            {labels.ownerBlock}
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div>
                     <p className="admin-meta"><strong>{labels.ownerTopFailedIps}</strong></p>

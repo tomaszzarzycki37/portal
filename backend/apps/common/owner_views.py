@@ -4,7 +4,7 @@ import os
 import shutil
 
 from django.contrib.auth.models import User
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Avg, Count, Max, Q, Sum
 from django.db.models.functions import TruncDate, TruncHour, TruncSecond
 from django.utils import timezone
 from rest_framework import status, viewsets
@@ -246,10 +246,44 @@ class OwnerSecurityView(APIView):
             many=True,
         ).data
 
+        try:
+            active_minutes = int(request.query_params.get('active_minutes', '15'))
+        except (TypeError, ValueError):
+            active_minutes = 15
+        active_minutes = max(1, min(active_minutes, 180))
+        active_since = timezone.now() - timedelta(minutes=active_minutes)
+        blocked_ip_set = {
+            row.ip_address
+            for row in BlockedIP.objects.filter(is_active=True).only('ip_address')
+        }
+        active_ip_rows = list(
+            SiteRequestLog.objects.filter(created_at__gte=active_since)
+            .exclude(ip_address='')
+            .values('ip_address')
+            .annotate(
+                hits=Count('id'),
+                last_seen=Max('created_at'),
+                bots=Count('id', filter=Q(is_bot=True)),
+            )
+            .order_by('-last_seen')[:50]
+        )
+        active_ips = [
+            {
+                'ip_address': row['ip_address'],
+                'hits': row['hits'],
+                'last_seen': row['last_seen'],
+                'bot_hits': row['bots'] or 0,
+                'is_blocked': row['ip_address'] in blocked_ip_set,
+            }
+            for row in active_ip_rows
+        ]
+
         return Response({
             'days': days,
+            'active_minutes': active_minutes,
             'by_type': by_type,
             'top_failed_ips': top_fail_ips,
+            'active_ips': active_ips,
             'recent_events': recent,
             'blocked_ips': blocked,
         })
