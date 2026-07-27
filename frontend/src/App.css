@@ -1569,7 +1569,17 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 .reviews-catalog-expanded__toolbar {
 	display: flex;
 	justify-content: flex-end;
-	margin-bottom: 0.35rem;
+	padding: 0.85rem 1rem 0.25rem;
+	margin: 0;
+}
+
+.reviews-catalog-expanded__collapse {
+	padding: 0.28rem 0.65rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1.2;
+	border-radius: 999px;
+	min-height: 0;
 }
 
 .opinions-list .reviews-catalog-preview + .reviews-catalog-preview,
