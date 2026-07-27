@@ -1573,9 +1573,10 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	margin: 0;
 }
 
+.reviews-catalog-expanded__toolbar .btn,
 .reviews-catalog-expanded__collapse {
-	padding: 0.28rem 0.65rem;
-	font-size: 0.75rem;
+	padding: 0.28rem 0.65rem !important;
+	font-size: 0.75rem !important;
 	font-weight: 600;
 	line-height: 1.2;
 	border-radius: 999px;
