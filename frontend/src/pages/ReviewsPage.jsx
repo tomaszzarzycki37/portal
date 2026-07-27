@@ -9,6 +9,7 @@ import api from '../services/api'
 import { canEditByAuthorId, getCurrentUser } from '../utils/auth'
 import { useAuthSession } from '../hooks/useAuthSession'
 import { getReviewCategoryLabel } from '../utils/reviewCategory'
+import { getCarImage, handleCarImageError } from '../utils/carImages'
 import SelectedImageFilesPreview from '../components/SelectedImageFilesPreview'
 import TestResultsEditor from '../components/TestResultsEditor'
 import MarqueePlaceholderInput from '../components/MarqueePlaceholderInput'
@@ -325,6 +326,7 @@ export default function ReviewsPage() {
   const [reviewSaving, setReviewSaving] = useState(false)
   const [reviewMessage, setReviewMessage] = useState('')
   const [reviewError, setReviewError] = useState('')
+  const [expandedReviewId, setExpandedReviewId] = useState(null)
   const [isCreateReviewSectionOpen, setIsCreateReviewSectionOpen] = useState(false)
   const [newReviewFirstSliderFiles, setNewReviewFirstSliderFiles] = useState([])
   const [newReviewSecondSliderFiles, setNewReviewSecondSliderFiles] = useState([])
@@ -401,6 +403,11 @@ export default function ReviewsPage() {
   }, [normalizedReviews, selectedBrand])
 
   const carsByBrand = useMemo(() => groupCarsByBrand(cars), [cars])
+  const carById = useMemo(() => {
+    const map = new Map()
+    cars.forEach((car) => map.set(car.id, car))
+    return map
+  }, [cars])
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -436,6 +443,18 @@ export default function ReviewsPage() {
     if (sortBy === 'most-helpful') sorted.sort((a, b) => new Date(b.published_at) - new Date(a.published_at))
     return sorted
   }, [normalizedReviews, selectedBrand, selectedModel, sortBy, searchTerm])
+
+  useEffect(() => {
+    setExpandedReviewId(null)
+  }, [selectedBrand, selectedModel, searchTerm, sortBy])
+
+  useEffect(() => {
+    if (!expandedReviewId) return undefined
+    const timer = window.setTimeout(() => {
+      document.getElementById(`review-${expandedReviewId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
+    return () => window.clearTimeout(timer)
+  }, [expandedReviewId])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -1102,6 +1121,7 @@ export default function ReviewsPage() {
           </p>
 
           <div className="opinions-list">
+            <p className="admin-meta" style={{ marginTop: 0 }}>{t.pages.reviewPreviewHint}</p>
             {filteredAndSortedReviews.map((review) => {
               const content = decodeHtmlEntities(review.content)
               const parsed = parseReviewContent(content)
@@ -1112,8 +1132,71 @@ export default function ReviewsPage() {
               const emptyOverviewLabel = canManageReview ? 'Kliknij, aby dodać opis testu' : 'Brak opisu testu'
               const emptyResultsLabel = canManageReview ? 'Kliknij, aby dodać wyniki testu' : 'Brak wyników testu'
               const emptyVerdictLabel = canManageReview ? 'Kliknij, aby dodać werdykt' : 'Brak werdyktu'
+              const isExpanded = expandedReviewId === review.id
+              const previewImage = parsed?.images?.[0] || getCarImage(carById.get(review.car_id))
+              const carLabel = `${review.car_brand_name || ''} ${review.car_name || ''}`.trim()
+
+              if (!isExpanded) {
+                return (
+                  <article
+                    key={review.id}
+                    className="reviews-catalog-preview"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setExpandedReviewId(review.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        setExpandedReviewId(review.id)
+                      }
+                    }}
+                  >
+                    <div className="home-featured-review-main">
+                      <div className="home-featured-review-content">
+                        <div className="home-featured-review-heading">
+                          {carLabel ? <p className="home-featured-review-meta">{carLabel}</p> : null}
+                          <h3>{review.title}</h3>
+                        </div>
+                        {review.summary ? (
+                          <p
+                            className="home-featured-review-summary reviews-catalog-preview__summary"
+                            dangerouslySetInnerHTML={{ __html: sanitizeEditorialHtml(review.summary) }}
+                          />
+                        ) : (
+                          <p className="home-featured-review-summary reviews-catalog-preview__summary">
+                            {stripRichText(parsed?.overview || content).slice(0, 220)}
+                            {stripRichText(parsed?.overview || content).length > 220 ? '…' : ''}
+                          </p>
+                        )}
+                      </div>
+                      <div className="home-featured-review-rail">
+                        <img
+                          className="home-featured-review-thumb"
+                          src={previewImage}
+                          alt={carLabel || review.title}
+                          loading="lazy"
+                          onError={handleCarImageError}
+                        />
+                        <span className="home-featured-review-open-link">
+                          {t.pages.openReviewCard || t.home.openFeaturedReview}
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                )
+              }
+
               return (
-                <article key={review.id} className="review-card-rich">
+                <article key={review.id} className="review-card-rich reviews-catalog-expanded" id={`review-${review.id}`}>
+                  <div className="reviews-catalog-expanded__toolbar">
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setExpandedReviewId(null)}
+                    >
+                      {t.pages.collapseReviewCard}
+                    </button>
+                  </div>
                   {canManageReview && (
                     <button
                       type="button"
@@ -1316,6 +1399,13 @@ export default function ReviewsPage() {
                         {t.pages.deleteLabel}
                       </button>
                     )}
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setExpandedReviewId(null)}
+                    >
+                      {t.pages.collapseReviewCard}
+                    </button>
                   </div>
 
                 </article>

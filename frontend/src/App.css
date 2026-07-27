@@ -1542,6 +1542,42 @@ body.app-theme-dark .custom-file-input:focus + .custom-file-input-label {
 	}
 }
 
+.reviews-catalog-preview {
+	display: flex;
+	flex-direction: column;
+	padding: 0.7rem 0.8rem;
+	border-radius: 0.85rem;
+	border: 1px solid #fed7aa;
+	background: #fffaf5;
+	box-sizing: border-box;
+	cursor: pointer;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.reviews-catalog-preview:hover,
+.reviews-catalog-preview:focus-visible {
+	border-color: #fb923c;
+	box-shadow: 0 10px 24px rgba(234, 88, 12, 0.14);
+	transform: translateY(-1px);
+	outline: none;
+}
+
+.reviews-catalog-preview__summary {
+	-webkit-line-clamp: 4;
+}
+
+.reviews-catalog-expanded__toolbar {
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: 0.35rem;
+}
+
+.opinions-list .reviews-catalog-preview + .reviews-catalog-preview,
+.opinions-list .reviews-catalog-preview + .review-card-rich,
+.opinions-list .review-card-rich + .reviews-catalog-preview {
+	margin-top: 0.85rem;
+}
+
 /* ── Rich Review Cards ─────────────────────────────────── */
 .review-card-rich {
 	background: #ffffff;
