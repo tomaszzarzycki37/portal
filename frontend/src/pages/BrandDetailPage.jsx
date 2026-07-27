@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
-import { useTranslation } from '../i18n'
+import { LANGUAGE_SWITCHER_ENABLED, useTranslation } from '../i18n'
 import { getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { isAdminUser } from '../utils/auth'
@@ -90,10 +90,10 @@ export default function BrandDetailPage() {
 
   const [brandDescriptionEn, setBrandDescriptionEn] = useState('')
   const [brandDescriptionPl, setBrandDescriptionPl] = useState('')
-  const [descriptionEditorLang, setDescriptionEditorLang] = useState(lang === 'pl' ? 'pl' : 'en')
+  const [descriptionEditorLang, setDescriptionEditorLang] = useState('pl')
   const [brandAnecdoteEn, setBrandAnecdoteEn] = useState('')
   const [brandAnecdotePl, setBrandAnecdotePl] = useState('')
-  const [anecdoteEditorLang, setAnecdoteEditorLang] = useState(lang === 'pl' ? 'pl' : 'en')
+  const [anecdoteEditorLang, setAnecdoteEditorLang] = useState('pl')
   const [brandFoundedYear, setBrandFoundedYear] = useState('')
   const [brandWebsite, setBrandWebsite] = useState('')
   const [brandLogoUrl, setBrandLogoUrl] = useState('')
@@ -137,7 +137,8 @@ export default function BrandDetailPage() {
   }, [slug])
 
   useEffect(() => {
-    setDescriptionEditorLang(lang === 'pl' ? 'pl' : 'en')
+    setDescriptionEditorLang(LANGUAGE_SWITCHER_ENABLED && lang === 'en' ? 'en' : 'pl')
+    setAnecdoteEditorLang(LANGUAGE_SWITCHER_ENABLED && lang === 'en' ? 'en' : 'pl')
   }, [lang])
 
   useEffect(() => {
@@ -377,36 +378,42 @@ export default function BrandDetailPage() {
               </div>
 
               <div className="admin-form-grid-full">
-                <div className="brand-description-switch-row">
-                  <label className="form-label">{t.adminPanel.textLanguage}</label>
-                  <div className="brand-description-switch" role="tablist" aria-label={t.adminPanel.textLanguage}>
-                    <button
-                      type="button"
-                      className={`brand-description-switch-btn ${descriptionEditorLang === 'en' ? 'is-active' : ''}`}
-                      onClick={() => setDescriptionEditorLang('en')}
-                    >
-                      EN
-                    </button>
-                    <button
-                      type="button"
-                      className={`brand-description-switch-btn ${descriptionEditorLang === 'pl' ? 'is-active' : ''}`}
-                      onClick={() => setDescriptionEditorLang('pl')}
-                    >
-                      PL
-                    </button>
+                {LANGUAGE_SWITCHER_ENABLED && (
+                  <div className="brand-description-switch-row">
+                    <label className="form-label">{t.adminPanel.textLanguage}</label>
+                    <div className="brand-description-switch" role="tablist" aria-label={t.adminPanel.textLanguage}>
+                      <button
+                        type="button"
+                        className={`brand-description-switch-btn ${descriptionEditorLang === 'en' ? 'is-active' : ''}`}
+                        onClick={() => setDescriptionEditorLang('en')}
+                      >
+                        EN
+                      </button>
+                      <button
+                        type="button"
+                        className={`brand-description-switch-btn ${descriptionEditorLang === 'pl' ? 'is-active' : ''}`}
+                        onClick={() => setDescriptionEditorLang('pl')}
+                      >
+                        PL
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <label className="form-label" htmlFor="brand-description-language">
-                  {descriptionEditorLang === 'pl' ? t.adminPanel.descriptionPl : t.adminPanel.descriptionEn}
+                  {(!LANGUAGE_SWITCHER_ENABLED || descriptionEditorLang === 'pl')
+                    ? t.adminPanel.descriptionPl
+                    : t.adminPanel.descriptionEn}
                 </label>
                 <textarea
                   id="brand-description-language"
                   className="form-input form-textarea"
                   rows={4}
-                  value={descriptionEditorLang === 'pl' ? brandDescriptionPl : brandDescriptionEn}
+                  value={(!LANGUAGE_SWITCHER_ENABLED || descriptionEditorLang === 'pl')
+                    ? brandDescriptionPl
+                    : brandDescriptionEn}
                   onChange={(e) => {
-                    if (descriptionEditorLang === 'pl') {
+                    if (!LANGUAGE_SWITCHER_ENABLED || descriptionEditorLang === 'pl') {
                       setBrandDescriptionPl(e.target.value)
                     } else {
                       setBrandDescriptionEn(e.target.value)
@@ -453,37 +460,41 @@ export default function BrandDetailPage() {
               </div>
 
               <div className="admin-form-grid-full">
-                <div className="brand-description-switch-row">
-                  <label className="form-label">{t.adminPanel.textLanguage}</label>
-                  <div className="brand-description-switch" role="tablist" aria-label={t.adminPanel.textLanguage}>
-                    <button
-                      type="button"
-                      className={`brand-description-switch-btn ${anecdoteEditorLang === 'en' ? 'is-active' : ''}`}
-                      onClick={() => setAnecdoteEditorLang('en')}
-                    >
-                      EN
-                    </button>
-                    <button
-                      type="button"
-                      className={`brand-description-switch-btn ${anecdoteEditorLang === 'pl' ? 'is-active' : ''}`}
-                      onClick={() => setAnecdoteEditorLang('pl')}
-                    >
-                      PL
-                    </button>
+                {LANGUAGE_SWITCHER_ENABLED && (
+                  <div className="brand-description-switch-row">
+                    <label className="form-label">{t.adminPanel.textLanguage}</label>
+                    <div className="brand-description-switch" role="tablist" aria-label={t.adminPanel.textLanguage}>
+                      <button
+                        type="button"
+                        className={`brand-description-switch-btn ${anecdoteEditorLang === 'en' ? 'is-active' : ''}`}
+                        onClick={() => setAnecdoteEditorLang('en')}
+                      >
+                        EN
+                      </button>
+                      <button
+                        type="button"
+                        className={`brand-description-switch-btn ${anecdoteEditorLang === 'pl' ? 'is-active' : ''}`}
+                        onClick={() => setAnecdoteEditorLang('pl')}
+                      >
+                        PL
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <label className="form-label" htmlFor="brand-anecdote-language">
-                  {anecdoteEditorLang === 'pl' ? t.adminPanel.brandAnecdoteEditLabel : t.adminPanel.brandAnecdoteEditLabel}
+                  {t.adminPanel.brandAnecdoteEditLabel}
                 </label>
                 <textarea
                   id="brand-anecdote-language"
                   className="form-input form-textarea"
                   rows={3}
                   placeholder={t.pages.brandAnecdotePlaceholder}
-                  value={anecdoteEditorLang === 'pl' ? brandAnecdotePl : brandAnecdoteEn}
+                  value={(!LANGUAGE_SWITCHER_ENABLED || anecdoteEditorLang === 'pl')
+                    ? brandAnecdotePl
+                    : brandAnecdoteEn}
                   onChange={(e) => {
-                    if (anecdoteEditorLang === 'pl') {
+                    if (!LANGUAGE_SWITCHER_ENABLED || anecdoteEditorLang === 'pl') {
                       setBrandAnecdotePl(e.target.value)
                     } else {
                       setBrandAnecdoteEn(e.target.value)

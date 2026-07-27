@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
-import { useTranslation } from '../i18n'
+import { LANGUAGE_SWITCHER_ENABLED, useTranslation } from '../i18n'
 import { createBrandPlaceholderUrl, getBrandLogoOrPlaceholder } from '../utils/brandLogos'
 import { sortBrandsByName } from '../utils/brands'
 import { buildModelFamilyPath } from '../utils/modelSlug'
@@ -445,7 +445,7 @@ export default function CarsListPage() {
   const handleOpenBrandTextEditor = (brand, field) => {
     if (!isAdmin || !brand) return
     setBrandTextError('')
-    setBrandDescriptionEditorLang(lang === 'pl' ? 'pl' : 'en')
+    setBrandDescriptionEditorLang(LANGUAGE_SWITCHER_ENABLED && lang === 'en' ? 'en' : 'pl')
     setBrandTextDraftEn(brand.description_en || brand.description || '')
     setBrandTextDraftPl(brand.description_pl || '')
     setBrandTextDraftFoundedYear(brand.founded_year ? String(brand.founded_year) : '')
@@ -1186,35 +1186,41 @@ export default function CarsListPage() {
             </h3>
             {brandTextEditor.field === 'description' ? (
               <div>
-                <div className="brand-description-switch-row" style={{ marginBottom: '0.75rem' }}>
-                  <label className="form-label">{t.adminPanel.textLanguage}</label>
-                  <div className="brand-description-switch" role="tablist" aria-label={t.adminPanel.textLanguage}>
-                    <button
-                      type="button"
-                      className={`brand-description-switch-btn ${brandDescriptionEditorLang === 'en' ? 'is-active' : ''}`}
-                      onClick={() => setBrandDescriptionEditorLang('en')}
-                    >
-                      EN
-                    </button>
-                    <button
-                      type="button"
-                      className={`brand-description-switch-btn ${brandDescriptionEditorLang === 'pl' ? 'is-active' : ''}`}
-                      onClick={() => setBrandDescriptionEditorLang('pl')}
-                    >
-                      PL
-                    </button>
+                {LANGUAGE_SWITCHER_ENABLED && (
+                  <div className="brand-description-switch-row" style={{ marginBottom: '0.75rem' }}>
+                    <label className="form-label">{t.adminPanel.textLanguage}</label>
+                    <div className="brand-description-switch" role="tablist" aria-label={t.adminPanel.textLanguage}>
+                      <button
+                        type="button"
+                        className={`brand-description-switch-btn ${brandDescriptionEditorLang === 'en' ? 'is-active' : ''}`}
+                        onClick={() => setBrandDescriptionEditorLang('en')}
+                      >
+                        EN
+                      </button>
+                      <button
+                        type="button"
+                        className={`brand-description-switch-btn ${brandDescriptionEditorLang === 'pl' ? 'is-active' : ''}`}
+                        onClick={() => setBrandDescriptionEditorLang('pl')}
+                      >
+                        PL
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
                 <label className="form-label" htmlFor="catalog-brand-description">
-                  {brandDescriptionEditorLang === 'pl' ? t.adminPanel.descriptionPl : t.adminPanel.descriptionEn}
+                  {(!LANGUAGE_SWITCHER_ENABLED || brandDescriptionEditorLang === 'pl')
+                    ? t.adminPanel.descriptionPl
+                    : t.adminPanel.descriptionEn}
                 </label>
                 <textarea
                   id="catalog-brand-description"
                   className="form-input form-textarea"
                   rows={6}
-                  value={brandDescriptionEditorLang === 'pl' ? brandTextDraftPl : brandTextDraftEn}
+                  value={(!LANGUAGE_SWITCHER_ENABLED || brandDescriptionEditorLang === 'pl')
+                    ? brandTextDraftPl
+                    : brandTextDraftEn}
                   onChange={(e) => {
-                    if (brandDescriptionEditorLang === 'pl') {
+                    if (!LANGUAGE_SWITCHER_ENABLED || brandDescriptionEditorLang === 'pl') {
                       setBrandTextDraftPl(e.target.value)
                     } else {
                       setBrandTextDraftEn(e.target.value)

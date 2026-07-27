@@ -33,7 +33,7 @@ export default function Header() {
   const [brandLogoUrl, setBrandLogoUrl] = useState('')
   const token = localStorage.getItem('access_token')
   const isAdmin = isAdminUser()
-  const { t, lang, setLang } = useTranslation()
+  const { t, lang, setLang, languageSwitcherEnabled } = useTranslation()
   const brandLogoSrc = resolveBrandLogoSrc(brandLogoUrl || t.nav.brandLogoUrl)
   const hasBrandLogo = Boolean(brandLogoSrc)
 
@@ -160,22 +160,24 @@ export default function Header() {
           {token && isAdmin && <Link to="/admin" className="nav-link">{t.nav.admin}</Link>}
         </div>
 
-        <div className="lang-switch desktop-only" aria-label="Language switcher">
-          <button
-            type="button"
-            className={`lang-btn language-toggle-btn ${lang === 'pl' ? 'active' : ''}`}
-            onClick={() => setLang('pl')}
-          >
-            PL
-          </button>
-          <button
-            type="button"
-            className={`lang-btn language-toggle-btn ${lang === 'en' ? 'active' : ''}`}
-            onClick={() => setLang('en')}
-          >
-            EN
-          </button>
-        </div>
+        {languageSwitcherEnabled && (
+          <div className="lang-switch desktop-only" aria-label="Language switcher">
+            <button
+              type="button"
+              className={`lang-btn language-toggle-btn ${lang === 'pl' ? 'active' : ''}`}
+              onClick={() => setLang('pl')}
+            >
+              PL
+            </button>
+            <button
+              type="button"
+              className={`lang-btn language-toggle-btn ${lang === 'en' ? 'active' : ''}`}
+              onClick={() => setLang('en')}
+            >
+              EN
+            </button>
+          </div>
+        )}
 
         <div className="lang-switch desktop-only" aria-label="Theme switcher">
           <button
@@ -301,22 +303,24 @@ export default function Header() {
       {isMenuOpen && (
         <div className="mobile-nav-wrap mobile-only">
           <div className="container mobile-nav">
-            <div className="lang-switch" aria-label="Language switcher">
-              <button
-                type="button"
-                className={`lang-btn language-toggle-btn ${lang === 'pl' ? 'active' : ''}`}
-                onClick={() => setLang('pl')}
-              >
-                PL
-              </button>
-              <button
-                type="button"
-                className={`lang-btn language-toggle-btn ${lang === 'en' ? 'active' : ''}`}
-                onClick={() => setLang('en')}
-              >
-                EN
-              </button>
-            </div>
+            {languageSwitcherEnabled && (
+              <div className="lang-switch" aria-label="Language switcher">
+                <button
+                  type="button"
+                  className={`lang-btn language-toggle-btn ${lang === 'pl' ? 'active' : ''}`}
+                  onClick={() => setLang('pl')}
+                >
+                  PL
+                </button>
+                <button
+                  type="button"
+                  className={`lang-btn language-toggle-btn ${lang === 'en' ? 'active' : ''}`}
+                  onClick={() => setLang('en')}
+                >
+                  EN
+                </button>
+              </div>
+            )}
             <div className="lang-switch" aria-label="Theme switcher">
               <button
                 type="button"

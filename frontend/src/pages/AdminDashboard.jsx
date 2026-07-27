@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
-import { getBaseTranslationValue, getTranslationKeys, useTranslation } from '../i18n'
+import { getBaseTranslationValue, getTranslationKeys, LANGUAGE_SWITCHER_ENABLED, useTranslation } from '../i18n'
 import api from '../services/api'
 import { getCurrentUser, isAdminUser } from '../utils/auth'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
@@ -170,14 +170,14 @@ export default function AdminDashboard() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [contentLang, setContentLang] = useState('en')
+  const [contentLang, setContentLang] = useState('pl')
   const [contentKey, setContentKey] = useState('home.titleA')
   const [contentValue, setContentValue] = useState('')
   const [contentRecordId, setContentRecordId] = useState(null)
   const [contentSaving, setContentSaving] = useState(false)
   const [contentMessage, setContentMessage] = useState('')
   const [contentError, setContentError] = useState('')
-  const [headerLang, setHeaderLang] = useState('en')
+  const [headerLang, setHeaderLang] = useState('pl')
   const [headerTitle, setHeaderTitle] = useState('')
   const [headerIcon, setHeaderIcon] = useState('')
   const [headerLogoUrl, setHeaderLogoUrl] = useState('')
@@ -3728,15 +3728,25 @@ export default function AdminDashboard() {
             <div className="admin-form-grid">
           <div className="admin-inline-field-row admin-inline-field-row-language">
             <label className="form-label" htmlFor="header-lang">{t.adminPanel.textLanguage}</label>
-            <select
-              id="header-lang"
-              className="form-input admin-inline-field-select"
-              value={headerLang}
-              onChange={(e) => setHeaderLang(e.target.value)}
-            >
-              <option value="en">English</option>
-              <option value="pl">Polski</option>
-            </select>
+            {LANGUAGE_SWITCHER_ENABLED ? (
+              <select
+                id="header-lang"
+                className="form-input admin-inline-field-select"
+                value={headerLang}
+                onChange={(e) => setHeaderLang(e.target.value)}
+              >
+                <option value="en">English</option>
+                <option value="pl">Polski</option>
+              </select>
+            ) : (
+              <input
+                id="header-lang"
+                className="form-input admin-inline-field-select"
+                value="Polski"
+                readOnly
+                disabled
+              />
+            )}
           </div>
 
           <div>
@@ -3928,15 +3938,25 @@ export default function AdminDashboard() {
             <div className="admin-form-grid">
               <div className="admin-inline-field-row admin-inline-field-row-language">
                 <label className="form-label" htmlFor="content-lang">{t.adminPanel.textLanguage}</label>
-                <select
-                  id="content-lang"
-                  className="form-input admin-inline-field-select"
-                  value={contentLang}
-                  onChange={(e) => setContentLang(e.target.value)}
-                >
-                  <option value="en">English</option>
-                  <option value="pl">Polski</option>
-                </select>
+                {LANGUAGE_SWITCHER_ENABLED ? (
+                  <select
+                    id="content-lang"
+                    className="form-input admin-inline-field-select"
+                    value={contentLang}
+                    onChange={(e) => setContentLang(e.target.value)}
+                  >
+                    <option value="en">English</option>
+                    <option value="pl">Polski</option>
+                  </select>
+                ) : (
+                  <input
+                    id="content-lang"
+                    className="form-input admin-inline-field-select"
+                    value="Polski"
+                    readOnly
+                    disabled
+                  />
+                )}
               </div>
 
               <div>

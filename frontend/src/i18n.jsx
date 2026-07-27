@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useMemo, useState, useEffect } from 'react'
+﻿import { createContext, useCallback, useContext, useMemo, useState, useEffect } from 'react'
 import api from './services/api'
 
 const baseTranslations = {
@@ -1409,7 +1409,11 @@ function deepClone(value) {
   )
 }
 
-export function getTranslationKeys(lang = 'en') {
+/** Temporary: hide PL/EN switchers and force Polish UI everywhere. Set to true to re-enable EN. */
+export const LANGUAGE_SWITCHER_ENABLED = false
+export const DEFAULT_UI_LANGUAGE = 'pl'
+
+export function getTranslationKeys(lang = DEFAULT_UI_LANGUAGE) {
   return flattenTranslationKeys(baseTranslations[lang] || {})
 }
 
@@ -1418,8 +1422,12 @@ export function getBaseTranslationValue(lang, keyPath) {
 }
 
 function detectDefaultLanguage() {
+  if (!LANGUAGE_SWITCHER_ENABLED) {
+    return DEFAULT_UI_LANGUAGE
+  }
+
   if (typeof window === 'undefined') {
-    return 'en'
+    return DEFAULT_UI_LANGUAGE
   }
 
   const browserLocales = [
@@ -1441,8 +1449,22 @@ function detectDefaultLanguage() {
 const LanguageContext = createContext(null)
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState(detectDefaultLanguage)
+  const [lang, setLangState] = useState(detectDefaultLanguage)
   const [overrides, setOverrides] = useState([])
+
+  const setLang = useCallback((nextLang) => {
+    if (!LANGUAGE_SWITCHER_ENABLED) {
+      setLangState(DEFAULT_UI_LANGUAGE)
+      return
+    }
+    setLangState(nextLang === 'en' ? 'en' : 'pl')
+  }, [])
+
+  useEffect(() => {
+    if (!LANGUAGE_SWITCHER_ENABLED && lang !== DEFAULT_UI_LANGUAGE) {
+      setLangState(DEFAULT_UI_LANGUAGE)
+    }
+  }, [lang])
 
   useEffect(() => {
     document.documentElement.lang = lang
@@ -1473,10 +1495,11 @@ export function LanguageProvider({ children }) {
       return {
         lang,
         setLang,
+        languageSwitcherEnabled: LANGUAGE_SWITCHER_ENABLED,
         t: mergedTranslations,
       }
     },
-    [lang, overrides],
+    [lang, overrides, setLang],
   )
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
