@@ -4,6 +4,7 @@ import {
   AUTH_SESSION_CHANGED_EVENT,
   getCurrentUser,
   isAuthenticatedUser,
+  isOwnerUsername,
   isPortalOwner,
   notifyAuthSessionChanged,
 } from '../utils/auth'
@@ -52,8 +53,7 @@ export function useAuthSession() {
         const nextUser = response.data
         const forceLogoutBefore = nextUser?.force_logout_before
         const sessionStartedAt = localStorage.getItem('session_started_at')
-        const isOwner = !!(nextUser?.is_portal_owner
-          || String(nextUser?.username || '').toLowerCase() === 'toza')
+        const isOwner = !!(nextUser?.is_portal_owner || isOwnerUsername(nextUser?.username))
 
         if (
           forceLogoutBefore

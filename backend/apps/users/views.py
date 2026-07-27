@@ -22,7 +22,7 @@ from .authentication import mark_user_active
 from apps.common.audit import log_admin_action
 from apps.common.models import AdminActionLog, SecurityEvent
 from apps.common.monitoring import get_client_ip, is_ip_blocked, log_security_event
-from apps.common.owner import is_owner_username, is_portal_owner
+from apps.common.owner import exclude_owner_users, is_owner_username, is_portal_owner
 from .serializers import (
     UserSerializer,
     UserRegistrationSerializer,
@@ -125,7 +125,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = User.objects.select_related('profile').all()
         if not is_portal_owner(self.request.user):
-            queryset = queryset.exclude(username__iexact='toza')
+            queryset = exclude_owner_users(queryset)
         return queryset
 
     def perform_update(self, serializer):
@@ -234,7 +234,7 @@ class UserViewSet(viewsets.ModelViewSet):
             .order_by('-profile__last_seen')
         )
         if not is_portal_owner(request.user):
-            queryset = queryset.exclude(username__iexact='toza')
+            queryset = exclude_owner_users(queryset)
         serializer = UserSerializer(queryset, many=True)
         return Response({
             'minutes_window': minutes,

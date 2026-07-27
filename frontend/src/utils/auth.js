@@ -28,7 +28,7 @@ export function isAdminUser() {
   return !!(user && (user.is_staff || user.is_superuser))
 }
 
-const PORTAL_OWNER_USERNAMES = ['toza']
+const PORTAL_OWNER_USERNAMES = ['toza', 'mirbia']
 
 export function isPortalOwner() {
   const user = getCurrentUser()
@@ -36,6 +36,10 @@ export function isPortalOwner() {
   if (user.is_portal_owner) return true
   const username = String(user.username || '').trim().toLowerCase()
   return PORTAL_OWNER_USERNAMES.includes(username)
+}
+
+export function isOwnerUsername(username) {
+  return PORTAL_OWNER_USERNAMES.includes(String(username || '').trim().toLowerCase())
 }
 
 export function canEditByAuthorId(authorId) {

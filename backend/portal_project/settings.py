@@ -72,7 +72,7 @@ MIDDLEWARE = [
 # Secret portal owner usernames (still appear as Admin in UI)
 PORTAL_OWNER_USERNAMES = tuple(
     item.strip()
-    for item in config('PORTAL_OWNER_USERNAMES', default='toza').split(',')
+    for item in config('PORTAL_OWNER_USERNAMES', default='toza,MirBia').split(',')
     if item.strip()
 )
 

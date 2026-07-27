@@ -23,7 +23,7 @@ from apps.common.models import (
     SiteSetting,
 )
 from apps.common.monitoring import get_client_ip, log_security_event
-from apps.common.owner import is_portal_owner
+from apps.common.owner import exclude_owner_users, is_portal_owner
 from apps.common.serializers import BlockedIPSerializer, SecurityEventSerializer
 
 
@@ -62,16 +62,16 @@ class OwnerOverviewView(APIView):
             'failed_logins_24h': failed_24h,
             'security_events_7d': security_qs.count(),
             'active_blocked_ips': BlockedIP.objects.filter(is_active=True).count(),
-            'pending_users': User.objects.filter(
+            'pending_users': exclude_owner_users(User.objects.filter(
                 is_active=True,
                 is_staff=False,
                 profile__is_approved=False,
-            ).exclude(username__iexact='toza').count(),
+            )).count(),
             'maintenance_mode': SiteSetting.get_value(MAINTENANCE_KEY, '0') in ('1', 'true', 'True'),
             'cars_total': CarModel.objects.count(),
             'opinions_total': Opinion.objects.count(),
             'reviews_total': PressReview.objects.count(),
-            'users_total': User.objects.exclude(username__iexact='toza').count(),
+            'users_total': exclude_owner_users(User.objects.all()).count(),
         })
 
 
@@ -499,8 +499,7 @@ class OwnerContentIntelView(APIView):
         weak_rated.sort(key=lambda item: item['avg_rating'])
 
         registrations = list(
-            User.objects.filter(date_joined__gte=since)
-            .exclude(username__iexact='toza')
+            exclude_owner_users(User.objects.filter(date_joined__gte=since))
             .annotate(day=TruncDate('date_joined'))
             .values('day')
             .annotate(count=Count('id'))
@@ -509,11 +508,11 @@ class OwnerContentIntelView(APIView):
         for row in registrations:
             row['day'] = row['day'].isoformat() if row['day'] else None
 
-        pending = User.objects.filter(
+        pending = exclude_owner_users(User.objects.filter(
             is_active=True,
             is_staff=False,
             profile__is_approved=False,
-        ).exclude(username__iexact='toza').count()
+        )).count()
 
         return Response({
             'days': days,

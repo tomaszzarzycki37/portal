@@ -4,7 +4,7 @@ import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { getBaseTranslationValue, getTranslationKeys, LANGUAGE_SWITCHER_ENABLED, useTranslation } from '../i18n'
 import api from '../services/api'
-import { getCurrentUser, isAdminUser, isPortalOwner } from '../utils/auth'
+import { getCurrentUser, isAdminUser, isOwnerUsername, isPortalOwner } from '../utils/auth'
 import OwnerSupervisionPanel from '../components/OwnerSupervisionPanel'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { normalizeMediaUrl } from '../utils/mediaUrl'
@@ -409,7 +409,7 @@ export default function AdminDashboard() {
       setUsersError(t.adminPanel.usersSuperuserProtectedError)
       return
     }
-    if (String(user.username || '').toLowerCase() === 'toza' && !isPortalOwner()) {
+    if (isOwnerUsername(user.username) && !isPortalOwner()) {
       setUsersError(t.adminPanel.usersSuperuserProtectedError)
       return
     }
@@ -463,7 +463,7 @@ export default function AdminDashboard() {
       setUsersError(t.adminPanel.usersSuperuserProtectedError)
       return
     }
-    if (String(user.username || '').toLowerCase() === 'toza' && !isPortalOwner()) {
+    if (isOwnerUsername(user.username) && !isPortalOwner()) {
       setUsersError(t.adminPanel.usersSuperuserProtectedError)
       return
     }
@@ -495,7 +495,7 @@ export default function AdminDashboard() {
       setUsersError(t.adminPanel.usersSuperuserProtectedError)
       return
     }
-    if (String(user.username || '').toLowerCase() === 'toza' && !isPortalOwner()) {
+    if (isOwnerUsername(user.username) && !isPortalOwner()) {
       setUsersError(t.adminPanel.usersSuperuserProtectedError)
       return
     }
@@ -708,7 +708,7 @@ export default function AdminDashboard() {
   const isOwner = useMemo(() => isPortalOwner(), [currentUser?.username, currentUser?.is_portal_owner])
   const isProtectedAccount = (user) => {
     if (!user) return false
-    if (String(user.username || '').toLowerCase() === 'toza') return !isOwner
+    if (isOwnerUsername(user.username)) return !isOwner
     if (user.is_superuser) return !isOwner && !currentUser?.is_superuser
     return false
   }
@@ -2689,7 +2689,7 @@ export default function AdminDashboard() {
                       >
                         {expandedUserId === user.id ? t.adminPanel.usersHideDetails : t.adminPanel.usersEditDetails}
                       </button>
-                      {!user.is_superuser && String(user.username || '').toLowerCase() !== 'toza' && !user.is_staff && !user.profile?.is_approved && (
+                      {!user.is_superuser && !isOwnerUsername(user.username) && !user.is_staff && !user.profile?.is_approved && (
                         <button
                           type="button"
                           className="btn btn-primary"
@@ -2699,7 +2699,7 @@ export default function AdminDashboard() {
                           {t.adminPanel.usersApprove}
                         </button>
                       )}
-                      {!user.is_superuser && String(user.username || '').toLowerCase() !== 'toza' && (
+                      {!user.is_superuser && !isOwnerUsername(user.username) && (
                         <button
                           type="button"
                           className="btn btn-secondary"
@@ -2709,7 +2709,7 @@ export default function AdminDashboard() {
                           {user.is_staff ? t.adminPanel.usersSetRoleUser : t.adminPanel.usersSetRoleAdmin}
                         </button>
                       )}
-                      {!user.is_superuser && String(user.username || '').toLowerCase() !== 'toza' && (
+                      {!user.is_superuser && !isOwnerUsername(user.username) && (
                         <button
                           type="button"
                           className="btn btn-secondary"
@@ -2719,7 +2719,7 @@ export default function AdminDashboard() {
                           {user.is_active ? t.adminPanel.usersBlock : t.adminPanel.usersUnblock}
                         </button>
                       )}
-                      {!user.is_superuser && String(user.username || '').toLowerCase() !== 'toza' && (
+                      {!user.is_superuser && !isOwnerUsername(user.username) && (
                         <button
                           type="button"
                           className="btn btn-danger"
