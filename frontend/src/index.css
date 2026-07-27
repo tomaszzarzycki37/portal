@@ -3855,3 +3855,58 @@ body.app-theme-dark .owner-health-info__value {
 body.app-theme-dark .owner-health-meter__track {
   background: #334155;
 }
+
+.owner-live-axis-label {
+  fill: #64748b;
+}
+
+.admin-wrap.admin-theme-dark .owner-live-axis-label,
+body.app-theme-dark .owner-live-axis-label {
+  fill: #e2e8f0;
+}
+
+.admin-wrap.admin-theme-dark .owner-bars-y,
+.admin-wrap.admin-theme-dark .owner-bars__value,
+.admin-wrap.admin-theme-dark .owner-bars__tick,
+body.app-theme-dark .owner-bars-y,
+body.app-theme-dark .owner-bars__value,
+body.app-theme-dark .owner-bars__tick {
+  color: #e2e8f0;
+}
+
+.admin-wrap.admin-theme-dark .owner-bars__tick--minor,
+body.app-theme-dark .owner-bars__tick--minor {
+  color: transparent;
+}
+
+.admin-wrap.admin-theme-dark .owner-bars-ruler,
+body.app-theme-dark .owner-bars-ruler {
+  border-top-color: #94a3b8;
+}
+
+.admin-wrap.admin-theme-dark .owner-bars-ruler__mark,
+body.app-theme-dark .owner-bars-ruler__mark {
+  border-left-color: #64748b;
+}
+
+.admin-wrap.admin-theme-dark .owner-bars-ruler__mark.is-major,
+body.app-theme-dark .owner-bars-ruler__mark.is-major {
+  border-left-color: #cbd5e1;
+}
+
+.admin-wrap.admin-theme-dark .owner-health-meter__label,
+.admin-wrap.admin-theme-dark .owner-health-meter__detail,
+.admin-wrap.admin-theme-dark .owner-health-info__label,
+.admin-wrap.admin-theme-dark .owner-health-info__detail,
+.admin-wrap.admin-theme-dark .owner-health-load__meta,
+body.app-theme-dark .owner-health-meter__label,
+body.app-theme-dark .owner-health-meter__detail,
+body.app-theme-dark .owner-health-info__label,
+body.app-theme-dark .owner-health-info__detail,
+body.app-theme-dark .owner-health-load__meta {
+  color: #cbd5e1;
+}
+
+.admin-wrap.admin-theme-dark .admin-meta {
+  color: #e2e8f0;
+}

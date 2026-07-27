@@ -273,7 +273,7 @@ function LiveThroughputChart({ labels }) {
             return (
               <g key={ratio}>
                 <line x1={padX} x2={padX + usableW} y1={y} y2={y} stroke="rgba(148,163,184,0.35)" strokeWidth="1" />
-                <text x={padX + 2} y={y - 2} fill="rgba(100,116,139,0.9)" fontSize="10">
+                <text x={padX + 2} y={y - 2} className="owner-live-axis-label" fontSize="10">
                   {formatRate(maxKbps * ratio)}
                 </text>
               </g>
