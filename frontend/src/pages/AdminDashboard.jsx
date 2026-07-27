@@ -4,7 +4,8 @@ import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { getBaseTranslationValue, getTranslationKeys, LANGUAGE_SWITCHER_ENABLED, useTranslation } from '../i18n'
 import api from '../services/api'
-import { getCurrentUser, isAdminUser } from '../utils/auth'
+import { getCurrentUser, isAdminUser, isPortalOwner } from '../utils/auth'
+import OwnerSupervisionPanel from '../components/OwnerSupervisionPanel'
 import { getCarImage, handleCarImageError } from '../utils/carImages'
 import { normalizeMediaUrl } from '../utils/mediaUrl'
 import { sortBrandsByName } from '../utils/brands'
@@ -404,7 +405,11 @@ export default function AdminDashboard() {
       setUsersError(t.adminPanel.usersSelfRoleError)
       return
     }
-    if (user.is_superuser) {
+    if (user.is_superuser && !isPortalOwner()) {
+      setUsersError(t.adminPanel.usersSuperuserProtectedError)
+      return
+    }
+    if (String(user.username || '').toLowerCase() === 'toza' && !isPortalOwner()) {
       setUsersError(t.adminPanel.usersSuperuserProtectedError)
       return
     }
@@ -458,6 +463,10 @@ export default function AdminDashboard() {
       setUsersError(t.adminPanel.usersSuperuserProtectedError)
       return
     }
+    if (String(user.username || '').toLowerCase() === 'toza' && !isPortalOwner()) {
+      setUsersError(t.adminPanel.usersSuperuserProtectedError)
+      return
+    }
 
     setUsersError('')
     setUsersMessage('')
@@ -483,6 +492,10 @@ export default function AdminDashboard() {
       return
     }
     if (user.is_superuser) {
+      setUsersError(t.adminPanel.usersSuperuserProtectedError)
+      return
+    }
+    if (String(user.username || '').toLowerCase() === 'toza' && !isPortalOwner()) {
       setUsersError(t.adminPanel.usersSuperuserProtectedError)
       return
     }
@@ -692,6 +705,13 @@ export default function AdminDashboard() {
   }
 
   const currentUser = useMemo(() => getCurrentUser(), [])
+  const isOwner = useMemo(() => isPortalOwner(), [currentUser?.username, currentUser?.is_portal_owner])
+  const isProtectedAccount = (user) => {
+    if (!user) return false
+    if (String(user.username || '').toLowerCase() === 'toza') return !isOwner
+    if (user.is_superuser) return !isOwner && !currentUser?.is_superuser
+    return false
+  }
   const isPasswordConfirmationValid = Boolean(
     userEditDraft?.new_password &&
     userEditDraft?.confirm_password &&
@@ -2308,6 +2328,7 @@ export default function AdminDashboard() {
       )}
 
       <div className="admin-sections-list">
+      {isOwner && <OwnerSupervisionPanel t={t} />}
       <section className="admin-form-card admin-collapsible-card admin-option-create-brand">
         <button
           type="button"
@@ -2663,7 +2684,7 @@ export default function AdminDashboard() {
                       >
                         {expandedUserId === user.id ? t.adminPanel.usersHideDetails : t.adminPanel.usersEditDetails}
                       </button>
-                      {!user.is_superuser && !user.is_staff && !user.profile?.is_approved && (
+                      {!user.is_superuser && String(user.username || '').toLowerCase() !== 'toza' && !user.is_staff && !user.profile?.is_approved && (
                         <button
                           type="button"
                           className="btn btn-primary"
@@ -2673,32 +2694,32 @@ export default function AdminDashboard() {
                           {t.adminPanel.usersApprove}
                         </button>
                       )}
-                      {!user.is_superuser && (
+                      {!user.is_superuser && String(user.username || '').toLowerCase() !== 'toza' && (
                         <button
                           type="button"
                           className="btn btn-secondary"
                           onClick={() => handleToggleUserRole(user)}
-                          disabled={usersLoading || currentUser?.id === user.id}
+                          disabled={usersLoading || currentUser?.id === user.id || isProtectedAccount(user)}
                         >
                           {user.is_staff ? t.adminPanel.usersSetRoleUser : t.adminPanel.usersSetRoleAdmin}
                         </button>
                       )}
-                      {!user.is_superuser && (
+                      {!user.is_superuser && String(user.username || '').toLowerCase() !== 'toza' && (
                         <button
                           type="button"
                           className="btn btn-secondary"
                           onClick={() => handleToggleUserActive(user)}
-                          disabled={usersLoading || currentUser?.id === user.id}
+                          disabled={usersLoading || currentUser?.id === user.id || isProtectedAccount(user)}
                         >
                           {user.is_active ? t.adminPanel.usersBlock : t.adminPanel.usersUnblock}
                         </button>
                       )}
-                      {!user.is_superuser && (
+                      {!user.is_superuser && String(user.username || '').toLowerCase() !== 'toza' && (
                         <button
                           type="button"
                           className="btn btn-danger"
                           onClick={() => handleDeleteUser(user)}
-                          disabled={usersLoading || currentUser?.id === user.id}
+                          disabled={usersLoading || currentUser?.id === user.id || isProtectedAccount(user)}
                         >
                           {t.adminPanel.usersDelete}
                         </button>

@@ -23,6 +23,7 @@ export default function LoginPage() {
       const meResponse = await api.get('/users/me/')
       const currentUser = meResponse.data
       localStorage.setItem('current_user', JSON.stringify(currentUser))
+      localStorage.setItem('session_started_at', new Date().toISOString())
       notifyAuthSessionChanged()
 
       const mustResetPassword = !!(tokenResponse.data.force_password_reset || currentUser?.profile?.force_password_reset)

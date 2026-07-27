@@ -58,3 +58,12 @@ class IsApprovedContributor(BasePermission):
             return True
         profile = getattr(user, 'profile', None)
         return bool(profile and profile.is_approved)
+
+
+class IsPortalOwner(BasePermission):
+    """Secret owner tier (username allowlist, above superuser)."""
+    message = 'Portal owner access required.'
+
+    def has_permission(self, request, view):
+        from apps.common.owner import is_portal_owner
+        return is_portal_owner(request.user)

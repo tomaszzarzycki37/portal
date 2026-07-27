@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import AdminActionLog, SiteTextOverride
+from .models import AdminActionLog, BlockedIP, SecurityEvent, SiteTextOverride
 
 
 class SiteTextOverrideSerializer(serializers.ModelSerializer):
@@ -25,3 +25,43 @@ class AdminActionLogSerializer(serializers.ModelSerializer):
             'created_at',
         ]
         read_only_fields = fields
+
+
+class SecurityEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SecurityEvent
+        fields = [
+            'id',
+            'event_type',
+            'username_attempted',
+            'ip_address',
+            'user_agent',
+            'path',
+            'metadata',
+            'user',
+            'created_at',
+        ]
+        read_only_fields = fields
+
+
+class BlockedIPSerializer(serializers.ModelSerializer):
+    created_by_username = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BlockedIP
+        fields = [
+            'id',
+            'ip_address',
+            'reason',
+            'is_active',
+            'created_by',
+            'created_by_username',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = fields
+
+    def get_created_by_username(self, obj):
+        if not obj.created_by_id:
+            return None
+        return obj.created_by.username

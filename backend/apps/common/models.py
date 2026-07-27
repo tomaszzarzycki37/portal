@@ -78,3 +78,133 @@ class AdminActionLog(models.Model):
 
 	def __str__(self):
 		return f"{self.actor_username or 'system'}: {self.action_type} ({self.created_at.isoformat()})"
+
+
+class SiteRequestLog(models.Model):
+	method = models.CharField(max_length=10, default='GET')
+	path = models.CharField(max_length=300, db_index=True)
+	status_code = models.PositiveSmallIntegerField(default=0, db_index=True)
+	ip_address = models.CharField(max_length=64, blank=True, db_index=True)
+	user_agent = models.CharField(max_length=400, blank=True)
+	referer = models.CharField(max_length=400, blank=True)
+	is_bot = models.BooleanField(default=False, db_index=True)
+	response_ms = models.PositiveIntegerField(blank=True, null=True)
+	user = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.SET_NULL,
+		blank=True,
+		null=True,
+		related_name='site_request_logs',
+	)
+	created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+	class Meta:
+		ordering = ['-created_at']
+		indexes = [
+			models.Index(fields=['created_at', 'is_bot']),
+			models.Index(fields=['path', 'created_at']),
+		]
+
+	def __str__(self):
+		return f"{self.method} {self.path} ({self.status_code})"
+
+
+class SecurityEvent(models.Model):
+	EVENT_FAILED_LOGIN = 'failed_login'
+	EVENT_BLOCKED_LOGIN = 'blocked_login'
+	EVENT_UNAUTHORIZED_API = 'unauthorized_api'
+	EVENT_SUSPICIOUS_ADMIN = 'suspicious_admin'
+	EVENT_IP_BLOCKED = 'ip_blocked'
+	EVENT_IP_UNBLOCKED = 'ip_unblocked'
+	EVENT_MAINTENANCE_ON = 'maintenance_on'
+	EVENT_MAINTENANCE_OFF = 'maintenance_off'
+	EVENT_FORCE_LOGOUT = 'force_logout'
+
+	EVENT_TYPE_CHOICES = [
+		(EVENT_FAILED_LOGIN, 'Failed login'),
+		(EVENT_BLOCKED_LOGIN, 'Blocked login'),
+		(EVENT_UNAUTHORIZED_API, 'Unauthorized API'),
+		(EVENT_SUSPICIOUS_ADMIN, 'Suspicious admin action'),
+		(EVENT_IP_BLOCKED, 'IP blocked'),
+		(EVENT_IP_UNBLOCKED, 'IP unblocked'),
+		(EVENT_MAINTENANCE_ON, 'Maintenance enabled'),
+		(EVENT_MAINTENANCE_OFF, 'Maintenance disabled'),
+		(EVENT_FORCE_LOGOUT, 'Force logout'),
+	]
+
+	event_type = models.CharField(max_length=40, choices=EVENT_TYPE_CHOICES, db_index=True)
+	username_attempted = models.CharField(max_length=150, blank=True)
+	ip_address = models.CharField(max_length=64, blank=True, db_index=True)
+	user_agent = models.CharField(max_length=400, blank=True)
+	path = models.CharField(max_length=300, blank=True)
+	metadata = models.JSONField(default=dict, blank=True)
+	user = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.SET_NULL,
+		blank=True,
+		null=True,
+		related_name='security_events',
+	)
+	created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+	class Meta:
+		ordering = ['-created_at']
+
+	def __str__(self):
+		return f"{self.event_type} @ {self.ip_address or 'unknown'}"
+
+
+class BlockedIP(models.Model):
+	ip_address = models.CharField(max_length=64, unique=True)
+	reason = models.CharField(max_length=255, blank=True)
+	is_active = models.BooleanField(default=True, db_index=True)
+	created_by = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.SET_NULL,
+		blank=True,
+		null=True,
+		related_name='blocked_ips',
+	)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ['-created_at']
+
+	def __str__(self):
+		return f"{self.ip_address} ({'active' if self.is_active else 'inactive'})"
+
+
+class SiteSetting(models.Model):
+	key = models.CharField(max_length=100, unique=True)
+	value = models.TextField(blank=True)
+	updated_at = models.DateTimeField(auto_now=True)
+	updated_by = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.SET_NULL,
+		blank=True,
+		null=True,
+		related_name='site_settings_updated',
+	)
+
+	class Meta:
+		ordering = ['key']
+
+	def __str__(self):
+		return self.key
+
+	@classmethod
+	def get_value(cls, key, default=''):
+		row = cls.objects.filter(key=key).first()
+		if not row:
+			return default
+		return row.value
+
+	@classmethod
+	def set_value(cls, key, value, user=None):
+		row, _created = cls.objects.get_or_create(key=key)
+		row.value = '' if value is None else str(value)
+		if user is not None and getattr(user, 'is_authenticated', False):
+			row.updated_by = user
+		row.save()
+		return row

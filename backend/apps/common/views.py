@@ -5,14 +5,24 @@ from django.conf import settings
 from django.core.files.storage import default_storage
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .audit import log_admin_action
 from .helpers import IsAdminOrReadOnly, IsAuthenticated
-from .models import AdminActionLog, SiteTextOverride
+from .models import AdminActionLog, SiteSetting, SiteTextOverride
 from .pagination import StandardResultsSetPagination
 from .serializers import AdminActionLogSerializer, SiteTextOverrideSerializer
+
+
+class SiteStatusView(APIView):
+	permission_classes = [AllowAny]
+
+	def get(self, request):
+		return Response({
+			'maintenance_mode': SiteSetting.get_value('maintenance_mode', '0') in ('1', 'true', 'True'),
+		})
 
 
 class SiteTextOverrideViewSet(viewsets.ModelViewSet):

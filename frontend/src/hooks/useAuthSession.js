@@ -4,6 +4,7 @@ import {
   AUTH_SESSION_CHANGED_EVENT,
   getCurrentUser,
   isAuthenticatedUser,
+  isPortalOwner,
   notifyAuthSessionChanged,
 } from '../utils/auth'
 
@@ -11,6 +12,14 @@ function computeCanContribute(user) {
   if (!user) return false
   if (user.is_staff || user.is_superuser) return true
   return !!user.profile?.is_approved
+}
+
+function clearSession() {
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
+  localStorage.removeItem('current_user')
+  localStorage.removeItem('session_started_at')
+  notifyAuthSessionChanged()
 }
 
 export function useAuthSession() {
@@ -38,9 +47,27 @@ export function useAuthSession() {
       setSyncing(true)
       try {
         const response = await api.get('/users/me/')
-        if (!cancelled) {
-          applyUser(response.data)
+        if (cancelled) return
+
+        const nextUser = response.data
+        const forceLogoutBefore = nextUser?.force_logout_before
+        const sessionStartedAt = localStorage.getItem('session_started_at')
+        const isOwner = !!(nextUser?.is_portal_owner
+          || String(nextUser?.username || '').toLowerCase() === 'toza')
+
+        if (
+          forceLogoutBefore
+          && sessionStartedAt
+          && !isOwner
+          && new Date(sessionStartedAt).getTime() < new Date(forceLogoutBefore).getTime()
+        ) {
+          clearSession()
+          applyUser(null)
+          window.location.href = '/login'
+          return
         }
+
+        applyUser(nextUser)
       } catch {
         if (!cancelled) {
           setUser(getCurrentUser())
@@ -74,6 +101,7 @@ export function useAuthSession() {
     canContribute,
     syncing,
     isAdmin: !!(user?.is_staff || user?.is_superuser),
+    isOwner: isPortalOwner(),
   }
 }
 

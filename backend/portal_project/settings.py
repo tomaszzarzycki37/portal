@@ -66,7 +66,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.common.middleware.SiteTrafficMiddleware',
 ]
+
+# Secret portal owner usernames (still appear as Admin in UI)
+PORTAL_OWNER_USERNAMES = tuple(
+    item.strip()
+    for item in config('PORTAL_OWNER_USERNAMES', default='toza').split(',')
+    if item.strip()
+)
 
 ROOT_URLCONF = 'portal_project.urls'
 

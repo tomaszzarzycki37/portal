@@ -1,0 +1,378 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import api from '../services/api'
+
+function SimpleBars({ rows, valueKey = 'hits', labelKey = 'day', maxHeight = 120 }) {
+  const maxValue = Math.max(1, ...rows.map((row) => Number(row[valueKey]) || 0))
+  return (
+    <div className="owner-bars" style={{ display: 'flex', alignItems: 'flex-end', gap: '0.35rem', minHeight: maxHeight }}>
+      {rows.map((row) => {
+        const value = Number(row[valueKey]) || 0
+        const height = Math.max(4, Math.round((value / maxValue) * maxHeight))
+        const label = String(row[labelKey] || '').slice(-5)
+        return (
+          <div key={`${row[labelKey]}-${value}`} style={{ flex: 1, textAlign: 'center', minWidth: 0 }}>
+            <div
+              title={`${row[labelKey]}: ${value}`}
+              style={{
+                height,
+                background: 'linear-gradient(180deg, #f59e0b, #b45309)',
+                borderRadius: '4px 4px 0 0',
+                margin: '0 auto',
+                maxWidth: 28,
+              }}
+            />
+            <div className="admin-meta" style={{ fontSize: '0.65rem', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {label}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function StatPill({ label, value }) {
+  return (
+    <span className="admin-meta">
+      <strong>{label}:</strong> {value}
+    </span>
+  )
+}
+
+export default function OwnerSupervisionPanel({ t }) {
+  const [open, setOpen] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+  const [overview, setOverview] = useState(null)
+  const [traffic, setTraffic] = useState(null)
+  const [security, setSecurity] = useState(null)
+  const [health, setHealth] = useState(null)
+  const [content, setContent] = useState(null)
+  const [adminActivity, setAdminActivity] = useState(null)
+  const [godMode, setGodMode] = useState(null)
+  const [blockIp, setBlockIp] = useState('')
+  const [blockReason, setBlockReason] = useState('')
+  const [blocking, setBlocking] = useState(false)
+  const [actionSaving, setActionSaving] = useState(false)
+
+  const labels = t.adminPanel
+
+  const loadAll = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const [overviewRes, trafficRes, securityRes, healthRes, contentRes, activityRes, godRes] = await Promise.all([
+        api.get('/common/owner/overview/'),
+        api.get('/common/owner/traffic/?days=14'),
+        api.get('/common/owner/security/?days=7'),
+        api.get('/common/owner/health/'),
+        api.get('/common/owner/content-intel/?days=14'),
+        api.get('/common/owner/admin-activity/?days=14'),
+        api.get('/common/owner/god-mode/'),
+      ])
+      setOverview(overviewRes.data)
+      setTraffic(trafficRes.data)
+      setSecurity(securityRes.data)
+      setHealth(healthRes.data)
+      setContent(contentRes.data)
+      setAdminActivity(activityRes.data)
+      setGodMode(godRes.data)
+    } catch {
+      setError(labels.ownerLoadError || 'Could not load supervision data.')
+    } finally {
+      setLoading(false)
+    }
+  }, [labels.ownerLoadError])
+
+  useEffect(() => {
+    loadAll()
+  }, [loadAll])
+
+  const trafficBars = useMemo(() => traffic?.by_day || [], [traffic])
+
+  const handleBlockIp = async (event) => {
+    event.preventDefault()
+    if (!blockIp.trim()) return
+    setBlocking(true)
+    setMessage('')
+    setError('')
+    try {
+      await api.post('/common/owner/blocked-ips/', {
+        ip_address: blockIp.trim(),
+        reason: blockReason.trim(),
+      })
+      setBlockIp('')
+      setBlockReason('')
+      setMessage(labels.ownerIpBlocked)
+      await loadAll()
+    } catch {
+      setError(labels.ownerIpBlockError)
+    } finally {
+      setBlocking(false)
+    }
+  }
+
+  const handleUnblock = async (id) => {
+    setError('')
+    try {
+      await api.delete(`/common/owner/blocked-ips/${id}/`)
+      setMessage(labels.ownerIpUnblocked)
+      await loadAll()
+    } catch {
+      setError(labels.ownerIpBlockError)
+    }
+  }
+
+  const runGodAction = async (action) => {
+    setActionSaving(true)
+    setError('')
+    setMessage('')
+    try {
+      await api.post('/common/owner/god-mode/', { action })
+      setMessage(labels.ownerActionDone)
+      await loadAll()
+    } catch {
+      setError(labels.ownerActionError)
+    } finally {
+      setActionSaving(false)
+    }
+  }
+
+  return (
+    <section className="admin-form-card admin-collapsible-card">
+      <button
+        type="button"
+        className="admin-collapsible-toggle"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
+      >
+        <h2 className="admin-section-heading admin-section-heading-with-badge">
+          <span>{labels.ownerSectionTitle}</span>
+          <span className="admin-site-badge">{labels.ownerSectionBadge}</span>
+        </h2>
+        <span className={`admin-inline-toggle admin-inline-gear ${open ? 'is-open' : ''}`} aria-hidden="true">
+          <svg className="admin-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z" />
+          </svg>
+        </span>
+      </button>
+
+      {open && (
+        <div>
+          <p className="admin-subtitle">{labels.ownerSectionSubtitle}</p>
+          <div className="admin-actions-row" style={{ marginBottom: '0.75rem' }}>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={loadAll} disabled={loading}>
+              {loading ? t.pages.loading : labels.ownerRefresh}
+            </button>
+          </div>
+          {message && <p className="form-success">{message}</p>}
+          {error && <p className="form-error">{error}</p>}
+          {loading && !overview ? (
+            <p className="admin-meta">{t.pages.loading}</p>
+          ) : (
+            <>
+              <div className="admin-actions-row" style={{ flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+                <StatPill label={labels.ownerTraffic7d} value={overview?.traffic_7d ?? '—'} />
+                <StatPill label={labels.ownerUniqueIps} value={overview?.unique_ips_7d ?? '—'} />
+                <StatPill label={labels.ownerFailedLogins} value={overview?.failed_logins_24h ?? '—'} />
+                <StatPill label={labels.ownerBlockedIps} value={overview?.active_blocked_ips ?? '—'} />
+                <StatPill label={labels.ownerPendingUsers} value={overview?.pending_users ?? '—'} />
+                <StatPill
+                  label={labels.ownerMaintenance}
+                  value={overview?.maintenance_mode ? labels.ownerOn : labels.ownerOff}
+                />
+              </div>
+
+              <div className="admin-form-card" style={{ marginBottom: '1rem' }}>
+                <h3 className="admin-section-caption">{labels.ownerTrafficTitle}</h3>
+                <p className="admin-meta" style={{ marginBottom: '0.75rem' }}>
+                  {labels.ownerHits}: {traffic?.total_hits ?? 0}
+                  {' • '}
+                  {labels.ownerAvgMs}: {traffic?.avg_response_ms ?? 0}
+                  {' • '}
+                  {labels.ownerBots}: {traffic?.bot_hits ?? 0}
+                </p>
+                {trafficBars.length > 0 ? (
+                  <SimpleBars rows={trafficBars} labelKey="day" valueKey="hits" />
+                ) : (
+                  <p className="admin-meta">{labels.ownerNoTraffic}</p>
+                )}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                  <div>
+                    <p className="admin-section-caption">{labels.ownerTopPaths}</p>
+                    <ul className="admin-meta" style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                      {(traffic?.top_paths || []).slice(0, 8).map((row) => (
+                        <li key={row.path}>{row.path} — {row.hits}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="admin-section-caption">{labels.ownerTopReferers}</p>
+                    <ul className="admin-meta" style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                      {(traffic?.top_referers || []).slice(0, 8).map((row) => (
+                        <li key={row.referer}>{row.referer} — {row.hits}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-form-card" style={{ marginBottom: '1rem' }}>
+                <h3 className="admin-section-caption">{labels.ownerSecurityTitle}</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <p className="admin-meta"><strong>{labels.ownerTopFailedIps}</strong></p>
+                    <ul className="admin-meta" style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                      {(security?.top_failed_ips || []).slice(0, 8).map((row) => (
+                        <li key={row.ip_address}>
+                          {row.ip_address} — {row.count}
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{ marginLeft: 8 }}
+                            onClick={() => {
+                              setBlockIp(row.ip_address)
+                              setBlockReason('Failed login cluster')
+                            }}
+                          >
+                            {labels.ownerBlock}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="admin-meta"><strong>{labels.ownerRecentSecurity}</strong></p>
+                    <ul className="admin-meta" style={{ margin: 0, paddingLeft: '1.1rem', maxHeight: 180, overflow: 'auto' }}>
+                      {(security?.recent_events || []).slice(0, 12).map((row) => (
+                        <li key={row.id}>
+                          {row.event_type} • {row.username_attempted || '—'} • {row.ip_address || '—'}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                <form onSubmit={handleBlockIp} className="admin-actions-row" style={{ marginTop: '0.85rem', flexWrap: 'wrap' }}>
+                  <input
+                    className="form-input"
+                    style={{ maxWidth: 180 }}
+                    placeholder="IP"
+                    value={blockIp}
+                    onChange={(e) => setBlockIp(e.target.value)}
+                  />
+                  <input
+                    className="form-input"
+                    style={{ maxWidth: 240 }}
+                    placeholder={labels.ownerBlockReason}
+                    value={blockReason}
+                    onChange={(e) => setBlockReason(e.target.value)}
+                  />
+                  <button type="submit" className="btn btn-primary btn-sm" disabled={blocking}>
+                    {blocking ? t.pages.loading : labels.ownerBlock}
+                  </button>
+                </form>
+                {(security?.blocked_ips || []).length > 0 && (
+                  <ul className="admin-meta" style={{ marginTop: '0.75rem', paddingLeft: '1.1rem' }}>
+                    {security.blocked_ips.map((row) => (
+                      <li key={row.id}>
+                        {row.ip_address} — {row.reason || '—'}
+                        <button type="button" className="btn btn-secondary btn-sm" style={{ marginLeft: 8 }} onClick={() => handleUnblock(row.id)}>
+                          {labels.ownerUnblock}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="admin-form-card" style={{ marginBottom: '1rem' }}>
+                <h3 className="admin-section-caption">{labels.ownerHealthTitle}</h3>
+                <div className="admin-actions-row" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <StatPill label="5xx/24h" value={health?.errors_5xx_24h ?? '—'} />
+                  <StatPill label="4xx/24h" value={health?.errors_4xx_24h ?? '—'} />
+                  <StatPill label={labels.ownerAvgMs} value={health?.avg_response_ms_24h ?? '—'} />
+                  <StatPill
+                    label={labels.ownerDisk}
+                    value={health?.disk ? `${health.disk.used_percent}% (${health.disk.free_gb} GB free)` : '—'}
+                  />
+                </div>
+              </div>
+
+              <div className="admin-form-card" style={{ marginBottom: '1rem' }}>
+                <h3 className="admin-section-caption">{labels.ownerContentTitle}</h3>
+                <div className="admin-actions-row" style={{ flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  <StatPill label={labels.ownerPendingUsers} value={content?.pending_approvals ?? '—'} />
+                  <StatPill label={labels.ownerModels} value={content?.models_total ?? '—'} />
+                  <StatPill label={labels.ownerOpinions} value={content?.opinions_total ?? '—'} />
+                  <StatPill label={labels.ownerReviews} value={content?.reviews_total ?? '—'} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <p className="admin-meta"><strong>{labels.ownerCarsNoOpinions}</strong></p>
+                    <ul className="admin-meta" style={{ margin: 0, paddingLeft: '1.1rem', maxHeight: 160, overflow: 'auto' }}>
+                      {(content?.cars_without_opinions || []).slice(0, 10).map((car) => (
+                        <li key={car.id}>{car.brand} {car.name}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="admin-meta"><strong>{labels.ownerWeakRated}</strong></p>
+                    <ul className="admin-meta" style={{ margin: 0, paddingLeft: '1.1rem', maxHeight: 160, overflow: 'auto' }}>
+                      {(content?.weak_rated_cars || []).slice(0, 10).map((car) => (
+                        <li key={car.id}>{car.brand} {car.name} — {Number(car.avg_rating).toFixed(1)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-form-card" style={{ marginBottom: '1rem' }}>
+                <h3 className="admin-section-caption">{labels.ownerAdminActivityTitle}</h3>
+                <p className="admin-meta"><strong>{labels.ownerOnlineAdmins}</strong></p>
+                <ul className="admin-meta" style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                  {(adminActivity?.online_admins || []).map((user) => (
+                    <li key={user.id}>{user.username}{user.is_owner ? ' ★' : ''}</li>
+                  ))}
+                </ul>
+                <p className="admin-meta" style={{ marginTop: '0.75rem' }}><strong>{labels.ownerRecentAdminActions}</strong></p>
+                <ul className="admin-meta" style={{ margin: 0, paddingLeft: '1.1rem', maxHeight: 180, overflow: 'auto' }}>
+                  {(adminActivity?.recent_actions || []).slice(0, 15).map((row) => (
+                    <li key={row.id}>{row.actor_username}: {row.action_type} — {row.object_label}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="admin-form-card">
+                <h3 className="admin-section-caption">{labels.ownerGodModeTitle}</h3>
+                <p className="admin-meta" style={{ marginBottom: '0.75rem' }}>{labels.ownerGodModeHint}</p>
+                <div className="admin-actions-row" style={{ flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    disabled={actionSaving}
+                    onClick={() => runGodAction(godMode?.maintenance_mode ? 'maintenance_off' : 'maintenance_on')}
+                  >
+                    {godMode?.maintenance_mode ? labels.ownerMaintenanceOff : labels.ownerMaintenanceOn}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    disabled={actionSaving}
+                    onClick={() => {
+                      if (window.confirm(labels.ownerForceLogoutConfirm)) {
+                        runGodAction('force_logout_all')
+                      }
+                    }}
+                  >
+                    {labels.ownerForceLogout}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </section>
+  )
+}

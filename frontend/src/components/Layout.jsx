@@ -1,11 +1,17 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
 import ScrollToTopButton from './ScrollToTopButton'
 import UserActivityHeartbeat from './UserActivityHeartbeat'
+import api from '../services/api'
+import { useTranslation } from '../i18n'
+import { isPortalOwner } from '../utils/auth'
 
 export default function Layout() {
+  const { t } = useTranslation()
+  const [maintenanceMode, setMaintenanceMode] = useState(false)
+
   useEffect(() => {
     const darkClass = 'app-theme-dark'
 
@@ -36,9 +42,44 @@ export default function Layout() {
     }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    const loadStatus = async () => {
+      try {
+        const response = await api.get('/common/site-status/')
+        if (!cancelled) {
+          setMaintenanceMode(!!response.data?.maintenance_mode)
+        }
+      } catch {
+        if (!cancelled) setMaintenanceMode(false)
+      }
+    }
+    loadStatus()
+    const timer = window.setInterval(loadStatus, 60000)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+    }
+  }, [])
+
+  const showMaintenanceBanner = maintenanceMode && !isPortalOwner()
+
   return (
     <div className="site-shell">
       <Header />
+      {showMaintenanceBanner && (
+        <div
+          style={{
+            background: '#7c2d12',
+            color: '#fff7ed',
+            textAlign: 'center',
+            padding: '0.65rem 1rem',
+            fontWeight: 600,
+          }}
+        >
+          {t.pages.maintenanceBanner}
+        </div>
+      )}
       <main className="site-main container">
         <Outlet />
       </main>
