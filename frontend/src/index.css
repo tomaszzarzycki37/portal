@@ -3649,6 +3649,108 @@ body.app-theme-dark .detailed-opinion-fuel-avg-preview {
   color: #b45309;
 }
 
+.owner-bars-wrap {
+  overflow-x: auto;
+  padding-top: 0.25rem;
+}
+
+.owner-bars-plot {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 0.35rem;
+  align-items: stretch;
+  min-width: 280px;
+}
+
+.owner-bars-y {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.35rem 0 1.55rem;
+  font-size: 0.65rem;
+  color: #94a3b8;
+  text-align: right;
+  line-height: 1;
+}
+
+.owner-bars-main {
+  min-width: 0;
+}
+
+.owner-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.2rem;
+  padding: 0.35rem 0.15rem 0;
+  border-bottom: 1px solid #cbd5e1;
+  background-image:
+    linear-gradient(to top, rgba(148, 163, 184, 0.18) 1px, transparent 1px);
+  background-size: 100% 25%;
+  background-position: left bottom;
+}
+
+.owner-bars__col {
+  flex: 1 0 18px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.owner-bars__value {
+  min-height: 0.95rem;
+  margin-bottom: 0.2rem;
+  font-size: 0.62rem;
+  color: #64748b;
+  line-height: 1;
+}
+
+.owner-bars__bar-slot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.owner-bars__bar {
+  width: 100%;
+  max-width: 28px;
+  margin: 0 auto;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, #fbbf24, #ea580c);
+  box-shadow: 0 0 0 1px rgba(234, 88, 12, 0.25);
+}
+
+.owner-bars__tick {
+  margin-top: 0.35rem;
+  min-height: 1.1rem;
+  font-size: 0.62rem;
+  color: #475569;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.owner-bars__tick--minor {
+  color: transparent;
+}
+
+.owner-bars-ruler {
+  display: flex;
+  gap: 0.2rem;
+  margin-top: 0.15rem;
+  padding: 0 0.15rem;
+  border-top: 1px solid #94a3b8;
+}
+
+.owner-bars-ruler__mark {
+  flex: 1 0 18px;
+  min-width: 18px;
+  height: 6px;
+  border-left: 1px solid #cbd5e1;
+}
+
+.owner-bars-ruler__mark.is-major {
+  height: 10px;
+  border-left-color: #64748b;
+}
+
 .admin-wrap.admin-theme-dark .owner-health-meter,
 .admin-wrap.admin-theme-dark .owner-health-info,
 body.app-theme-dark .owner-health-meter,

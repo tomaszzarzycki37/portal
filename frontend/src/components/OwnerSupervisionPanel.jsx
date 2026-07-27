@@ -1,46 +1,109 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import api from '../services/api'
 
+function formatBarLabel(rawLabel, labelKey) {
+  const raw = String(rawLabel || '')
+  if (!raw) return '—'
+  if (labelKey === 'hour') {
+    const date = new Date(raw)
+    if (!Number.isNaN(date.getTime())) {
+      return `${String(date.getHours()).padStart(2, '0')}:00`
+    }
+    const match = raw.match(/T(\d{2})/)
+    return match ? `${match[1]}:00` : raw.slice(-5)
+  }
+  if (labelKey === 'day') {
+    const date = new Date(raw)
+    if (!Number.isNaN(date.getTime())) {
+      return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`
+    }
+    if (raw.length >= 10) return `${raw.slice(8, 10)}.${raw.slice(5, 7)}`
+  }
+  return raw.length > 8 ? raw.slice(-5) : raw
+}
+
+function localHourKey(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value || '')
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+    String(date.getHours()).padStart(2, '0'),
+  ].join('-')
+}
+
+function padLast24Hours(rows, valueKey = 'hits') {
+  const byKey = new Map()
+  rows.forEach((row) => {
+    byKey.set(localHourKey(row.hour), Number(row[valueKey]) || 0)
+  })
+  const now = new Date()
+  now.setMinutes(0, 0, 0)
+  const points = []
+  for (let i = 23; i >= 0; i -= 1) {
+    const slot = new Date(now.getTime() - i * 60 * 60 * 1000)
+    points.push({
+      hour: slot.toISOString(),
+      hits: byKey.get(localHourKey(slot)) || 0,
+    })
+  }
+  return points
+}
+
 function SimpleBars({ rows, valueKey = 'hits', labelKey = 'day', maxHeight = 140 }) {
   const maxValue = Math.max(1, ...rows.map((row) => Number(row[valueKey]) || 0))
+  const tickStep = Math.max(1, Math.ceil(maxValue / 4))
+  const yTicks = [0, tickStep, tickStep * 2, tickStep * 3, Math.max(tickStep * 4, maxValue)]
+    .filter((value, index, arr) => arr.indexOf(value) === index)
+    .slice(0, 5)
+
   return (
-    <div
-      className="owner-bars"
-      style={{
-        display: 'flex',
-        alignItems: 'flex-end',
-        gap: '0.4rem',
-        minHeight: maxHeight + 28,
-        padding: '0.75rem 0.5rem 0',
-        borderBottom: '1px solid rgba(148,163,184,0.35)',
-        overflowX: 'auto',
-      }}
-    >
-      {rows.map((row, index) => {
-        const value = Number(row[valueKey]) || 0
-        const height = Math.max(6, Math.round((value / maxValue) * maxHeight))
-        const rawLabel = String(row[labelKey] || '')
-        const label = rawLabel.length > 10 ? rawLabel.slice(5, 10) : rawLabel.slice(-5)
-        return (
-          <div key={`${rawLabel}-${index}`} style={{ flex: '1 0 28px', textAlign: 'center', minWidth: 28 }}>
-            <div className="admin-meta" style={{ fontSize: '0.7rem', marginBottom: 4 }}>{value}</div>
-            <div
-              title={`${rawLabel}: ${value}`}
-              style={{
-                height,
-                background: 'linear-gradient(180deg, #fbbf24, #ea580c)',
-                borderRadius: '6px 6px 0 0',
-                margin: '0 auto',
-                maxWidth: 32,
-                boxShadow: '0 0 0 1px rgba(234,88,12,0.25)',
-              }}
-            />
-            <div className="admin-meta" style={{ fontSize: '0.65rem', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {label}
-            </div>
+    <div className="owner-bars-wrap">
+      <div className="owner-bars-plot">
+        <div className="owner-bars-y" aria-hidden="true">
+          {[...yTicks].reverse().map((tick) => (
+            <span key={tick}>{tick}</span>
+          ))}
+        </div>
+        <div className="owner-bars-main">
+          <div
+            className="owner-bars"
+            style={{ minHeight: maxHeight + 8 }}
+          >
+            {rows.map((row, index) => {
+              const value = Number(row[valueKey]) || 0
+              const height = value > 0 ? Math.max(6, Math.round((value / maxValue) * maxHeight)) : 0
+              const rawLabel = String(row[labelKey] || '')
+              const label = formatBarLabel(rawLabel, labelKey)
+              const showTick = labelKey !== 'hour' || index % 3 === 0 || index === rows.length - 1
+              return (
+                <div key={`${rawLabel}-${index}`} className="owner-bars__col">
+                  <div className="owner-bars__value">{value > 0 ? value : ''}</div>
+                  <div className="owner-bars__bar-slot" style={{ height: maxHeight }}>
+                    <div
+                      className="owner-bars__bar"
+                      title={`${label}: ${value}`}
+                      style={{ height }}
+                    />
+                  </div>
+                  <div className={`owner-bars__tick ${showTick ? '' : 'owner-bars__tick--minor'}`}>
+                    {showTick ? label : ''}
+                  </div>
+                </div>
+              )
+            })}
           </div>
-        )
-      })}
+          <div className="owner-bars-ruler" aria-hidden="true">
+            {rows.map((row, index) => (
+              <span
+                key={`tick-${index}`}
+                className={`owner-bars-ruler__mark ${index % 3 === 0 || index === rows.length - 1 ? 'is-major' : ''}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -321,7 +384,10 @@ export default function OwnerSupervisionPanel({ t }) {
   }, [open])
 
   const trafficBars = useMemo(() => traffic?.by_day || [], [traffic])
-  const hourBars = useMemo(() => traffic?.by_hour_24h || [], [traffic])
+  const hourBars = useMemo(
+    () => (traffic ? padLast24Hours(traffic.by_hour_24h || []) : []),
+    [traffic],
+  )
 
   const handleBlockIp = async (event) => {
     event.preventDefault()
