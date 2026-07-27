@@ -2592,6 +2592,17 @@ body.app-theme-dark .home-featured-review-card {
 	border-color: #374151;
 }
 
+body.app-theme-dark .reviews-catalog-preview {
+	background: #1d232b;
+	border-color: #4b5563;
+}
+
+body.app-theme-dark .reviews-catalog-preview:hover,
+body.app-theme-dark .reviews-catalog-preview:focus-visible {
+	border-color: #fb923c;
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
 body.app-theme-dark .home-featured-reviews-head h2 {
 	color: #f3f4f6;
 }
