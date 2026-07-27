@@ -375,6 +375,25 @@ def _host_metrics():
         cpu = psutil.cpu_percent(interval=None)
         if cpu == 0.0:
             cpu = psutil.cpu_percent(interval=0.05)
+
+        processes = []
+        for proc in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_percent']):
+            try:
+                info = proc.info
+                processes.append({
+                    'pid': info.get('pid'),
+                    'name': info.get('name') or '?',
+                    'user': info.get('username') or '',
+                    'cpu_percent': round(float(info.get('cpu_percent') or 0), 1),
+                    'memory_percent': round(float(info.get('memory_percent') or 0), 1),
+                })
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                continue
+        processes.sort(
+            key=lambda item: (item['cpu_percent'], item['memory_percent']),
+            reverse=True,
+        )
+
         return {
             'cpu_percent': round(cpu, 1),
             'cpu_count': psutil.cpu_count(logical=True) or 1,
@@ -394,6 +413,7 @@ def _host_metrics():
             'uptime_human': _format_uptime(uptime_seconds),
             'boot_time': datetime.fromtimestamp(boot_ts, tz=dt_timezone.utc).isoformat(),
             'process_count': len(psutil.pids()),
+            'top_processes': processes[:15],
             'network': {
                 'bytes_sent_gb': round(net.bytes_sent / (1024 ** 3), 2),
                 'bytes_recv_gb': round(net.bytes_recv / (1024 ** 3), 2),

@@ -3649,6 +3649,77 @@ body.app-theme-dark .detailed-opinion-fuel-avg-preview {
   color: #b45309;
 }
 
+.owner-process-table-wrap {
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.65rem;
+  background: #fff;
+}
+
+.owner-process-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.owner-process-table th,
+.owner-process-table td {
+  padding: 0.4rem 0.55rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.owner-process-table th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  z-index: 1;
+}
+
+.owner-process-table td:nth-child(2),
+.owner-process-table td:nth-child(3) {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.owner-process-table td:nth-child(4),
+.owner-process-table td:nth-child(5) {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.owner-process-table th:nth-child(4),
+.owner-process-table th:nth-child(5) {
+  text-align: right;
+}
+
+.admin-wrap.admin-theme-dark .owner-process-table-wrap,
+body.app-theme-dark .owner-process-table-wrap {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.admin-wrap.admin-theme-dark .owner-process-table th,
+body.app-theme-dark .owner-process-table th {
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+.admin-wrap.admin-theme-dark .owner-process-table th,
+.admin-wrap.admin-theme-dark .owner-process-table td,
+body.app-theme-dark .owner-process-table th,
+body.app-theme-dark .owner-process-table td {
+  border-bottom-color: #334155;
+  color: #e2e8f0;
+}
+
 .owner-bars-wrap {
   overflow-x: auto;
   padding-top: 0.25rem;

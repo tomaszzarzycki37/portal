@@ -716,6 +716,39 @@ export default function OwnerSupervisionPanel({ t }) {
                     }
                   />
                 </div>
+                <p className="admin-meta" style={{ marginTop: '0.85rem' }}>
+                  <strong>{labels.ownerProcessList}</strong>
+                  {' '}
+                  ({labels.ownerProcessListHint})
+                </p>
+                {(health?.host?.top_processes || []).length > 0 ? (
+                  <div className="owner-process-table-wrap">
+                    <table className="owner-process-table">
+                      <thead>
+                        <tr>
+                          <th>PID</th>
+                          <th>{labels.ownerProcessName}</th>
+                          <th>{labels.ownerProcessUser}</th>
+                          <th>CPU %</th>
+                          <th>RAM %</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {health.host.top_processes.map((proc) => (
+                          <tr key={`${proc.pid}-${proc.name}`}>
+                            <td>{proc.pid}</td>
+                            <td title={proc.name}>{proc.name}</td>
+                            <td title={proc.user || ''}>{proc.user || '—'}</td>
+                            <td>{Number(proc.cpu_percent).toFixed(1)}</td>
+                            <td>{Number(proc.memory_percent).toFixed(1)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="admin-meta">{labels.ownerNoProcesses}</p>
+                )}
                 <p className="admin-meta" style={{ marginTop: '0.85rem' }}>{labels.ownerAppMetrics}</p>
                 <div className="owner-health-app-grid">
                   <HealthInfoCard
