@@ -301,6 +301,25 @@ export default function OwnerSupervisionPanel({ t }) {
     loadAll()
   }, [loadAll])
 
+  useEffect(() => {
+    if (!open) return undefined
+    let cancelled = false
+    let timer = null
+
+    const pollHealth = async () => {
+      const result = await safeGet('/common/owner/health/')
+      if (cancelled || !result.ok) return
+      setHealth(result.data)
+    }
+
+    pollHealth()
+    timer = window.setInterval(pollHealth, 1000)
+    return () => {
+      cancelled = true
+      if (timer) window.clearInterval(timer)
+    }
+  }, [open])
+
   const trafficBars = useMemo(() => traffic?.by_day || [], [traffic])
   const hourBars = useMemo(() => traffic?.by_hour_24h || [], [traffic])
 
@@ -546,7 +565,8 @@ export default function OwnerSupervisionPanel({ t }) {
 
               <div className="admin-form-card" style={{ marginBottom: '1rem' }}>
                 <h3 className="admin-section-caption">{labels.ownerHealthTitle}</h3>
-                <p className="admin-meta" style={{ marginTop: 0 }}>{labels.ownerHostMetrics}</p>
+                <p className="admin-meta" style={{ marginTop: 0 }}>{labels.ownerHealthLiveHint}</p>
+                <p className="admin-meta">{labels.ownerHostMetrics}</p>
                 <div className="owner-health-grid">
                   <HealthMeter
                     label={labels.ownerCpu}

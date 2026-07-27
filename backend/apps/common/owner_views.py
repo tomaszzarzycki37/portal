@@ -371,8 +371,12 @@ def _host_metrics():
             load = None
 
         net = psutil.net_io_counters()
+        # Non-blocking sample (accurate across 1s polls in the same worker).
+        cpu = psutil.cpu_percent(interval=None)
+        if cpu == 0.0:
+            cpu = psutil.cpu_percent(interval=0.05)
         return {
-            'cpu_percent': round(psutil.cpu_percent(interval=0.2), 1),
+            'cpu_percent': round(cpu, 1),
             'cpu_count': psutil.cpu_count(logical=True) or 1,
             'memory': {
                 'total_gb': round(mem.total / (1024 ** 3), 2),
