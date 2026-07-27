@@ -294,15 +294,15 @@ class OwnerContentIntelView(APIView):
         )
 
         cars_without_opinions = (
-            CarModel.objects.annotate(opinions_count=Count('opinions'))
-            .filter(opinions_count=0)
+            CarModel.objects.annotate(opinions_total=Count('opinions'))
+            .filter(opinions_total=0)
             .select_related('brand')
             .order_by('brand__name', 'name')[:30]
         )
         weak_rated = []
         for car in (
-            CarModel.objects.annotate(opinions_count=Count('opinions'))
-            .filter(opinions_count__gt=0)
+            CarModel.objects.annotate(opinions_total=Count('opinions'))
+            .filter(opinions_total__gt=0)
             .select_related('brand')
             .order_by('name')[:200]
         ):
@@ -313,7 +313,7 @@ class OwnerContentIntelView(APIView):
                     'name': car.name,
                     'brand': car.brand.name if car.brand_id else '',
                     'avg_rating': rating,
-                    'opinions_count': car.opinions_count,
+                    'opinions_count': car.opinions_total,
                 })
             if len(weak_rated) >= 20:
                 break

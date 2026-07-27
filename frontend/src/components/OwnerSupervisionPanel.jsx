@@ -1,27 +1,41 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import api from '../services/api'
 
-function SimpleBars({ rows, valueKey = 'hits', labelKey = 'day', maxHeight = 120 }) {
+function SimpleBars({ rows, valueKey = 'hits', labelKey = 'day', maxHeight = 140 }) {
   const maxValue = Math.max(1, ...rows.map((row) => Number(row[valueKey]) || 0))
   return (
-    <div className="owner-bars" style={{ display: 'flex', alignItems: 'flex-end', gap: '0.35rem', minHeight: maxHeight }}>
-      {rows.map((row) => {
+    <div
+      className="owner-bars"
+      style={{
+        display: 'flex',
+        alignItems: 'flex-end',
+        gap: '0.4rem',
+        minHeight: maxHeight + 28,
+        padding: '0.75rem 0.5rem 0',
+        borderBottom: '1px solid rgba(148,163,184,0.35)',
+        overflowX: 'auto',
+      }}
+    >
+      {rows.map((row, index) => {
         const value = Number(row[valueKey]) || 0
-        const height = Math.max(4, Math.round((value / maxValue) * maxHeight))
-        const label = String(row[labelKey] || '').slice(-5)
+        const height = Math.max(6, Math.round((value / maxValue) * maxHeight))
+        const rawLabel = String(row[labelKey] || '')
+        const label = rawLabel.length > 10 ? rawLabel.slice(5, 10) : rawLabel.slice(-5)
         return (
-          <div key={`${row[labelKey]}-${value}`} style={{ flex: 1, textAlign: 'center', minWidth: 0 }}>
+          <div key={`${rawLabel}-${index}`} style={{ flex: '1 0 28px', textAlign: 'center', minWidth: 28 }}>
+            <div className="admin-meta" style={{ fontSize: '0.7rem', marginBottom: 4 }}>{value}</div>
             <div
-              title={`${row[labelKey]}: ${value}`}
+              title={`${rawLabel}: ${value}`}
               style={{
                 height,
-                background: 'linear-gradient(180deg, #f59e0b, #b45309)',
-                borderRadius: '4px 4px 0 0',
+                background: 'linear-gradient(180deg, #fbbf24, #ea580c)',
+                borderRadius: '6px 6px 0 0',
                 margin: '0 auto',
-                maxWidth: 28,
+                maxWidth: 32,
+                boxShadow: '0 0 0 1px rgba(234,88,12,0.25)',
               }}
             />
-            <div className="admin-meta" style={{ fontSize: '0.65rem', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div className="admin-meta" style={{ fontSize: '0.65rem', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {label}
             </div>
           </div>
@@ -37,6 +51,16 @@ function StatPill({ label, value }) {
       <strong>{label}:</strong> {value}
     </span>
   )
+}
+
+async function safeGet(url) {
+  try {
+    const response = await api.get(url)
+    return { ok: true, data: response.data }
+  } catch (err) {
+    const detail = err?.response?.data?.detail || err?.message || 'error'
+    return { ok: false, error: String(detail) }
+  }
 }
 
 export default function OwnerSupervisionPanel({ t }) {
@@ -61,35 +85,41 @@ export default function OwnerSupervisionPanel({ t }) {
   const loadAll = useCallback(async () => {
     setLoading(true)
     setError('')
-    try {
-      const [overviewRes, trafficRes, securityRes, healthRes, contentRes, activityRes, godRes] = await Promise.all([
-        api.get('/common/owner/overview/'),
-        api.get('/common/owner/traffic/?days=14'),
-        api.get('/common/owner/security/?days=7'),
-        api.get('/common/owner/health/'),
-        api.get('/common/owner/content-intel/?days=14'),
-        api.get('/common/owner/admin-activity/?days=14'),
-        api.get('/common/owner/god-mode/'),
-      ])
-      setOverview(overviewRes.data)
-      setTraffic(trafficRes.data)
-      setSecurity(securityRes.data)
-      setHealth(healthRes.data)
-      setContent(contentRes.data)
-      setAdminActivity(activityRes.data)
-      setGodMode(godRes.data)
-    } catch {
+    const results = await Promise.all([
+      safeGet('/common/owner/overview/'),
+      safeGet('/common/owner/traffic/?days=14'),
+      safeGet('/common/owner/security/?days=7'),
+      safeGet('/common/owner/health/'),
+      safeGet('/common/owner/content-intel/?days=14'),
+      safeGet('/common/owner/admin-activity/?days=14'),
+      safeGet('/common/owner/god-mode/'),
+    ])
+
+    const [overviewRes, trafficRes, securityRes, healthRes, contentRes, activityRes, godRes] = results
+    if (overviewRes.ok) setOverview(overviewRes.data)
+    if (trafficRes.ok) setTraffic(trafficRes.data)
+    if (securityRes.ok) setSecurity(securityRes.data)
+    if (healthRes.ok) setHealth(healthRes.data)
+    if (contentRes.ok) setContent(contentRes.data)
+    if (activityRes.ok) setAdminActivity(activityRes.data)
+    if (godRes.ok) setGodMode(godRes.data)
+
+    const failed = results.filter((item) => !item.ok)
+    if (failed.length === results.length) {
       setError(labels.ownerLoadError || 'Could not load supervision data.')
-    } finally {
-      setLoading(false)
+    } else if (failed.length > 0) {
+      setError(`${labels.ownerPartialLoadError || 'Some supervision modules failed.'} (${failed.map((item) => item.error).join('; ')})`)
     }
-  }, [labels.ownerLoadError])
+
+    setLoading(false)
+  }, [labels.ownerLoadError, labels.ownerPartialLoadError])
 
   useEffect(() => {
     loadAll()
   }, [loadAll])
 
   const trafficBars = useMemo(() => traffic?.by_day || [], [traffic])
+  const hourBars = useMemo(() => traffic?.by_hour_24h || [], [traffic])
 
   const handleBlockIp = async (event) => {
     event.preventDefault()
@@ -168,7 +198,7 @@ export default function OwnerSupervisionPanel({ t }) {
           </div>
           {message && <p className="form-success">{message}</p>}
           {error && <p className="form-error">{error}</p>}
-          {loading && !overview ? (
+          {loading && !overview && !traffic ? (
             <p className="admin-meta">{t.pages.loading}</p>
           ) : (
             <>
@@ -193,10 +223,17 @@ export default function OwnerSupervisionPanel({ t }) {
                   {' • '}
                   {labels.ownerBots}: {traffic?.bot_hits ?? 0}
                 </p>
+                <p className="admin-meta" style={{ marginBottom: '0.35rem' }}><strong>{labels.ownerTrafficByDay}</strong></p>
                 {trafficBars.length > 0 ? (
                   <SimpleBars rows={trafficBars} labelKey="day" valueKey="hits" />
                 ) : (
                   <p className="admin-meta">{labels.ownerNoTraffic}</p>
+                )}
+                {hourBars.length > 0 && (
+                  <>
+                    <p className="admin-meta" style={{ margin: '1rem 0 0.35rem' }}><strong>{labels.ownerTrafficByHour}</strong></p>
+                    <SimpleBars rows={hourBars} labelKey="hour" valueKey="hits" maxHeight={100} />
+                  </>
                 )}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
                   <div>
