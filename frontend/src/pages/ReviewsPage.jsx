@@ -412,8 +412,15 @@ export default function ReviewsPage() {
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const modelFromUrl = String(params.get('model') || '').trim()
+    const reviewFromUrl = String(params.get('review') || '').trim()
     if (modelFromUrl) {
       setSelectedModel(modelFromUrl)
+    }
+    if (reviewFromUrl) {
+      const reviewId = Number.parseInt(reviewFromUrl, 10)
+      if (Number.isFinite(reviewId)) {
+        setExpandedReviewId(reviewId)
+      }
     }
   }, [location.search])
 
@@ -445,8 +452,10 @@ export default function ReviewsPage() {
   }, [normalizedReviews, selectedBrand, selectedModel, sortBy, searchTerm])
 
   useEffect(() => {
-    setExpandedReviewId(null)
-  }, [selectedBrand, selectedModel, searchTerm, sortBy])
+    if (!expandedReviewId) return
+    const stillVisible = filteredAndSortedReviews.some((review) => review.id === expandedReviewId)
+    if (!stillVisible) setExpandedReviewId(null)
+  }, [expandedReviewId, filteredAndSortedReviews])
 
   useEffect(() => {
     if (!expandedReviewId) return undefined
