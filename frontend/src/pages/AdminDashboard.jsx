@@ -1935,7 +1935,6 @@ export default function AdminDashboard() {
       <div className="page-card admin-hero-card">
         <div>
           <h1 className="page-title">{t.adminPanel.title}</h1>
-          <p className="admin-subtitle">{t.adminPanel.subtitle}</p>
         </div>
         <div className="admin-hero-right">
           <div className="admin-owner-badge">
