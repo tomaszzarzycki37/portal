@@ -1948,6 +1948,12 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {isOwner && (
+        <div style={{ marginBottom: '1.25rem' }}>
+          <OwnerSupervisionPanel t={t} />
+        </div>
+      )}
+
       {!loading && (
         <div className="admin-stats-grid">
           <div className="admin-stat-card">
@@ -2328,7 +2334,6 @@ export default function AdminDashboard() {
       )}
 
       <div className="admin-sections-list">
-      {isOwner && <OwnerSupervisionPanel t={t} />}
       <section className="admin-form-card admin-collapsible-card admin-option-create-brand">
         <button
           type="button"
